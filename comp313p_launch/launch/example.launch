@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+
+	<include file="$(find stdr_launcher)/launch/server_with_map_and_gui_plus_robot.launch"/>
+
+</launch>
