@@ -1,0 +1,16 @@
+<launch>
+  <param name="use_sim_time" type="bool" value="true" />
+  <rosparam param="maximum_window_height_in_pixels">700</rosparam>
+  <rosparam param="clock_send_rate">40</rosparam>
+  <rosparam param="time_scale_factor">5</rosparam>
+  <arg name="map_file" default="$(find cw2)/s02_factory.yaml"/>
+  <arg name="goal_file" default="$(find cw2)/s02_factory_goals.txt"/>
+  <rosparam param="maximum_window_height_in_pixels">700</rosparam>
+  <node pkg="time_server" name="time_server" type="timeServerNode.py" output="screen"/>
+  <node pkg="custom_comp313p_map_server" name="map_server" type="map_server" args="$(arg map_file)"/>
+  <node pkg="custom_comp313p_turtlesim" name="sim" type="turtlesim_node"/>
+  <node pkg="planner_controller" name="planner_node" type="plannerNode.py" output="screen"/>
+  <node pkg="the_boss" name="the_boss" type="bossNode.py" args="$(arg goal_file)" output="screen"/>
+</launch>
+
+  
