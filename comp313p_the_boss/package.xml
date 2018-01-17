@@ -16,7 +16,6 @@
   <license>TODO</license>
  
   <buildtool_depend>catkin</buildtool_depend>
-  <buildtool_depend>turtlesim</buildtool_depend> 
   <build_depend>message_generation</build_depend>
   <build_depend>planner_controller</build_depend>
  
