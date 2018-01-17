@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>time_server</name>
+  <name>comp313p_time_server</name>
   <version>0.0.0</version>
   <description>The time_server package</description>
   <maintainer email="s.julier@ucl.ac.uk">ucacsjj</maintainer>

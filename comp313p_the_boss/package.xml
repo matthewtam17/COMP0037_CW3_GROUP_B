@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>the_boss</name>
+  <name>comp313p_the_boss</name>
   <version>0.0.0</version>
   <description>The the_boss package</description>
 
@@ -17,10 +17,9 @@
  
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>message_generation</build_depend>
-  <build_depend>planner_controller</build_depend>
  
   <run_depend>message_runtime</run_depend>
-  <run_depend>planner_controller</run_depend>
+  <run_depend>comp313p_planner_controller</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
