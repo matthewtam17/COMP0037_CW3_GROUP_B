@@ -15,22 +15,22 @@ class CellLabel(Enum):
 
 class Cell(object):
 
-    def __init__(this, coords, isOccupied):
+    def __init__(self, coords, isOccupied):
 
         # Set coordinates
-        this.coords = coords
+        self.coords = coords
 
         # Label the cell. If it is known to be obstructed, mark it as
         # such. Otherwise, assume it is free and mark as unvisited.
         if (isOccupied > 0):
-            this.label = CellLabel.OBSTRUCTED;
+            self.label = CellLabel.OBSTRUCTED;
         else:
-            this.label = CellLabel.UNVISITED
+            self.label = CellLabel.UNVISITED
 
         # Initially the cell has no parents.
-        this.parent = None
+        self.parent = None
 
         # The initial path cost is infinite. For algorithms that need
         # it, this is the necessary initial condition.
-        this.pathCost = float("inf")
+        self.pathCost = float("inf")
     

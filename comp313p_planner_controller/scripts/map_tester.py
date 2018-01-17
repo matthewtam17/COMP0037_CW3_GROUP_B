@@ -11,17 +11,17 @@ from grid_drawer import GridDrawer
 
 class MapTester(object):
 
-    def __init__(this):
+    def __init__(self):
         rospy.loginfo('Waiting for static_map to become available.')
         print "Hello1"
         rospy.wait_for_service('static_map') 
         print "Hello2"
-        this.mapServer = rospy.ServiceProxy('static_map', GetMap)
+        self.mapServer = rospy.ServiceProxy('static_map', GetMap)
         print "Hello3"
 
-    def getMapFromServer(this):
+    def getMapFromServer(self):
         print "starting"
-        resp = this.mapServer()
+        resp = self.mapServer()
         print "got from server"
         occupancyGrid = OccupancyGrid(resp.map.info.width, resp.map.info.height, resp.map.info.resolution)
         print "make grid"

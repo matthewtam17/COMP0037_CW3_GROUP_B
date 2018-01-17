@@ -10,23 +10,23 @@ class FIFOPlanner(PlannerBase):
 
     # This implements a simple FIFO search algorithm
     
-    def __init__(this, occupancyGrid):
-        PlannerBase.__init__(this, occupancyGrid)
-        this.fifoQueue = deque()
+    def __init__(self, occupancyGrid):
+        PlannerBase.__init__(self, occupancyGrid)
+        self.fifoQueue = deque()
 
     # Simply put on the end of the queue
-    def pushCellOntoQueue(this, cell):
-        this.fifoQueue.append(cell)
+    def pushCellOntoQueue(self, cell):
+        self.fifoQueue.append(cell)
 
     # Check the queue size is zero
-    def isQueueEmpty(this):
-        return not this.fifoQueue
+    def isQueueEmpty(self):
+        return not self.fifoQueue
 
     # Simply pull from the front of the list
-    def popCellFromQueue(this):
-        cell = this.fifoQueue.popleft()
+    def popCellFromQueue(self):
+        cell = self.fifoQueue.popleft()
         return cell
 
-    def resolveDuplicate(this, cell, parentCell):
-        # Nothing to do in this case
+    def resolveDuplicate(self, cell, parentCell):
+        # Nothing to do in self case
         pass
