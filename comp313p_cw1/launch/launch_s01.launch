@@ -20,7 +20,7 @@
 	
   <node pkg="comp313p_time_server" name="time_server" type="time_server_node.py" output="screen"/>
   <node pkg="comp313p_the_boss" name="the_boss" type="boss_node.py" args="$(arg goal_file)" output="screen"/>
-  <node pkg="comp313p_planner_controller" name="planner_node" type="planner_node.py" output="screen"/>
+  <node pkg="comp313p_planner_controller" name="planner_controller_node" type="planner_controller" output="screen"/>
 
 </launch>
 
