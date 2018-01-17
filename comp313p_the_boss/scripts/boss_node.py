@@ -4,9 +4,9 @@
 
 import rospy
 import sys
-from planner_controller.srv import *
+from comp313p_planner_controller.srv import *
 from nav_msgs.srv import GetMap
-from turtlesim.srv import *
+
 
 from random import randint
 
