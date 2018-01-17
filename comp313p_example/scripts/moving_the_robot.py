@@ -4,7 +4,6 @@ import rospy
 from geometry_msgs.msg  import Twist
 from nav_msgs.msg import Odometry
 from math import pow,atan2,sqrt,pi
-from PyKDL import Rotation
 
 class stdr_controller():
 
@@ -22,6 +21,7 @@ class stdr_controller():
     def run(self):
 
         # Sleep for 1s before starting. This gives time for all the parts of stdr to start up
+        rospy.wait_for_service('/robot0/replace')
         rospy.sleep(1.0)
 
         while not rospy.is_shutdown():
