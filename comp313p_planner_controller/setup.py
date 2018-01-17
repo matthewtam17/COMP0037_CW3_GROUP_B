@@ -6,7 +6,8 @@ d = generate_distutils_setup(
                     'comp313p_planner_controller.planner.algorithms',
                     'comp313p_planner_controller.planner.base',
                     'comp313p_planner_controller.planner.graphics'],
-    packages_dir = {'': 'src'}
+    packages_dir = {'': 'src'},
+    scripts=['scripts/planner_controller']
     )
 
 setup(**d)

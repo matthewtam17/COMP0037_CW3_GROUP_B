@@ -3,11 +3,11 @@ import rospy
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import Pose
 from nav_msgs.srv import GetMap
-from occupancy_grid import OccupancyGrid
-from grid_drawer import GridDrawer
-from fifo_planner import FIFOPlanner
-from move2goal_controller import Move2GoalController
-from planner_controller.srv import *
+from comp313p_planner_controller.planner.base.occupancy_grid import OccupancyGrid
+from comp313p_planner_controller.planner.graphics.grid_drawer import GridDrawer
+from comp313p_planner_controller.planner.algorithms.fifo_planner import FIFOPlanner
+from comp313p_planner_controller.controller.move2goal_controller import Move2GoalController
+from comp313p_planner_controller.srv import *
 import threading
 
 # Self class interfaces with the planner and the controller
@@ -134,7 +134,7 @@ class PlannerControllerNode(object):
             self.waitForDriveCompleted.notify()
             self.waitForDriveCompleted.release()
 
-if __name__ == '__main__':
+def main():
     try:
         plannerController = PlannerControllerNode()
         plannerController.run()
