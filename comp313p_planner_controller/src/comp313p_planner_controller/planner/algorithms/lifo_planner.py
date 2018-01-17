@@ -22,5 +22,5 @@ class LIFOPlanner(PlannerBase):
         return cell
 
     def resolveDuplicate(self, cell, parentCell):
-        # Nothing to do in self case
+        # Nothing to do in this case
         pass
