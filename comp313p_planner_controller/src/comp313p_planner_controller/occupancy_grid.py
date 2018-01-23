@@ -1,4 +1,4 @@
-from helpers import clamp
+from comp313p_planner_controller.helpers import clamp
 
 # This class stores the occupancy grid. This is a "chessboard-like"
 # representation of the environment. The environment is represented by

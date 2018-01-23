@@ -3,8 +3,8 @@ import rospy
 from geometry_msgs.msg  import Twist
 from geometry_msgs.msg  import Pose
 from math import pow,atan2,sqrt
-from planned_path import PlannedPath
-from controller_base import ControllerBase
+from comp313p_planner_controller.planned_path import PlannedPath
+from comp313p_planner_controller.controller_base import ControllerBase
 
 # This class defines a possible base of what the robot controller
 # could do.

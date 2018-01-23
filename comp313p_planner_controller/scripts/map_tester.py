@@ -3,9 +3,9 @@
 import sys
 import rospy
 from nav_msgs.srv import GetMap
-from occupancy_grid import OccupancyGrid
-from search_grid import SearchGrid
-from grid_drawer import GridDrawer
+from comp313p_planner_controller.occupancy_grid import OccupancyGrid
+from comp313p_planner_controller.search_grid import SearchGrid
+from comp313p_planner_controller.grid_drawer import GridDrawer
 
 # This class pings the map server and gets the map. It then draws it to the screen.
 

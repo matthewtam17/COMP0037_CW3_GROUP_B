@@ -1,4 +1,4 @@
-from planner_base import PlannerBase
+from comp313p_planner_controller.planner_base import PlannerBase
 
 class LIFOPlanner(PlannerBase):
 

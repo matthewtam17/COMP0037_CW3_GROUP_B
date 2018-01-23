@@ -1,6 +1,6 @@
-from graphics import *
-from search_grid import SearchGrid
-from cell import CellLabel
+from comp313p_planner_controller.graphics import *
+from comp313p_planner_controller.search_grid import SearchGrid
+from comp313p_planner_controller.cell import CellLabel
 
 class GridDrawer(object):
 
