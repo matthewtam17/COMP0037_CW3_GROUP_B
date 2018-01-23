@@ -1,4 +1,4 @@
-from cell import Cell
+from comp313p_planner_controller.cell import Cell
 
 class SearchGrid(object):
 

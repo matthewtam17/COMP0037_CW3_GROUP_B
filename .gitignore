@@ -34,6 +34,7 @@
 */srv/_*.py
 */*.pcd
 */*.pyc
+*/*/*/*.pyc
 */qtcreator-*
 */*.user
 

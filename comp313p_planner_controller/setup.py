@@ -1,13 +1,12 @@
+## ! DO NOT MANUALLY INVOKE THIS setup.py, USE CATKIN INSTEAD
+
 from distutils.core import setup
 from catkin_pkg.python_setup import generate_distutils_setup
 
-d = generate_distutils_setup(
-    packages = ['comp313p_planner_controller.controller',
-                    'comp313p_planner_controller.planner.algorithms',
-                    'comp313p_planner_controller.planner.base',
-                    'comp313p_planner_controller.planner.graphics'],
-    packages_dir = {'': 'src'},
-    scripts=['scripts/planner_controller']
-    )
+# fetch values from package.xml
+setup_args = generate_distutils_setup(
+    packages=['comp313p_planner_controller'],
+    package_dir={'': 'src'},
+)
 
-setup(**d)
+setup(**setup_args)

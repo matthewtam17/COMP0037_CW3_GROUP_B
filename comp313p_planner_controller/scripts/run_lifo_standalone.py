@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
-from occupancy_grid import OccupancyGrid
-from lifo_planner import LIFOPlanner
+from comp313p_planner_controller.occupancy_grid import OccupancyGrid
+from comp313p_planner_controller.lifo_planner import LIFOPlanner
 
 # Create the occupancy grid
 occupancyGrid = OccupancyGrid(21, 21, 0.5)

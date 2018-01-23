@@ -134,7 +134,7 @@ class PlannerControllerNode(object):
             self.waitForDriveCompleted.notify()
             self.waitForDriveCompleted.release()
 
-def main():
+if __name__ == '__main__':
     try:
         plannerController = PlannerControllerNode()
         plannerController.run()
