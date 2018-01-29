@@ -1,6 +1,7 @@
-from collections import deque
+# -*- coding: utf-8 -*-
 
-# This class stores the planned path
+# The planned path the robot will take. This consists of a set of waypoints.
+from collections import deque
 
 class PlannedPath(object):
 
@@ -10,11 +11,11 @@ class PlannedPath(object):
         # Does the path actually reach the goal or not?
         self.goalReached = False
         
-        # The list of waypoint cells, from start to finish, which make
-        # up the path.
+        # The list of waypoints, from start to finish, which make up the path.
+        # The type of data stored here depends on the 
         self.waypoints = deque()
 
         # Performance information - number of waypoints, and the
         # travel cost of the path.
         self.numberOfWaypoints = 0
-        self.pathTravelCost = 0
+        self.travelCost = 0

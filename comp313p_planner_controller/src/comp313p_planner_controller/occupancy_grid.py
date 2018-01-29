@@ -1,4 +1,9 @@
-from comp313p_planner_controller.helpers import clamp
+# -*- coding: utf-8 -*-
+
+import math
+ 
+def clamp(x, minimum, maximum):
+    return max(minimum, min(x, maximum))
 
 # This class stores the occupancy grid. This is a "chessboard-like"
 # representation of the environment. The environment is represented by
@@ -18,14 +23,20 @@ class OccupancyGrid(object):
         self.height = height
         self.resolution = resolution
         self.data = [[0 for x in range(width)] for y in range(height)]
+        self.extent = (width, height)
+        self.resolution = resolution
+        self.widthInCells = int(math.ceil(self.extent[0] / self.resolution))
+        self.heightInCells = int(math.ceil(self.extent[1] / self.resolution))
+        self.extentInCells = (self.widthInCells, self.heightInCells)
+        self.grid = [[0 for y in range(self.heightInCells)] for y in range(self.widthInCells)]
 
     # Set the data from the array received from the map server. The
     # memory layout is different, so we have to flip it here. The map
     # server also scales 100 to mean free and 0 to mean blocked. We
     # use 0 for free and 1 for blocked.
     def setFromDataArrayFromMapServer(self, data):
-        for x in range(self.width):
-            for y in range(self.height):
+        for x in range(self.widthInCells):
+            for y in range(self.heightInCells):
                 if (data[len(data)-(self.height-y-1)-self.width*x-1] == 100):
                     self.data[x][y] = 1
                 else:
@@ -62,6 +73,49 @@ class OccupancyGrid(object):
         return cellCoords
     
     # Convert a position in cell coordinates to world coordinates. The
+    # conversion uses the centre of a cell, hence the mysterious 0.5
+    # addition. No clamping is currently done.
+    def getWorldCoordinatesFromCellCoordinates(self, cellCoords):
+
+        worldCoords = ((cellCoords[0] + 0.5) * self.resolution, \
+                      (cellCoords[1] + 0.5) * self.resolution)
+
+        return worldCoords
+ 
+    # The width of the occupancy map in cells                
+    def getWidthInCells(self):
+        return self.widthInCells
+
+    # The height of the occupancy map in cells                
+    def getHeightInCells(self):
+        return self.heightInCells
+
+    def getExtentInCells(self):
+        return self.extentInCells
+
+    # The resolution of each cell (the length of its side in metres)
+    def getResolution(self):
+        return self.resolution
+
+    # Get the status of a cell.
+    def getCell(self, x, y):
+        return self.grid[x][y]
+
+    # Set the status of a cell.
+    def setCell(self, x, y, c):
+        self.grid[x][y] = c
+    
+    # Take a position in workspace coordinates (i.e., m) and turn it into
+    # cell coordinates. Clamp the value so that it always falls within
+    # the grid. The conversion uses integer rounding.
+    def getCellCoordinatesFromWorldCoordinates(self, worldCoords):
+
+        cellCoords = (clamp(int(worldCoords[0] / self.resolution), 0, self.extentInCells[0]), \
+                      clamp(int(worldCoords[1] / self.resolution), 0, self.extentInCells[1]))
+        
+        return cellCoords
+    
+    # Convert a position in cell coordinates to workspace coordinates. The
     # conversion uses the centre of a cell, hence the mysterious 0.5
     # addition. No clamping is currently done.
     def getWorldCoordinatesFromCellCoordinates(self, cellCoords):

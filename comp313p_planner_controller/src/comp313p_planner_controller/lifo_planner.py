@@ -1,11 +1,13 @@
-from comp313p_planner_controller.planner_base import PlannerBase
+# -*- coding: utf-8 -*-
 
-class LIFOPlanner(PlannerBase):
+from cell_based_forward_search import CellBasedForwardSearch
+
+class LIFOPlanner(CellBasedForwardSearch):
 
     # This implements a simple LIFO search algorithm
     
-    def __init__(self, occupancyGrid):
-        PlannerBase.__init__(self, occupancyGrid)
+    def __init__(self, title, occupancyGrid):
+        CellBasedForwardSearch.__init__(self, title, occupancyGrid)
         self.lifoQueue = list()
 
     # Simply put on the end of the queue
@@ -22,5 +24,5 @@ class LIFOPlanner(PlannerBase):
         return cell
 
     def resolveDuplicate(self, cell, parentCell):
-        # Nothing to do in this case
+        # Nothing to do in self case
         pass

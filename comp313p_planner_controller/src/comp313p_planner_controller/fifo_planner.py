@@ -1,4 +1,6 @@
-from comp313p_planner_controller.planner_base import PlannerBase
+# -*- coding: utf-8 -*-
+
+from cell_based_forward_search import CellBasedForwardSearch
 from collections import deque
 
 # This class implements the FIFO - or breadth first search - planning
@@ -6,12 +8,12 @@ from collections import deque
 # onto the back of the queue, and are popped from the front of the
 # queue.
 
-class FIFOPlanner(PlannerBase):
+class FIFOPlanner(CellBasedForwardSearch):
 
-    # This implements a simple FIFO search algorithm
+    # self implements a simple FIFO search algorithm
     
-    def __init__(self, occupancyGrid):
-        PlannerBase.__init__(self, occupancyGrid)
+    def __init__(self, title, occupancyGrid):
+        CellBasedForwardSearch.__init__(self, title, occupancyGrid)
         self.fifoQueue = deque()
 
     # Simply put on the end of the queue
@@ -28,5 +30,5 @@ class FIFOPlanner(PlannerBase):
         return cell
 
     def resolveDuplicate(self, cell, parentCell):
-        # Nothing to do in this case
+        # Nothing to do in self case
         pass

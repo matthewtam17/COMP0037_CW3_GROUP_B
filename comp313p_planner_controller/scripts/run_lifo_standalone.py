@@ -15,16 +15,13 @@ start = (3, 18)
 goal = (20, 0)
 
 # Create the planner
-planner = LIFOPlanner(occupancyGrid);
-planner.setPauseTime(0)
+planner = LIFOPlanner('Depth First Search', occupancyGrid);
+
+# Shrink the window
+planner.setWindowHeightInPixels(400)
 
 # Run it
-planner.plan(start, goal)
+planner.search(start, goal)
 
-# Pause
-planner.gridDrawer.waitForKeyPress()
-
-# Show the path
-planner.extractPathToGoal()
-planner.gridDrawer.waitForKeyPress()
-
+# Extract the path
+path = planner.extractPathToGoal()

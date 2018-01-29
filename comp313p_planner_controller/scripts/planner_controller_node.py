@@ -1,14 +1,25 @@
 #!/usr/bin/env python
 import rospy
-from geometry_msgs.msg import Twist
-from geometry_msgs.msg import Pose
-from nav_msgs.srv import GetMap
-from comp313p_planner_controller.planner.base.occupancy_grid import OccupancyGrid
-from comp313p_planner_controller.planner.graphics.grid_drawer import GridDrawer
-from comp313p_planner_controller.planner.algorithms.fifo_planner import FIFOPlanner
-from comp313p_planner_controller.controller.move2goal_controller import Move2GoalController
-from comp313p_planner_controller.srv import *
 import threading
+
+# Robot pose
+from geometry_msgs.msg import Pose
+
+# Response we get from the map server when we ask for the map
+from nav_msgs.srv import GetMap
+
+# The service messages this node sends. This is actually a report
+# that the robot has reached its goal
+from comp313p_planner_controller.srv import *
+
+# The occupancy grid, used to store our representation of the map
+from comp313p_planner_controller.occupancy_grid import OccupancyGrid
+
+# The planner used to figure out the path
+from comp313p_planner_controller.fifo_planner import FIFOPlanner
+
+# The controller to drive the robot along the path
+from comp313p_planner_controller.move2goal_controller import Move2GoalController
 
 # Self class interfaces with the planner and the controller
 class PlannerControllerNode(object):
@@ -58,7 +69,6 @@ class PlannerControllerNode(object):
         self.waitForDriveCompleted.release()
 
         return GoalResponse(True)
-        
 
     def driveToGoal(self, goal):
 
@@ -77,7 +87,7 @@ class PlannerControllerNode(object):
         print "goalCellCoords = " + str(goalCellCoords)
 
         # Get the plan
-        goalReached = self.planner.plan(startCellCoords, goalCellCoords)
+        goalReached = self.planner.search(startCellCoords, goalCellCoords)
 
         # If we can't reach the goal, give up and return
         if (goalReached == False):

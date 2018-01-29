@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # graphics.py
 """Simple object oriented graphics library  
 
@@ -12,7 +14,7 @@ GPL (http://www.gnu.org/licenses/gpl.html).
 PLATFORMS: The package is a wrapper around Tkinter and should run on
 any platform where Tkinter is available.
 
-INSTALLATION: Put self file somewhere where Python can see it.
+INSTALLATION: Put this file somewhere where Python can see it.
 
 OVERVIEW: There are two kinds of objects in the library. The GraphWin
 class implements a window where drawing can be done and various
@@ -445,7 +447,7 @@ class GraphicsObject:
     
     def __init__(self, options):
         # options is a list of strings indicating which options are
-        # legal for self object.
+        # legal for this object.
         
         # When an object is drawn, canvas is set to the GraphWin(canvas)
         #    object where it is drawn and id is the TK identifier of the
@@ -525,7 +527,7 @@ class GraphicsObject:
     def _reconfig(self, option, setting):
         # Internal method for changing configuration of the object
         # Raises an error if the option does not exist in the config
-        #    dictionary for self object
+        #    dictionary for this object
         if option not in self.config:
             raise GraphicsError(UNSUPPORTED_METHOD)
         options = self.config

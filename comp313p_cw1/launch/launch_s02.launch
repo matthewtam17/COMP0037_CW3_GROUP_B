@@ -9,7 +9,7 @@
   <node pkg="time_server" name="time_server" type="timeServerNode.py" output="screen"/>
   <node pkg="custom_comp313p_map_server" name="map_server" type="map_server" args="$(arg map_file)"/>
   <node pkg="custom_comp313p_turtlesim" name="sim" type="turtlesim_node"/>
-  <node pkg="planner_controller" name="planner_node" type="plannerNode.py" output="screen"/>
+  <node pkg="planner_controller" name="planner_node" type="planner_controller_node.py" output="screen"/>
   <node pkg="the_boss" name="the_boss" type="bossNode.py" args="$(arg goal_file)" output="screen"/>
 </launch>
 

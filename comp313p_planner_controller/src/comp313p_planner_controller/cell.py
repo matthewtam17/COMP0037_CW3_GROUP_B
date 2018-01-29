@@ -1,6 +1,9 @@
-from enum import Enum
+# -*- coding: utf-8 -*-
 
-# Enumeration to give the cell label
+# This class stores information about each cell - its coordinates in the grid,
+# and its label
+
+from enum import Enum
 
 class CellLabel(Enum):
     OBSTRUCTED=-3
@@ -10,9 +13,6 @@ class CellLabel(Enum):
     DEAD=1
     ALIVE=2
 
-# This class stores information about each cell - its coordinates in the grid,
-# its label, and the path cost to reach it
-
 class Cell(object):
 
     def __init__(self, coords, isOccupied):
@@ -20,9 +20,8 @@ class Cell(object):
         # Set coordinates
         self.coords = coords
 
-        # Label the cell. If it is known to be obstructed, mark it as
-        # such. Otherwise, assume it is free and mark as unvisited.
-        if (isOccupied > 0):
+        # Label the cell
+        if (isOccupied == 1):
             self.label = CellLabel.OBSTRUCTED;
         else:
             self.label = CellLabel.UNVISITED
@@ -33,4 +32,4 @@ class Cell(object):
         # The initial path cost is infinite. For algorithms that need
         # it, this is the necessary initial condition.
         self.pathCost = float("inf")
-    
+
