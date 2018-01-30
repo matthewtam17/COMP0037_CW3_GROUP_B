@@ -6,7 +6,8 @@ import rospy
 import sys
 from comp313p_planner_controller.srv import *
 from nav_msgs.srv import GetMap
-
+from stdr_msgs.srv import MoveRobot
+from geometry_msgs.msg import Pose2D
 
 from random import randint
 
@@ -19,10 +20,10 @@ class BossNode(object):
         rospy.init_node('the_boss')
 
         # Get the teleport robot service
-        rospy.loginfo('Waiting for service teleport_absolute')
-        rospy.wait_for_service('/turtle1/teleport_absolute')
-        self.teleportAbsoluteService = rospy.ServiceProxy('/turtle1/teleport_absolute', TeleportAbsolute)
-        rospy.loginfo('Got the teleport_absolute service')
+        rospy.loginfo('Waiting for service replace')
+        rospy.wait_for_service('/robot0/replace')
+        self.teleportAbsoluteService = rospy.ServiceProxy('/robot0/replace', MoveRobot)
+        rospy.loginfo('Got the replace service')
         
         # Get the drive robot service
         rospy.loginfo('Waiting for service drive_to_goal')
@@ -82,7 +83,11 @@ class BossNode(object):
     def bossTheRobotAround(self):
 
         # Teleport to the first waypoint
-        self.teleportAbsoluteService(self.goals[0][0], self.goals[0][1], 0)
+        pose = Pose2D()
+        pose.x = self.goals[0][0]
+        pose.y = self.goals[0][1]
+        pose.theta = 0
+        self.teleportAbsoluteService(pose)
         
         # Now iterate through the rest of the waypoints and drive to them
         for g in range(1, len(self.goals)):
