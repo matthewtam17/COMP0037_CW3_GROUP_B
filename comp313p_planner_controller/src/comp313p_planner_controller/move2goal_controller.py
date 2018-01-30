@@ -5,6 +5,7 @@ from geometry_msgs.msg  import Pose
 from math import pow,atan2,sqrt
 from comp313p_planner_controller.planned_path import PlannedPath
 from comp313p_planner_controller.controller_base import ControllerBase
+import math
 
 # This class defines a possible base of what the robot controller
 # could do.
@@ -33,6 +34,7 @@ class Move2GoalController(ControllerBase):
         angleError = self.shortestAngularDistance(self.pose.theta, atan2(waypoint[1] - self.pose.y, waypoint[0] - self.pose.x))
        
         while ((distanceError >= self.distance_tolerance) & (not rospy.is_shutdown())):
+            print str(distanceError)
             #Proportional Controller
             #linear velocity in the x-axis: only switch on when the angular error is sufficiently small
             if (math.fabs(angleError) < 1e-3):

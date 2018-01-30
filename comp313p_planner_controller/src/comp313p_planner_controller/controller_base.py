@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import rospy
 from geometry_msgs.msg  import Twist
-from geometry_msgs.msg  import Pose
+from geometry_msgs.msg  import Pose2D
 from std_msgs.msg import String
 from nav_msgs.msg import Odometry
 from math import pow,atan2,sqrt,pi
@@ -15,22 +15,16 @@ class ControllerBase(object):
 
     def __init__(self, occupancyGrid):
 
-        # Set up the node
-        rospy.init_node('stdr_controller', anonymous=True)
-
-        # Wait for the service to start (which shows that STDR is now
-        # running) and then sleep for 1.0s for good measure
-#        rospy.wait_for_service('/robot0/replace')
-#        rospy.sleep(1.0)
         rospy.wait_for_message('/robot0/odom', Odometry)
 
         # Create the node, publishers and subscriber
         self.velocityPublisher = rospy.Publisher('/robot0/cmd_vel', Twist, queue_size=10)
         self.currentOdometrySubscriber = rospy.Subscriber('/robot0/odom', Odometry, self.odometryCallback)
-        self.pose = Pose()
 
         self.distanceTolerance = 0.01
         self.angleTolerance = 5
+
+        self.pose = Pose2D()
 
         # Store the occupany grid - used to transform from cell
         # coordinates to world driving coordinates
@@ -41,7 +35,17 @@ class ControllerBase(object):
 
     # Get the pose of the robot
     def odometryCallback(self, odometry):
-        self.pose = odometry.pose.pose
+        odometryPose = odometry.pose.pose
+
+        pose = Pose2D()
+
+        position = odometryPose.position
+        orientation = odometryPose.orientation
+        
+        pose.x = position.x
+        pose.y = position.y
+        pose.theta = 2 * atan2(orientation.z, orientation.w) * 180 / pi
+        self.pose = pose
 
     # Return the most up-to-date pose of the robot
     def getCurrentPose(self):

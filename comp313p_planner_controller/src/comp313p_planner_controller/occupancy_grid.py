@@ -15,19 +15,20 @@ def clamp(x, minimum, maximum):
 class OccupancyGrid(object):
 
     # Construct a new occupancy grid with a given width and
-    # height. The resolution says the lenght of the side of each cell
+    # height. The resolution says the length of the side of each cell
     # in metres. By default, all the cells are set to "0" which means
     # that there are no obstacles.
-    def __init__(self, width, height, resolution):
-        self.width = width
-        self.height = height
-        self.resolution = resolution
-        self.data = [[0 for x in range(width)] for y in range(height)]
-        self.extent = (width, height)
-        self.resolution = resolution
-        self.widthInCells = int(math.ceil(self.extent[0] / self.resolution))
-        self.heightInCells = int(math.ceil(self.extent[1] / self.resolution))
+    def __init__(self, widthInCells, heightInCells, resolution):
+        self.widthInCells = widthInCells
+        self.heightInCells = heightInCells
         self.extentInCells = (self.widthInCells, self.heightInCells)
+
+        self.resolution = resolution
+
+        self.width = widthInCells * self.resolution
+        self.height = heightInCells * self.resolution
+        self.extent = (self.width, self.height)
+
         self.grid = [[0 for y in range(self.heightInCells)] for y in range(self.widthInCells)]
 
     # Set the data from the array received from the map server. The
@@ -35,12 +36,19 @@ class OccupancyGrid(object):
     # server also scales 100 to mean free and 0 to mean blocked. We
     # use 0 for free and 1 for blocked.
     def setFromDataArrayFromMapServer(self, data):
+        print len(data)
+        print str(self.resolution)
+        print self.width
+        print self.height
+        print self.widthInCells
+        print self.heightInCells
+        
         for x in range(self.widthInCells):
             for y in range(self.heightInCells):
-                if (data[len(data)-(self.height-y-1)-self.width*x-1] == 100):
-                    self.data[x][y] = 1
+                if (data[len(data)-(self.widthInCells-x-1)-self.heightInCells*y-1] == 100):
+                    self.grid[x][self.heightInCells-y-1] = 1
                 else:
-                    self.data[x][y] = 0
+                    self.grid[x][self.heightInCells-y-1] = 0
 
     # The width of the occupancy map in cells                
     def getWidth(self):
@@ -53,22 +61,14 @@ class OccupancyGrid(object):
     # The resolution of each cell (the length of its side in metres)
     def getResolution(self):
         return self.resolution
-
-    # Get the status of a cell.
-    def getCell(self, x, y):
-        return self.data[y][x]
-
-    # Set the status of a cell.
-    def setCell(self, x, y, c):
-        self.data[y][x] = c
     
     # Take a position in world coordinates (i.e., m) and turn it into
     # cell coordinates. Clamp the value so that it always falls within
     # the grid. The conversion uses integer rounding.
     def getCellCoordinatesFromWorldCoordinates(self, worldCoords):
 
-        cellCoords = (clamp(int(worldCoords[0] / self.resolution), 0, self.width - 1), \
-                      clamp(int(worldCoords[1] / self.resolution), 0, self.height - 1))
+        cellCoords = (clamp(int(worldCoords[0] / self.resolution), 0, self.widthInCells - 1), \
+                      clamp(int(worldCoords[1] / self.resolution), 0, self.heightInCells - 1))
         
         return cellCoords
     

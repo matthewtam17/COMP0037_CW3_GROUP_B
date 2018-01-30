@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import rospy
 import threading
+import math
 
 # Robot pose
 from geometry_msgs.msg import Pose
@@ -49,7 +50,7 @@ class PlannerControllerNode(object):
         self.occupancyGrid.setFromDataArrayFromMapServer(map.data)
 
     def createPlanner(self):
-        self.planner = FIFOPlanner(self.occupancyGrid)
+        self.planner = FIFOPlanner('FIFO', self.occupancyGrid)
         self.planner.setPauseTime(0)
         self.planner.maximumGridDrawerWindowHeightInPixels = rospy.get_param('maximum_window_height_in_pixels', 700)
         
