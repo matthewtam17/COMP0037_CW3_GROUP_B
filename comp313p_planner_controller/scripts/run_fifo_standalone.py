@@ -15,6 +15,7 @@ goal = (20, 0)
 
 # Create the planner
 planner = FIFOPlanner('Depth First Search', occupancyGrid);
+planner.setRunInteractively(True)
 
 # Shrink the window
 planner.setWindowHeightInPixels(400)
