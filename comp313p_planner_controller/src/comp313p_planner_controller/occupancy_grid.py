@@ -31,6 +31,8 @@ class OccupancyGrid(object):
 
         self.grid = [[0 for y in range(self.heightInCells)] for y in range(self.widthInCells)]
 
+        self.originalGrid = None
+
     # Set the data from the array received from the map server. The
     # memory layout is different, so we have to flip it here. The map
     # server also scales 100 to mean free and 0 to mean blocked. We
@@ -50,6 +52,38 @@ class OccupancyGrid(object):
                 else:
                     self.grid[x][self.heightInCells-y-1] = 0
 
+    # Pre process the map so that we expand all the obstacles by a
+    # circle of radius robotRadius metres. This is a way to account
+    # for the geometry. Technically, this is known as taking the
+    # Minkowski sum. Practically, this is a really bad way to write
+    # this! It also currently uses the crude aproximation that the
+    # robot shape is a square
+    def expandObstaclesToAccountForCircularRobotOfRadius(self, robotRadius):
+
+        # Compute the size we need to grow the obstacle
+        s = int(math.ceil(robotRadius / self.resolution))
+        print 's=' + str(s)
+
+        # Always scale from the original grid. If it doesn't exist, make a copy
+        if self.originalGrid is None:
+            self.originalGrid =  [[self.grid[x][y] for y in range(self.heightInCells)] for x in range(self.widthInCells)]
+        
+        # Allocate the new occupancy grid, which will contain the new obstacles
+        newGrid = [[0 for y in range(self.heightInCells)] for y in range(self.widthInCells)]
+        
+        # Iterate through all the cells in the first grid. If they are a 1, set all
+        # cells within radius robotRadius to occupied as well. Note the magic +1 in the
+        # range. This is needed because range(a,b) actually gives [a, a+1, ..., b-1]. See
+        # https://www.pythoncentral.io/pythons-range-function-explained/
+        for x in range(self.widthInCells):
+            for y in range(self.heightInCells):
+                if self.originalGrid[x][y] == 1:
+                    for gridX in range(clamp(x-s, 0, self.widthInCells),clamp(x+s+1, 0, self.widthInCells)):
+                        for gridY in range(clamp(y-s, 0, self.heightInCells),clamp(y+s+1, 0, self.heightInCells)):
+                            newGrid[gridX][gridY] = 1
+
+        self.grid = newGrid
+                    
     # The width of the occupancy map in cells                
     def getWidth(self):
         return self.width
