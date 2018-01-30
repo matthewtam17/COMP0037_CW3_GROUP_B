@@ -21,8 +21,8 @@ class ControllerBase(object):
         self.velocityPublisher = rospy.Publisher('/robot0/cmd_vel', Twist, queue_size=10)
         self.currentOdometrySubscriber = rospy.Subscriber('/robot0/odom', Odometry, self.odometryCallback)
 
-        self.distanceTolerance = 0.01
-        self.angleTolerance = 5
+        self.distanceTolerance = rospy.get_param('distance_tolerance', 0.05)
+        self.angleTolerance = rospy.get_param('angle_tolerance', 1)
 
         self.pose = Pose2D()
 
@@ -33,7 +33,9 @@ class ControllerBase(object):
         # Set up variables to store the pose from the robot
         self.rate = rospy.Rate(10)
 
-    # Get the pose of the robot
+    # Get the pose of the robot. Store this in a Pose2D structure because
+    # this is easy to use. Use radians for angles because these are used
+    # inside the control system.
     def odometryCallback(self, odometry):
         odometryPose = odometry.pose.pose
 
@@ -44,7 +46,7 @@ class ControllerBase(object):
         
         pose.x = position.x
         pose.y = position.y
-        pose.theta = 2 * atan2(orientation.z, orientation.w) * 180 / pi
+        pose.theta = 2 * atan2(orientation.z, orientation.w)
         self.pose = pose
 
     # Return the most up-to-date pose of the robot
