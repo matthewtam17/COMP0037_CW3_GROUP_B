@@ -1,7 +1,0 @@
-image: s01_map.png
-file: s01_map.txt
-resolution: 0.500000
-origin: [0.0, 0.0, 0.0]
-occupied_thresh: 0.99
-free_thresh: 0.01
-negate: 0

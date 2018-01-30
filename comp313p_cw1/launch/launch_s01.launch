@@ -3,8 +3,8 @@
   <param name="use_sim_time" type="bool" value="true" />
   <rosparam param="clock_send_rate">40</rosparam>
   <rosparam param="time_scale_factor">1</rosparam>
-  <arg name="map_file" default="$(find comp313p_cw1)/scenarios/s02_factory/s02_factory.yaml"/>
-  <arg name="goal_file" default="$(find comp313p_cw1)/scenarios/s02_factory/s02_factory_goals.txt"/>
+  <arg name="map_file" default="$(find comp313p_resources)/maps/empty_map.yaml"/>
+  <arg name="goal_file" default="$(find comp313p_cw1)/scenarios/s01_empty/s01_goals.txt"/>
 
   <node pkg="comp313p_time_server" name="time_server" type="time_server_node.py" output="screen"/>
   <node pkg="comp313p_the_boss" name="the_boss" type="boss_node.py" args="$(arg goal_file)" output="screen"/>

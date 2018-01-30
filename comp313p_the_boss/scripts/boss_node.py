@@ -88,7 +88,9 @@ class BossNode(object):
         pose.y = self.goals[0][1]
         pose.theta = 0
         self.teleportAbsoluteService(pose)
-        
+        rospy.loginfo('sleeping after teleport')
+        rospy.sleep(1)
+                
         # Now iterate through the rest of the waypoints and drive to them
         for g in range(1, len(self.goals)):
             bossNode.sendGoalToRobot(self.goals[g])
