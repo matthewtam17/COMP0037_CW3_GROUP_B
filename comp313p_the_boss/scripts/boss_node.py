@@ -86,7 +86,7 @@ class BossNode(object):
         pose = Pose2D()
         pose.x = self.goals[0][0]
         pose.y = self.goals[0][1]
-        pose.theta = 0
+        pose.theta = 0.0
         self.teleportAbsoluteService(pose)
         rospy.loginfo('sleeping after teleport')
         rospy.sleep(1)
