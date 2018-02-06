@@ -6,7 +6,7 @@
   <arg name="map_file" default="$(find comp313p_resources)/maps/factory.yaml"/>
   <arg name="goal_file" default="$(find comp313p_cw1)/scenarios/s02_factory/s02_goals.txt"/>
 
-  <node pkg="comp313p_time_server" name="time_server" type="time_server_node.py" output="screen"/>
+  <node pkg="comp313p_time_server" name="time_server" type="time_server_node.py"/>
   <node pkg="comp313p_the_boss" name="the_boss" type="boss_node.py" args="$(arg goal_file)" output="screen"/>
   <node pkg="comp313p_planner_controller" name="planner_controller" type="planner_controller_node.py" output="screen"/>
  

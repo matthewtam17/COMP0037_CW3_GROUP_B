@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import math
+import rospy
  
 def clamp(x, minimum, maximum):
     return max(minimum, min(x, maximum))
@@ -30,19 +31,22 @@ class OccupancyGrid(object):
         self.extent = (self.width, self.height)
 
         self.grid = [[0 for y in range(self.heightInCells)] for x in range(self.widthInCells)]
+        self.complete_grid = []
+        self.scale = rospy.get_param('plan_scale', 5)
 
     # Set the data from the array received from the map server. The
     # memory layout is different, so we have to flip it here. The map
     # server also scales 100 to mean free and 0 to mean blocked. We
     # use 0 for free and 1 for blocked.
     def setFromDataArrayFromMapServer(self, data):
-        print len(data)
-        print str(self.resolution)
-        print self.width
-        print self.height
-        print self.widthInCells
-        print self.heightInCells
-        
+        print("Length of Map: {}".format(len(data)))
+        print("Map Resolution: {}".format(str(self.resolution)))
+        print("Map Width: {}".format(self.width))
+        print("Map Height: {}".format(self.height))
+        print("Map Width (cells): {}".format(self.widthInCells))
+        print("Map Height (cells): {}".format(self.heightInCells))
+
+        # Get the complete map
         for x in range(self.widthInCells):
             for y in range(self.heightInCells):
                 if (data[len(data)-(self.widthInCells-x-1)-self.widthInCells*y-1] == 100):
@@ -50,7 +54,30 @@ class OccupancyGrid(object):
                 else:
                     self.grid[x][self.heightInCells-y-1] = 0
 
-    # The width of the occupancy map in cells                
+        planning_map = [[0 for y in range(self.heightInCells/self.scale)] for x in range(self.widthInCells/self.scale)]
+        print("Planning map size\nWidth: {}\nHeight: {}".format(len(planning_map), len(planning_map[0])))
+
+        plan_x_range = range(self.widthInCells)[0::self.scale]
+        plan_y_range = range(self.heightInCells)[0::self.scale]
+
+        for x in range(len(plan_x_range)):
+            for y in range(len(plan_y_range)):
+                planning_map[x][y] = self.grid[plan_x_range[x]][plan_y_range[y]]
+
+        self.complete_grid = self.grid
+        self.grid = planning_map
+
+        self.widthInCells = self.widthInCells / self.scale
+        self.heightInCells = self.heightInCells / self.scale
+        self.extentInCells = (self.widthInCells, self.heightInCells)
+
+        self.resolution = self.resolution * self.scale
+
+        self.width = self.widthInCells * self.resolution
+        self.height = self.heightInCells * self.resolution
+        self.extent = (self.width, self.height)
+
+    # The width of the occupancy map in cells
     def getWidth(self):
         return self.width
 
