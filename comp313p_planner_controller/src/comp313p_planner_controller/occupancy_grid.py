@@ -29,7 +29,7 @@ class OccupancyGrid(object):
         self.height = heightInCells * self.resolution
         self.extent = (self.width, self.height)
 
-        self.grid = [[0 for y in range(self.heightInCells)] for y in range(self.widthInCells)]
+        self.grid = [[0 for y in range(self.heightInCells)] for x in range(self.widthInCells)]
 
     # Set the data from the array received from the map server. The
     # memory layout is different, so we have to flip it here. The map

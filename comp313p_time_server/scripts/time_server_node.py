@@ -65,12 +65,12 @@ class TimeServerNode(object):
             # Work out how long to sleep for. If we've missed a sleep
             # period, thrown a warning and skip it
             currentWallclockTime = time.time()
-            timetoSleep = sleepUntilWallclockTime - currentWallclockTime            
-            if (timetoSleep < 0):
+            timeToSleep = sleepUntilWallclockTime - currentWallclockTime            
+            if (timeToSleep < 0):
                 rospy.logwarn('Cannot keep up; timeToSleep=' + str(timeToSleep) + '; skipping sleep step')
                 sleepUntilWallclockTime = currentWallclockTime
             else:
-                time.sleep(timetoSleep)
+                time.sleep(timeToSleep)
 
             # Work out when the next sleep time will be
             sleepUntilWallclockTime += sleepWallclockPeriod
