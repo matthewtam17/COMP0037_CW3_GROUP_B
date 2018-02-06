@@ -94,7 +94,6 @@ class PlannerControllerNode(object):
         if (goalReached == False):
             rospy.logwarn("Could not reach the goal at (%d, %d); moving to next goal", \
                           goalCellCoords[0], goalCellCoords[1])
-            self.planner.gridDrawer.waitForKeyPress()
             return False
         
         # Extract the path
