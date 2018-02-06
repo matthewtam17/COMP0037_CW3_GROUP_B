@@ -45,7 +45,7 @@ class OccupancyGrid(object):
         
         for x in range(self.widthInCells):
             for y in range(self.heightInCells):
-                if (data[len(data)-(self.widthInCells-x-1)-self.heightInCells*y-1] == 100):
+                if (data[len(data)-(self.widthInCells-x-1)-self.widthInCells*y-1] == 100):
                     self.grid[x][self.heightInCells-y-1] = 1
                 else:
                     self.grid[x][self.heightInCells-y-1] = 0
