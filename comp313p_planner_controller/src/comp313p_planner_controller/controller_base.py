@@ -31,7 +31,7 @@ class ControllerBase(object):
         self.occupancyGrid = occupancyGrid
         
         # Set up variables to store the pose from the robot
-        self.rate = rospy.Rate(10)
+        self.rate = rospy.Rate(20)
 
     # Get the pose of the robot
     def odometryCallback(self, odometry):

@@ -33,27 +33,34 @@ class Move2GoalController(ControllerBase):
         distanceError = sqrt(pow((waypoint[0] - self.pose.x), 2) + pow((waypoint[1] - self.pose.y), 2))
         angleError = self.shortestAngularDistance(self.pose.theta, atan2(waypoint[1] - self.pose.y, waypoint[0] - self.pose.x))
        
-        while ((distanceError >= self.distance_tolerance) & (not rospy.is_shutdown())):
-            print str(distanceError)
-            #Proportional Controller
-            #linear velocity in the x-axis: only switch on when the angular error is sufficiently small
+        while (distanceError >= self.distance_tolerance) & (not rospy.is_shutdown()):
+            print("Current Pose: x: {}, y:{} , theta: {}\nGoal: x: {}, y: {}\n".format(self.pose.x, self.pose.y,
+                                                                                       self.pose.theta, waypoint[0],
+                                                                                       waypoint[1]))
+            print("Distance Error: {}\nAngular Error: {}".format(distanceError, angleError))
+
+            # Proportional Controller
+            # linear velocity in the x-axis: only switch on when the angular error is sufficiently small
             if (math.fabs(angleError) < 1e-3):
-                vel_msg.linear.x = distanceError
+                vel_msg.linear.x = max(0.0, min(distanceError, 10))
                 vel_msg.linear.y = 0
                 vel_msg.linear.z = 0
 
-            #angular velocity in the z-axis:
+            # angular velocity in the z-axis:
             vel_msg.angular.x = 0
             vel_msg.angular.y = 0
             vel_msg.angular.z = 4 * angleError
 
-            #Publishing our vel_msg
+            print("Linear Velocity: {}\nAngular Velocity: {}\n\n".format(vel_msg.linear.x, math.degrees(vel_msg.angular.z)))
+            # Publishing our vel_msg
             self.velocityPublisher.publish(vel_msg)
             self.rate.sleep()
-            distanceError = sqrt(pow((waypoint[0] - self.pose.x), 2) + pow((waypoint[1] - self.pose.y), 2))
-            angleError = self.shortestAngularDistance(self.pose.theta, atan2(waypoint[1] - self.pose.y, waypoint[0] - self.pose.x))
 
-        #Stopping our robot after the movement is over
+            distanceError = sqrt(pow((waypoint[0] - self.pose.x), 2) + pow((waypoint[1] - self.pose.y), 2))
+            angleError = self.shortestAngularDistance(math.radians(self.pose.theta),
+                                                      atan2(waypoint[1] - self.pose.y, waypoint[0] - self.pose.x))
+
+        # Stopping our robot after the movement is over
         vel_msg.linear.x = 0
-        vel_msg.angular.z =0
+        vel_msg.angular.z = 0
         self.velocityPublisher.publish(vel_msg)
