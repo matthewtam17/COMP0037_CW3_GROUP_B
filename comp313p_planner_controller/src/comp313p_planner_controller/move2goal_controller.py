@@ -41,15 +41,16 @@ class Move2GoalController(ControllerBase):
 
             # Proportional Controller
             # linear velocity in the x-axis: only switch on when the angular error is sufficiently small
-            if (math.fabs(angleError) < 1e-3):
-                vel_msg.linear.x = max(0.0, min(distanceError, 10))
+            if math.fabs(angleError) < 1e-2:
+                vel_msg.linear.x = 0.5 * max(-10.0, min(distanceError, 10.0))
                 vel_msg.linear.y = 0
                 vel_msg.linear.z = 0
 
             # angular velocity in the z-axis:
-            vel_msg.angular.x = 0
-            vel_msg.angular.y = 0
-            vel_msg.angular.z = 4 * angleError
+            if math.fabs(distanceError) > 1e-2:
+                vel_msg.angular.x = 0
+                vel_msg.angular.y = 0
+                vel_msg.angular.z = 0.5 * max(-1, min(angleError, 1))
 
             print("Linear Velocity: {}\nAngular Velocity: {}\n\n".format(vel_msg.linear.x, math.degrees(vel_msg.angular.z)))
             # Publishing our vel_msg
