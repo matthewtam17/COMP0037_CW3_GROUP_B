@@ -19,6 +19,6 @@
   
   <node pkg="tf" type="static_transform_publisher" name="world2map" args="0 0 0 0 0 0  world map 100" />
   
-  <node pkg="stdr_robot" type="robot_handler" name="robby" args="add $(find stdr_resources)/resources/robots/pandora_robot.yaml 2 9.5 0" />
+  <node pkg="stdr_robot" type="robot_handler" name="robby" args="add $(find comp313p_resources)/resources/robots/tiny_pandora_robot.yaml 2 9.5 0" />
 
 </launch>
