@@ -33,10 +33,14 @@ class OccupancyGrid(object):
 
         self.grid = [[0 for y in range(self.heightInCells)] for x in range(self.widthInCells)]
         self.complete_grid = []
-        self.scale = rospy.get_param('plan_scale', 5)
+        self.scale = 1
 
         self.originalGrid = None
 
+    # Set the scale for the map.
+    def setScale(self, scale):
+        self.scale = scale
+        
     # Set the data from the array received from the map server. The
     # memory layout is different, so we have to flip it here. The map
     # server also scales 100 to mean free and 0 to mean blocked. We
@@ -104,7 +108,9 @@ class OccupancyGrid(object):
             for y in range(len(plan_y_range)):
                 planning_map[x][y] = self.grid[plan_x_range[x]][plan_y_range[y]]
 
-        self.originalGrid = copy.deepcopy(self.grid)
+        if self.originalGrid is None:
+            self.originalGrid = copy.deepcopy(self.grid)
+            
         self.grid = planning_map
 
         self.widthInCells = self.widthInCells / self.scale
