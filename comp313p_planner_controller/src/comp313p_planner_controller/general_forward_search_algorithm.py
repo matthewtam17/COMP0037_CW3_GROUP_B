@@ -7,6 +7,7 @@ from collections import deque
 from cell import *
 from planned_path import PlannedPath
 from math import *
+import rospy
 
 class GeneralForwardSearchAlgorithm(PlannerBase):
 
@@ -102,6 +103,9 @@ class GeneralForwardSearchAlgorithm(PlannerBase):
         self.goal = self.searchGrid.getCellFromCoords(goalCoords)
         self.goal.label = CellLabel.GOAL
 
+        if rospy.is_shutdown():
+            return False
+
         # Draw the initial state
         self.resetGraphics()
 
@@ -114,9 +118,15 @@ class GeneralForwardSearchAlgorithm(PlannerBase):
 
         # Indicates if we reached the goal or not
         self.goalReached = False
-        
+
         # Iterate until we have run out of live cells to try or we reached the goal
         while (self.isQueueEmpty() == False):
+
+            # Check if ROS is shutting down; if so, abort. This stops the
+            # planner from hanging
+            if rospy.is_shutdown():
+                return False
+            
             cell = self.popCellFromQueue()
             if (self.hasGoalBeenReached(cell) == True):
                 self.goalReached = True

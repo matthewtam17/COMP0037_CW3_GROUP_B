@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import rospy
 from search_grid import SearchGrid
 from cell import *
 from graphics import Rectangle
@@ -131,6 +132,8 @@ class SearchGridDrawer(BaseDrawer):
         # First iterate over all the cells and mark them up
         cellExtent = self.searchGrid.getExtentInCells()
         for i in range(cellExtent[0]):
+            if rospy.is_shutdown():
+                return
             for j in range(cellExtent[1]):
                 cellLabel = self.searchGrid.getCellFromCoords((i, j)).label
                 if cellLabel == CellLabel.OBSTRUCTED:
