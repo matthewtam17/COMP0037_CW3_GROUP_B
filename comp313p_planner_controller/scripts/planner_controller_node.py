@@ -49,6 +49,7 @@ class PlannerControllerNode(object):
         self.occupancyGrid = OccupancyGrid(map.info.width, map.info.height, map.info.resolution)
         self.occupancyGrid.setScale(rospy.get_param('plan_scale', 5))
         self.occupancyGrid.setFromDataArrayFromMapServer(map.data)
+        self.occupancyGrid.expandObstaclesToAccountForCircularRobotOfRadius(0.2)
 
     def createPlanner(self):
         self.planner = FIFOPlanner('FIFO', self.occupancyGrid)
