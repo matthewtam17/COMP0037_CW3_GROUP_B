@@ -170,6 +170,7 @@ class GeneralForwardSearchAlgorithm(PlannerBase):
 
         # Construct the path object and mark if the goal was reached
         path = PlannedPath()
+        
         path.goalReached = self.goalReached
         
         # Initial condition - the goal cell
@@ -189,6 +190,11 @@ class GeneralForwardSearchAlgorithm(PlannerBase):
             
         # Update the stats on the size of the path
         path.numberOfWaypoints = len(path.waypoints)
+
+        # Note that if we failed to reach the goal, the above mechanism computes a path length of 0.
+        # Therefore, if we didn't reach the goal, change it to infinity
+        if path.goalReached is False:
+            path.travelCost = float("inf")
 
         print "Path travel cost = " + str(path.travelCost)
         print "Path cardinality = " + str(path.numberOfWaypoints)

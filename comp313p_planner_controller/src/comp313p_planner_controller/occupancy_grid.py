@@ -2,6 +2,7 @@
 
 import math
 import rospy
+import copy
  
 def clamp(x, minimum, maximum):
     return max(minimum, min(x, maximum))
@@ -34,6 +35,8 @@ class OccupancyGrid(object):
         self.complete_grid = []
         self.scale = rospy.get_param('plan_scale', 5)
 
+        self.originalGrid = None
+
     # Set the data from the array received from the map server. The
     # memory layout is different, so we have to flip it here. The map
     # server also scales 100 to mean free and 0 to mean blocked. We
@@ -53,10 +56,47 @@ class OccupancyGrid(object):
                     self.grid[x][self.heightInCells-y-1] = 1
                 else:
                     self.grid[x][self.heightInCells-y-1] = 0
+                    
+        self.scaleMap()
+                   
+    # Pre process the map so that we expand all the obstacles by a
+    # circle of radius robotRadius metres. This is a way to account
+    # for the geometry. Technically, this is known as taking the
+    # Minkowski sum. Practically, this is a really bad way to write
+    # this! It also currently uses the crude aproximation that the
+    # robot shape is a square
+    def expandObstaclesToAccountForCircularRobotOfRadius(self, robotRadius):
 
+        # Compute the size we need to grow the obstacle
+        s = int(math.ceil(robotRadius / self.resolution))
+        print 's=' + str(s)
+
+        # Always scale from the original grid. If it doesn't exist, make a copy
+        if self.originalGrid is None:
+            self.originalGrid =  [[self.grid[x][y] for y in range(self.heightInCells)] for x in range(self.widthInCells)]
+        
+        # Allocate the new occupancy grid, which will contain the new obstacles
+        newGrid = [[0 for y in range(self.heightInCells)] for y in range(self.widthInCells)]
+        
+        # Iterate through all the cells in the first grid. If they are a 1, set all
+        # cells within radius robotRadius to occupied as well. Note the magic +1 in the
+        # range. This is needed because range(a,b) actually gives [a, a+1, ..., b-1]. See
+        # https://www.pythoncentral.io/pythons-range-function-explained/
+        for x in range(self.widthInCells):
+            for y in range(self.heightInCells):
+                if self.originalGrid[x][y] == 1:
+                    for gridX in range(clamp(x-s, 0, self.widthInCells),clamp(x+s+1, 0, self.widthInCells)):
+                        for gridY in range(clamp(y-s, 0, self.heightInCells),clamp(y+s+1, 0, self.heightInCells)):
+                            newGrid[gridX][gridY] = 1
+
+        self.grid = newGrid
+                         
+    def scaleMap(self):
+    
         planning_map = [[0 for y in range(self.heightInCells/self.scale)] for x in range(self.widthInCells/self.scale)]
         print("Planning map size\nWidth: {}\nHeight: {}".format(len(planning_map), len(planning_map[0])))
-
+        
+        # Dodgy way of scaling the map by grabbing every nth cell
         plan_x_range = range(self.widthInCells)[0::self.scale]
         plan_y_range = range(self.heightInCells)[0::self.scale]
 
@@ -64,7 +104,7 @@ class OccupancyGrid(object):
             for y in range(len(plan_y_range)):
                 planning_map[x][y] = self.grid[plan_x_range[x]][plan_y_range[y]]
 
-        self.complete_grid = self.grid
+        self.originalGrid = copy.deepcopy(self.grid)
         self.grid = planning_map
 
         self.widthInCells = self.widthInCells / self.scale

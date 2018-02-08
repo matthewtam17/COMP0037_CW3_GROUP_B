@@ -20,7 +20,8 @@ class BaseDrawer(object):
         self.title = title
         self.start = None
         self.goal = None
-
+        self.runInteractively = False
+        
     # Open the window and intialise the graphics
     def open(self):
         self.window = graphics.GraphWin(self.title, self.width, self.height, autoflush = False)
@@ -54,7 +55,11 @@ class BaseDrawer(object):
     def setStartAndGoal(self, start, goal):
         self.start = start
         self.goal = goal
-    
+
+    # Specify if the drawer runs interactively. This causes it to pause
+    def setRunInteractively(self, runInteractively):
+        self.runInteractively = runInteractively
+        
     # Go through and draw all objects        
     def update(self):
         
@@ -66,19 +71,13 @@ class BaseDrawer(object):
 
         # Flush the results
         self.window.update()
-        
-        # Update
-        #graphics.update(100)
-
  
     def drawPath(self, path):
         self.drawPathGraphics(path)
         self.drawStartAndGoalGraphics()
         # Flush the results
         self.window.flush()        
-        # Update
-        graphics.update(100)
-
+ 
     def drawPlanGraphics(self):
         raise NotImplementedError()
 
@@ -89,6 +88,11 @@ class BaseDrawer(object):
          raise NotImplementedError()
                           
     def waitForKeyPress(self):
+
+        # If not running interactively, return
+        if not self.runInteractively:
+            return
+        
         # This always hangs for me:
         #self.win.getKey()
         try:

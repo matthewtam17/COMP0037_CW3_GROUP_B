@@ -27,8 +27,18 @@ class PlannerBase(object):
         self.iterationsSinceLastGraphicsUpdate = 0
         self.plannerDrawer = None
         self.windowHeightInPixels = 700
+        self.runInteractively = False
 
-   # Show graphics?
+    # Pause for key presses?
+    def setRunInteractively(self, runInteractively):
+
+        # Record the decision here. We can only configure the drawer if it's already been
+        # created.
+        self.runInteractively = runInteractively
+        if self.plannerDrawer is not None:
+            self.plannerDrawer.setRunInterctively(runInteractively)
+        
+    # Show graphics?
     def setShowGraphics(self, showGraphics):
         self.showGraphics = showGraphics
 
@@ -60,6 +70,7 @@ class PlannerBase(object):
         # If we don't have the planner set up yet, create it      
         if (self.plannerDrawer is None):
             self.createPlannerDrawer()
+            self.plannerDrawer.setRunInteractively(self.runInteractively)
             self.plannerDrawer.setStartAndGoal(self.start, self.goal)
             self.plannerDrawer.open()
         else:
