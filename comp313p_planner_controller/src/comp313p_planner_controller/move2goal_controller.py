@@ -42,10 +42,10 @@ class Move2GoalController(ControllerBase):
        
 
         while (distanceError >= self.distance_tolerance) & (not rospy.is_shutdown()):
-            print("Current Pose: x: {}, y:{} , theta: {}\nGoal: x: {}, y: {}\n".format(self.pose.x, self.pose.y,
-                                                                                       self.pose.theta, waypoint[0],
-                                                                                       waypoint[1]))
-            print("Distance Error: {}\nAngular Error: {}".format(distanceError, angleError))
+            #print("Current Pose: x: {}, y:{} , theta: {}\nGoal: x: {}, y: {}\n".format(self.pose.x, self.pose.y,
+            #                                                                           self.pose.theta, waypoint[0],
+            #                                                                           waypoint[1]))
+            #print("Distance Error: {}\nAngular Error: {}".format(distanceError, angleError))
 
             # Proportional Controller
             # linear velocity in the x-axis: only switch on when the angular error is sufficiently small
@@ -60,7 +60,7 @@ class Move2GoalController(ControllerBase):
             vel_msg.angular.z = max(-5.0, min(self.angleErrorGain * angleError, 5.0))
 
 
-            print("Linear Velocity: {}\nAngular Velocity: {}\n\n".format(vel_msg.linear.x, math.degrees(vel_msg.angular.z)))
+            #print("Linear Velocity: {}\nAngular Velocity: {}\n\n".format(vel_msg.linear.x, math.degrees(vel_msg.angular.z)))
             # Publishing our vel_msg
             self.velocityPublisher.publish(vel_msg)
             self.rate.sleep()
