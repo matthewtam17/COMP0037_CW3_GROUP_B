@@ -75,8 +75,7 @@ class BaseDrawer(object):
     def drawPath(self, path):
         self.drawPathGraphics(path)
         self.drawStartAndGoalGraphics()
-        # Flush the results
-        self.window.flush()        
+        self.window.update()        
  
     def drawPlanGraphics(self):
         raise NotImplementedError()
@@ -156,6 +155,7 @@ class SearchGridDrawer(BaseDrawer):
             self.rectangles[p.coords[0]][p.coords[1]].setFill(colour)
             
         self.drawStartAndGoalGraphics()
+        self.window.update()
 
     # Draw the path
     def drawPathGraphics(self, path):
