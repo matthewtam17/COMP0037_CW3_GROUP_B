@@ -31,7 +31,7 @@ class ControllerBase(object):
         self.occupancyGrid = occupancyGrid
         
         # Set up variables to store the pose from the robot
-        self.rate = rospy.Rate(20)
+        self.rate = rospy.Rate(10)
 
     # Get the pose of the robot. Store this in a Pose2D structure because
     # this is easy to use. Use radians for angles because these are used
