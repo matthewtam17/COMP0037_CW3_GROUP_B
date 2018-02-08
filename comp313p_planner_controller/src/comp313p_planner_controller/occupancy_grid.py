@@ -108,10 +108,11 @@ class OccupancyGrid(object):
             for y in range(len(plan_y_range)):
                 planning_map[x][y] = self.grid[plan_x_range[x]][plan_y_range[y]]
 
+        self.grid = planning_map
+
         if self.originalGrid is None:
             self.originalGrid = copy.deepcopy(self.grid)
             
-        self.grid = planning_map
 
         self.widthInCells = self.widthInCells / self.scale
         self.heightInCells = self.heightInCells / self.scale
