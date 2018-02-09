@@ -22,6 +22,7 @@
 #include <stdr_robot/stdr_robot.h>
 #include <nodelet/NodeletUnload.h>
 #include <pluginlib/class_list_macros.h>
+#include <iostream>
 
 PLUGINLIB_EXPORT_CLASS(stdr_robot::Robot, nodelet::Nodelet)
 
@@ -197,6 +198,8 @@ namespace stdr_robot
     if( collisionExistsNoPath(req.newPose) ||
         checkUnknownOccupancy(req.newPose) )
     {
+      NODELET_INFO_STREAM("collisionExistsNoPath(req.newPose)=" << collisionExistsNoPath(req.newPose)
+		      << "; checkUnknownOccupancy(req.newPose)=" << checkUnknownOccupancy(req.newPose));
       return false;
     }
     
@@ -413,6 +416,7 @@ namespace stdr_robot
   void Robot::publishTransforms(const ros::TimerEvent&)
   {
     geometry_msgs::Pose2D pose = _motionControllerPtr->getPose();
+    NODELET_INFO_STREAM("collisionExists(pose, _previousPose)=" <<  collisionExists(pose, _previousPose));
     if( ! collisionExists(pose, _previousPose) )
     {
       _previousPose = pose;
