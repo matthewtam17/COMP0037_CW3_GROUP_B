@@ -10,9 +10,10 @@ class RobotListener():
     def __init__(self):
         #Creating our node,publisher and subscriber
         rospy.init_node('robot_listener', anonymous=True)
-        self.current_pose_subscriber = rospy.Subscriber('/robot0/odom', Odometry, self.current_callback)
- 
-    def current_callback(self, odometry):
+        self.currentPoseSubscriber = rospy.Subscriber('/robot0/odom', Odometry, self.odometryCallback)
+        self.currentTwistSubscriber = rospy.Subscriber('/robot0/cmd_vel',Twist, self.twistCallback)
+
+    def odometryCallback(self, odometry):
 
         odometryPose = odometry.pose.pose
 
@@ -21,7 +22,10 @@ class RobotListener():
         
         theta = 2 * atan2(orientation.z, orientation.w)
 
-        rospy.loginfo("Current Pose: x: %f, y:%f, theta: %f", position.x, position.y, theta)
+        # rospy.loginfo("Current Pose: x: %f, y:%f, theta: %f", position.x, position.y, theta)
+
+    def twistCallback(self, twist):
+        rospy.loginfo("Current Twist: v: %f, w: %f", twist.linear.x, twist.angular.z)
 
     def run(self):
 
