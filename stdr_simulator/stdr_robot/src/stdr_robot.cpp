@@ -34,7 +34,7 @@ namespace stdr_robot
   **/
   Robot::Robot(void)
   {
-
+    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": invoked");
   }
 
   /**
@@ -43,6 +43,7 @@ namespace stdr_robot
   **/
   void Robot::onInit()
   {
+    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": invoked");
     ros::NodeHandle n = getMTNodeHandle();
 
     _odomPublisher = n.advertise<nav_msgs::Odometry>(getName() + "/odom", 10);
@@ -76,13 +77,14 @@ namespace stdr_robot
     const actionlib::SimpleClientGoalState& state,
     const stdr_msgs::RegisterRobotResultConstPtr result)
   {
+    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": invoked");
 
     if (state == state.ABORTED) {
       NODELET_ERROR("Something really bad happened...");
       return;
     }
 
-    NODELET_INFO("Loaded new robot, %s", getName().c_str());
+    NODELET_ERROR("Loaded new robot, %s", getName().c_str());
     ros::NodeHandle n = getMTNodeHandle();
 
     _currentPose = result->description.initialPose;
@@ -195,10 +197,11 @@ namespace stdr_robot
   bool Robot::moveRobotCallback(stdr_msgs::MoveRobot::Request& req,
                 stdr_msgs::MoveRobot::Response& res)
   {
+    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": invoked");
     if( collisionExistsNoPath(req.newPose) ||
         checkUnknownOccupancy(req.newPose) )
     {
-      NODELET_INFO_STREAM("collisionExistsNoPath(req.newPose)=" << collisionExistsNoPath(req.newPose)
+      NODELET_ERROR_STREAM("collisionExistsNoPath(req.newPose)=" << collisionExistsNoPath(req.newPose)
 		      << "; checkUnknownOccupancy(req.newPose)=" << checkUnknownOccupancy(req.newPose));
       return false;
     }
@@ -218,6 +221,7 @@ namespace stdr_robot
   bool Robot::collisionExistsNoPath(
     const geometry_msgs::Pose2D& newPose)
   {
+    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": invoked");
     if(_map.info.width == 0 || _map.info.height == 0)
     {
       return false;
@@ -252,6 +256,7 @@ namespace stdr_robot
   bool Robot::checkUnknownOccupancy(
     const geometry_msgs::Pose2D& newPose)
   {
+    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": invoked");
     if(_map.info.width == 0 || _map.info.height == 0)
     {
       return false;
@@ -305,6 +310,7 @@ namespace stdr_robot
     const geometry_msgs::Pose2D& newPose,
     const geometry_msgs::Pose2D& previousPose)
   {
+    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": invoked");
     if(_map.info.width == 0 || _map.info.height == 0)
       return false;
 
@@ -395,6 +401,31 @@ namespace stdr_robot
               _map.info.width + pts[j].first + OF ] > 70
           )
           {
+	    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": collision");
+	    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": resolution=" << _map.info.resolution);
+	    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": f_x1=" << footprint_x_1 << "; f_y1=" << footprint_y_1);
+	    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": f_x2=" << footprint_x_1 << "; f_y2=" << footprint_y_2);
+	    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": x=" << x << "; y=" << y);
+	    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": xx1=" << xx1 << "; yy1=" << yy1);
+	    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": xx2=" << xx2 << "; yy2=" << yy2);
+	    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": pts[j].first=" << pts[j].first << "; pts[j].second=" << pts[j].second);
+	    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ <<
+				 (_map.data[ (pts[j].second - OF) * 
+					     _map.info.width + pts[j].first - OF ] > 70) <<
+				 (_map.data[ (pts[j].second - OF) * 
+					     _map.info.width + pts[j].first ] > 70) <<
+				 (_map.data[ (pts[j].second - OF) *  
+					     _map.info.width + pts[j].first + OF ] > 70) <<
+				 (_map.data[ (pts[j].second) * 
+					     _map.info.width + pts[j].first - OF ] > 70) <<
+				 (_map.data[ (pts[j].second) * 
+					     _map.info.width + pts[j].first + OF ] > 70) <<
+				 (_map.data[ (pts[j].second + OF) * 
+					     _map.info.width + pts[j].first - OF ] > 70) <<
+				 (_map.data[ (pts[j].second + OF) * 
+					     _map.info.width + pts[j].first ] > 70) <<
+				 (_map.data[ (pts[j].second + OF) * 
+					     _map.info.width + pts[j].first + OF ] > 70));
             return true;
           }
         }
@@ -415,8 +446,10 @@ namespace stdr_robot
   **/
   void Robot::publishTransforms(const ros::TimerEvent&)
   {
+    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": invoked");
+
     geometry_msgs::Pose2D pose = _motionControllerPtr->getPose();
-    NODELET_INFO_STREAM("collisionExists(pose, _previousPose)=" <<  collisionExists(pose, _previousPose));
+    NODELET_ERROR_STREAM("collisionExists(pose, _previousPose)=" <<  collisionExists(pose, _previousPose));
     if( ! collisionExists(pose, _previousPose) )
     {
       _previousPose = pose;
@@ -473,6 +506,7 @@ namespace stdr_robot
   **/
   Robot::~Robot()
   {
+    NODELET_ERROR_STREAM("Robot::~Robot: invoked");
     //!< Cleanup
   }
 
