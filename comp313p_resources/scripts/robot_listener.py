@@ -22,7 +22,7 @@ class RobotListener():
         
         theta = 2 * atan2(orientation.z, orientation.w)
 
-        # rospy.loginfo("Current Pose: x: %f, y:%f, theta: %f", position.x, position.y, theta)
+        rospy.loginfo("Current Pose: x: %f, y:%f, theta: %f", position.x, position.y, theta)
 
     def twistCallback(self, twist):
         rospy.loginfo("Current Twist: v: %f, w: %f", twist.linear.x, twist.angular.z)
