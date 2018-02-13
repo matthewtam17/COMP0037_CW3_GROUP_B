@@ -469,6 +469,7 @@ namespace stdr_robot
     NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": invoked");
 
     geometry_msgs::Pose2D pose = _motionControllerPtr->getPose();
+    NODELET_ERROR_STREAM("pose=" <<  pose);
     NODELET_ERROR_STREAM("collisionExists(pose, _previousPose)=" <<  collisionExists(pose, _previousPose));
     if( ! collisionExists(pose, _previousPose) )
     {
