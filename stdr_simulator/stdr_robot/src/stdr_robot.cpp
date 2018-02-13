@@ -342,16 +342,24 @@ namespace stdr_robot
                         (int)( newPose.y / _map.info.resolution );
 
     float angle = atan2(yMap - yMapPrev, xMap - xMapPrev);
-    int x = xMapPrev;
-    int y = yMapPrev;
+    //int x = xMapPrev;
+    //int y = yMapPrev;
     int d = 2;
+    double newX = previousPose.x;
+    double newY = previousPose.y;
 
-    while(pow(xMap - x,2) + pow(yMap - y,2) > 1)
+    while(pow(newPose.x - newX,2) + pow(newPose.y - newY,2) > pow(_map.info.resolution, 2))
+      //    while(pow(xMap - x,2) + pow(yMap - y,2) > 1)
     {
+      #if 0
       x = xMapPrev +
         ( movingForward? ceil( cos(angle) * d ): (int)( cos(angle) * d ) );
       y = yMapPrev +
         ( movingUpward? ceil( sin(angle) * d ): (int)( sin(angle) * d ) );
+      #endif
+      double newX = previousPose.x + d * _map.info.resolution * cos(angle);
+      double newY = previousPose.y + d * _map.info.resolution * sin(angle);
+      
       //Check all footprint points
       for(unsigned int i = 0 ; i < _footprint.size() ; i++)
       {
@@ -364,16 +372,21 @@ namespace stdr_robot
         double footprint_y_1 = _footprint[index_1].first * sin(newPose.theta) +
                    _footprint[index_1].second * cos(newPose.theta);
 
-        int xx1 = x + footprint_x_1 / _map.info.resolution;
-        int yy1 = y + footprint_y_1 / _map.info.resolution;
+        //int xx1 = x + footprint_x_1 / _map.info.resolution;
+        //int yy1 = y + footprint_y_1 / _map.info.resolution;
+	int xx1 = (newX + footprint_x_1)/ _map.info.resolution;
+        int yy1 = (newY + footprint_y_1)/ _map.info.resolution;
         
         double footprint_x_2 = _footprint[index_2].first * cos(newPose.theta) -
                    _footprint[index_2].second * sin(newPose.theta);
         double footprint_y_2 = _footprint[index_2].first * sin(newPose.theta) +
                    _footprint[index_2].second * cos(newPose.theta);
 
-        int xx2 = x + footprint_x_2 / _map.info.resolution;
-        int yy2 = y + footprint_y_2 / _map.info.resolution;
+        int xx2 = (newX + footprint_x_2) / _map.info.resolution;
+	int yy2 = (newY + footprint_y_2) / _map.info.resolution;
+
+        //int xx2 = x + footprint_x_2 / _map.info.resolution;
+        //int yy2 = y + footprint_y_2 / _map.info.resolution;
         
         //Here check all the points between the vertexes
         std::vector<std::pair<int,int> > pts = 
@@ -405,10 +418,17 @@ namespace stdr_robot
 	    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": resolution=" << _map.info.resolution);
 	    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": f_x1=" << footprint_x_1 << "; f_y1=" << footprint_y_1);
 	    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": f_x2=" << footprint_x_1 << "; f_y2=" << footprint_y_2);
-	    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": x=" << x << "; y=" << y);
+	    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": x=" << newX << "; y=" << newY);
 	    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": xx1=" << xx1 << "; yy1=" << yy1);
 	    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": xx2=" << xx2 << "; yy2=" << yy2);
 	    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": pts[j].first=" << pts[j].first << "; pts[j].second=" << pts[j].second);
+	    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": _footprint.size()=" << _footprint.size());
+	    //	    for (int k = 0; k < _footprint.size(); ++k)
+	    //{
+	    //	NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": _footprint " << k << "=(" << _footprint[k].first
+	    //			     << "," << _footprint[k].second << ")");
+	    //}
+	    
 	    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ <<
 				 (_map.data[ (pts[j].second - OF) * 
 					     _map.info.width + pts[j].first - OF ] > 70) <<
@@ -430,8 +450,8 @@ namespace stdr_robot
           }
         }
       }
-      if ( (movingForward && xMap < x) || (movingUpward && yMap < y) ||
-          (!movingForward && xMap > x) || (!movingUpward && yMap > y) )
+      if ( (movingForward && newPose.x < newX) || (movingUpward && newPose.y < newY) ||
+          (!movingForward && newPose.x > newX) || (!movingUpward && newPose.y > newY) )
       {
         break;
       }
