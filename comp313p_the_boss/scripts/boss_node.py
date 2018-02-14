@@ -8,7 +8,7 @@ from comp313p_planner_controller.srv import *
 from nav_msgs.srv import GetMap
 from stdr_msgs.srv import MoveRobot
 from geometry_msgs.msg import Pose2D
-
+import math
 from random import randint
 
 # The boss tells the robot where to go. Self is either a set of
@@ -68,13 +68,14 @@ class BossNode(object):
         for g in range(0, 15):
             goalX = randint(0, map.info.width - 1) * map.info.resolution
             goalY = randint(0, map.info.height - 1) * map.info.resolution
-            self.goals.append((goalX, goalY))
+            goalTheta = random() * math.pi / 180.0
+            self.goals.append((goalX, goalY, goalTheta))
         
 
     def sendGoalToRobot(self, goal):
         rospy.logwarn("Sending the robot to " + str(goal))
         try:
-            response = self.driveToGoalService(goal[0], goal[1])
+            response = self.driveToGoalService(goal[0], goal[1], goal[2])
             return response.reachedGoal
         except rospy.ServiceException, e:
             print "Service call failed: %s"%e
@@ -86,10 +87,12 @@ class BossNode(object):
         pose = Pose2D()
         pose.x = self.goals[0][0]
         pose.y = self.goals[0][1]
-        pose.theta = 0.0
+        print 'self.goals[0][2]=' + str(self.goals[0][2])
+        pose.theta = math.radians(self.goals[0][2])
+        #
         self.teleportAbsoluteService(pose)
-        rospy.loginfo('sleeping after teleport')
-        rospy.sleep(1)
+        rospy.loginfo('sleeping after getting teleport service')
+        rospy.sleep(2)
                 
         # Now iterate through the rest of the waypoints and drive to them
         for g in range(1, len(self.goals)):

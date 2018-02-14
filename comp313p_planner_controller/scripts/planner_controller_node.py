@@ -73,6 +73,9 @@ class PlannerControllerNode(object):
 
         return GoalResponse(True)
 
+    # Run the planner. Note that we do not take account of the robot orientation when planning.
+    # The reason is simplicity; adding orientation means we have a full 3D planning problem.
+    # As a result, the plan will not be as efficient as it could be.
     def driveToGoal(self, goal):
 
         # Get the current pose of the robot
@@ -110,7 +113,7 @@ class PlannerControllerNode(object):
         path = self.planner.extractPathToGoal()
 
         # Now drive it
-        self.robotController.drivePathToGoal(path, self.planner.getPlannerDrawer())
+        self.robotController.drivePathToGoal(path, goal.theta, self.planner.getPlannerDrawer())
 
         return True
     

@@ -8,8 +8,10 @@ from comp313p_planner_controller.controller_base import ControllerBase
 import math
 import angles
 
-# This class defines a possible base of what the robot controller
-# could do.
+# This sample controller works a fairly simple way. It figures out
+# where the goal is. It first turns the robot until it's roughly in
+# the correct direction and then keeps driving. It monitors the
+# angular error and trims it as it goes.
 
 class Move2GoalController(ControllerBase):
 
@@ -19,6 +21,8 @@ class Move2GoalController(ControllerBase):
         # Get the proportional gain settings
         self.distanceErrorGain = rospy.get_param('distance_error_gain', 1)
         self.angleErrorGain = rospy.get_param('angle_error_gain', 4)
+
+        self.driveAngleErrorTolerance = math.radians(rospy.get_param('angle_error_tolerance', 1))
     
     def get_distance(self, goal_x, goal_y):
         distance = sqrt(pow((goal_x - self.pose.x), 2) + pow((goal_y - self.pose.y), 2))
@@ -40,8 +44,7 @@ class Move2GoalController(ControllerBase):
         distanceError = sqrt(dX * dX + dY * dY)
         angleError = self.shortestAngularDistance(self.pose.theta, atan2(dY, dX))
        
-
-        while (distanceError >= self.distance_tolerance) & (not rospy.is_shutdown()):
+        while (distanceError >= self.distanceErrorTolerance) & (not rospy.is_shutdown()):
             #print("Current Pose: x: {}, y:{} , theta: {}\nGoal: x: {}, y: {}\n".format(self.pose.x, self.pose.y,
             #                                                                           self.pose.theta, waypoint[0],
             #                                                                           waypoint[1]))
@@ -49,7 +52,7 @@ class Move2GoalController(ControllerBase):
 
             # Proportional Controller
             # linear velocity in the x-axis: only switch on when the angular error is sufficiently small
-            if math.fabs(angleError) < 1e-2:
+            if math.fabs(angleError) < self.driveAngleErrorTolerance:
                 vel_msg.linear.x = max(0.0, min(self.distanceErrorGain * distanceError, 10.0))
                 vel_msg.linear.y = 0
                 vel_msg.linear.z = 0
@@ -76,3 +79,31 @@ class Move2GoalController(ControllerBase):
         vel_msg.linear.x = 0
         vel_msg.angular.z = 0
         self.velocityPublisher.publish(vel_msg)
+
+    def rotateToGoalOrientation(self, goalOrientation):
+        vel_msg = Twist()
+
+        goalOrientation = math.radians(goalOrientation)
+
+        angleError = self.shortestAngularDistance(self.pose.theta, goalOrientation)
+
+        while (math.fabs(angleError) >= self.goalAngleErrorTolerance) & (not rospy.is_shutdown()):
+            print 'Angular Error: ' + str(angleError)
+
+            # angular velocity in the z-axis:
+            vel_msg.angular.x = 0
+            vel_msg.angular.y = 0
+            vel_msg.angular.z = max(-5.0, min(self.angleErrorGain * angleError, 5.0))
+
+            # Publishing our vel_msg
+            self.velocityPublisher.publish(vel_msg)
+            if (self.plannerDrawer is not None):
+                self.plannerDrawer.flushAndUpdateWindow()
+                
+            self.rate.sleep()
+            angleError = self.shortestAngularDistance(self.pose.theta, goalOrientation)
+
+        # Stop movement once finished
+        vel_msg.angular.z = 0
+        self.velocityPublisher.publish(vel_msg)
+        
