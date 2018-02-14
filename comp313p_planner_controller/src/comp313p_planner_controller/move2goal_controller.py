@@ -88,7 +88,7 @@ class Move2GoalController(ControllerBase):
         angleError = self.shortestAngularDistance(self.pose.theta, goalOrientation)
 
         while (math.fabs(angleError) >= self.goalAngleErrorTolerance) & (not rospy.is_shutdown()):
-            print 'Angular Error: ' + str(angleError)
+            #print 'Angular Error: ' + str(angleError)
 
             # angular velocity in the z-axis:
             vel_msg.angular.x = 0
