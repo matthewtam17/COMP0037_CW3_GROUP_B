@@ -27,6 +27,9 @@ class RobotListener():
     def twistCallback(self, twist):
         rospy.loginfo("Current Twist: v: %f, w: %f", twist.linear.x, twist.angular.z)
 
+    def twistCallback(self, twist):
+        rospy.loginfo("Current Twist: v: %f, w: %f", twist.linear.x, twist.angular.z)
+
     def run(self):
 
         # Sleep for 1s before starting. This gives time for all the parts of stdr to start up

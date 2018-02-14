@@ -26,7 +26,7 @@ class BaseDrawer(object):
     def open(self):
         self.window = graphics.GraphWin(self.title, self.width, self.height, autoflush = False)
         self.initialize()
-        graphics.update(100)
+        graphics.update(5)
 
     # Close the window
     def close(self):
@@ -69,13 +69,19 @@ class BaseDrawer(object):
         # Overlay on top the start and the goal
         self.drawStartAndGoalGraphics()
 
+        # Flush the graphics
+        self.flushAndUpdateWindow()
+
+    def flushAndUpdateWindow(self):
         # Flush the results
         self.window.update()
+        self.window.flush()
  
     def drawPath(self, path):
         self.drawPathGraphics(path)
         self.drawStartAndGoalGraphics()
         self.window.update()        
+        self.window.flush()
  
     def drawPlanGraphics(self):
         raise NotImplementedError()
@@ -156,6 +162,7 @@ class SearchGridDrawer(BaseDrawer):
             
         self.drawStartAndGoalGraphics()
         self.window.update()
+        self.window.flush()
 
     # Draw the path
     def drawPathGraphics(self, path):
