@@ -54,7 +54,7 @@ class PlannerControllerNode(object):
     def createPlanner(self):
         self.planner = FIFOPlanner('FIFO', self.occupancyGrid)
         self.planner.setPauseTime(0)
-        self.planner.maximumGridDrawerWindowHeightInPixels = rospy.get_param('maximum_window_height_in_pixels', 700)
+        self.planner.windowHeightInPixels = rospy.get_param('maximum_window_height_in_pixels', 700)
         
     def createRobotController(self):
         self.robotController = Move2GoalController(self.occupancyGrid)
@@ -110,7 +110,7 @@ class PlannerControllerNode(object):
         path = self.planner.extractPathToGoal()
 
         # Now drive it
-        self.robotController.drivePathToGoal(path)
+        self.robotController.drivePathToGoal(path, self.planner.getPlannerDrawer())
 
         return True
     

@@ -42,6 +42,10 @@ class PlannerBase(object):
     def setShowGraphics(self, showGraphics):
         self.showGraphics = showGraphics
 
+    # Getter to get the graphics
+    def getPlannerDrawer(self):
+        return self.plannerDrawer
+        
     # Change the default window height in pixels
     def setWindowHeightInPixels(self, windowHeightInPixels):
         self.windowHeightInPixels = windowHeightInPixels

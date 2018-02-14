@@ -63,6 +63,9 @@ class Move2GoalController(ControllerBase):
             #print("Linear Velocity: {}\nAngular Velocity: {}\n\n".format(vel_msg.linear.x, math.degrees(vel_msg.angular.z)))
             # Publishing our vel_msg
             self.velocityPublisher.publish(vel_msg)
+            if (self.plannerDrawer is not None):
+                self.plannerDrawer.flushAndUpdateWindow()
+                
             self.rate.sleep()
 
             distanceError = sqrt(pow((waypoint[0] - self.pose.x), 2) + pow((waypoint[1] - self.pose.y), 2))

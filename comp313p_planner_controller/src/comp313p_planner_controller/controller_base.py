@@ -57,9 +57,12 @@ class ControllerBase(object):
     def driveToWaypoint(self, waypoint):
         raise NotImplementedError()
 
-    # Drive to each waypoint in turn
-    def drivePathToGoal(self, path):
-
+    # Drive to each waypoint in turn. Unfortunately we have to add
+    # the planner drawer because we have to keep updating it to
+    # make sure the graphics are redrawn properly.
+    def drivePathToGoal(self, path, plannerDrawer):
+        self.plannerDrawer = plannerDrawer
+        
         self.distance_tolerance = 1e-1
 
         for waypointNumber in range(0, len(path.waypoints)):
