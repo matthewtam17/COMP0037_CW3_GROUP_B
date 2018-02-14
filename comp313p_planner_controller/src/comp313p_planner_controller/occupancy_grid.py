@@ -99,14 +99,42 @@ class OccupancyGrid(object):
     
         planning_map = [[0 for y in range(self.heightInCells/self.scale)] for x in range(self.widthInCells/self.scale)]
         print("Planning map size\nWidth: {}\nHeight: {}".format(len(planning_map), len(planning_map[0])))
-        
-        # Dodgy way of scaling the map by grabbing every nth cell
+
         plan_x_range = range(self.widthInCells)[0::self.scale]
         plan_y_range = range(self.heightInCells)[0::self.scale]
 
+        # Checks every cell in the range and if any is occupied the scaled is occupied
         for x in range(len(plan_x_range)):
             for y in range(len(plan_y_range)):
-                planning_map[x][y] = self.grid[plan_x_range[x]][plan_y_range[y]]
+
+                # if it is the last planning cell just use that single cell
+                if x == len(plan_x_range) - 1:
+                    x_range = [plan_x_range[x]]
+                else:
+                    x_range = range(plan_x_range[x], plan_x_range[x+1] - 1)
+
+                if y == len(plan_y_range) - 1:
+                    y_range = [plan_y_range[y]]
+                else:
+                    y_range = range(plan_y_range[y], plan_y_range[y + 1] - 1)
+
+                # Start with the planning cell being unoccupied and search for an occupied cell as soon as you find one
+                # stop searching.
+                occupied = 0
+
+                for x_check in x_range:
+
+                    if occupied == 1:
+                        break
+
+                    for y_check in y_range:
+                        value = self.grid[x_check][y_check]
+
+                        if value > 0 or occupied == 1:
+                            occupied = 1
+                            break
+
+                planning_map[x][y] = occupied
 
         self.grid = planning_map
 
