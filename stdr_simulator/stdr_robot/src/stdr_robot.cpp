@@ -414,6 +414,7 @@ namespace stdr_robot
               _map.info.width + pts[j].first + OF ] > 70
           )
           {
+	    #if 0
 	    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": collision");
 	    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": resolution=" << _map.info.resolution);
 	    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": f_x1=" << footprint_x_1 << "; f_y1=" << footprint_y_1);
@@ -446,6 +447,7 @@ namespace stdr_robot
 					     _map.info.width + pts[j].first ] > 70) <<
 				 (_map.data[ (pts[j].second + OF) * 
 					     _map.info.width + pts[j].first + OF ] > 70));
+	    #endif
             return true;
           }
         }
