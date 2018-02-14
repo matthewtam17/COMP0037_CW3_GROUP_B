@@ -57,17 +57,17 @@ namespace stdr_robot {
   void IdealMotionController::calculateMotion(const ros::TimerEvent& event) 
   {
     //!< updates _posePtr based on _currentTwist and time passed (event.last_real)
-    ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": invoked");
+    //ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": invoked");
     
     ros::Duration dt = ros::Time::now() - event.last_real;
 
-    ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": dt=" << dt);
-    ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": _currentTwist=" << _currentTwist);
+    //ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": dt=" << dt);
+    //ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": _currentTwist=" << _currentTwist);
 
-    ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": _pose=" << _pose);
+    //ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": _pose=" << _pose);
 
     if (fabs(_currentTwist.angular.z) < 1e-6) {
-      ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": _currentTwist.angular.z == 0");
+      //ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": _currentTwist.angular.z == 0");
       
       _pose.x += _currentTwist.linear.x * dt.toSec() * cosf(_pose.theta);
       _pose.y += _currentTwist.linear.x * dt.toSec() * sinf(_pose.theta);
@@ -86,7 +86,7 @@ namespace stdr_robot {
     }
     _pose.theta += _currentTwist.angular.z * dt.toSec();
 
-    ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": _updatedPose=" << _pose);
+    //ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": _updatedPose=" << _pose);
 
   }
   
