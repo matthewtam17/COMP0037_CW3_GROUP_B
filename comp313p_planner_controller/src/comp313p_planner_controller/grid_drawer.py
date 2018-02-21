@@ -131,7 +131,10 @@ class SearchGridDrawer(BaseDrawer):
     def reset(self):
         # Nothing to do - rendering is stateless
         pass
-                
+
+    def setSearchGrid(self,new_sg):
+	self.searchGrid=new_sg
+            
     def drawPlanGraphics(self):
         
         # First iterate over all the cells and mark them up
@@ -142,13 +145,14 @@ class SearchGridDrawer(BaseDrawer):
             for j in range(cellExtent[1]):
                 cellLabel = self.searchGrid.getCellFromCoords((i, j)).label
                 if cellLabel == CellLabel.OBSTRUCTED:
-                    colour = 'purple'
+                    colour = 'purple'		    
                 elif cellLabel == CellLabel.START:
                     colour = 'green'
                 elif cellLabel == CellLabel.GOAL:
                     colour = 'blue'
                 elif cellLabel == CellLabel.UNVISITED:
                     colour = 'gray'
+	  	    
                 elif cellLabel == CellLabel.DEAD:
                     colour = 'black'
                 else:

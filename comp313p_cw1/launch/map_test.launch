@@ -8,7 +8,7 @@
 
   <node pkg="comp313p_time_server" name="time_server" type="time_server_node.py"/>
   <node pkg="comp313p_the_boss" name="the_boss" type="boss_node.py" args="$(arg goal_file)" output="screen"/>
-  <node pkg="comp313p_planner_controller" name="planner_controller" type="planner_controller_node.py" output="screen"/>
+  <node pkg="comp313p_example" name="moving" type="moving_the_robot.py" output="screen"/>
   <node pkg="comp313p_planner_controller" name="mock_slam_node" type="mock_slam_node.py" output="screen"/>	 
   <include file="$(find stdr_robot)/launch/robot_manager.launch" />
   <include file="$(find stdr_gui)/launch/stdr_gui.launch"/>
