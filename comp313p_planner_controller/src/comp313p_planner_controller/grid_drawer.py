@@ -21,6 +21,15 @@ class BaseDrawer(object):
         self.start = None
         self.goal = None
         self.runInteractively = False
+
+        # Work out the cell size
+        cellSize = self.pixelsPerMetre
+
+        # Set up the rectangles which will be drawn        
+        self.rectangles = [[Rectangle(Point(i * cellSize, (extent[1] - j - 1) * cellSize), \
+                                    Point((i+1)*cellSize, (extent[1] - j)*cellSize)) \
+                            for j in range(extent[1])] for i in range(extent[0])]
+
         
     # Open the window and intialise the graphics
     def open(self):
@@ -38,7 +47,7 @@ class BaseDrawer(object):
     def reset(self):
         raise NotImplementedError()
         
-    # Convert workspace coordinates to window coordinates. self has to
+    # Convert workspace coordinates to window coordinates. This has to
     # take account of the scaling and the fact that graphics packages
     # use a left handed coordinate system with the origin in the top
     # left hand corner.
@@ -46,12 +55,14 @@ class BaseDrawer(object):
         screenCoordinate = (1 + workspaceCoordinate[0] * self.pixelsPerMetre, 
                              1 + self.height - workspaceCoordinate[1] * self.pixelsPerMetre)
         return screenCoordinate
-
-    # Initialise
+ 
     def initialize(self):
-        raise NotImplementedError()
-    
-    # Start the start and goal. The type stored here depends upon the planning algorithm 
+        cellExtent = self.searchGrid.getExtentInCells()
+        for i in range(cellExtent[0]):
+            for j in range(cellExtent[1]):
+                self.rectangles[i][j].draw(self.window)
+
+    # Set the start and goal. The type stored here depends upon the planning algorithm 
     def setStartAndGoal(self, start, goal):
         self.start = start
         self.goal = goal
@@ -76,21 +87,6 @@ class BaseDrawer(object):
         # Flush the results
         self.window.update()
         self.window.flush()
- 
-    def drawPath(self, path):
-        self.drawPathGraphics(path)
-        self.drawStartAndGoalGraphics()
-        self.window.update()        
-        self.window.flush()
- 
-    def drawPlanGraphics(self):
-        raise NotImplementedError()
-
-    def drawPathGraphics(self):
-        raise NotImplementedError()
-    
-    def drawStartAndGoalGraphics(self):
-         raise NotImplementedError()
                           
     def waitForKeyPress(self):
 
@@ -111,22 +107,6 @@ class SearchGridDrawer(BaseDrawer):
         BaseDrawer.__init__(self, title, searchGrid.getExtentInCells(), 
                             maximumWindowHeightInPixels)
         self.searchGrid = searchGrid;
-
-        # Work out the cell size
-        cellSize = self.pixelsPerMetre
-
-        # Set up the rectangles which will be drawn        
-        cellExtent = searchGrid.getExtentInCells()
-        
-        self.rectangles = [[Rectangle(Point(i * cellSize, (cellExtent[1] - j - 1) * cellSize), \
-                                    Point((i+1)*cellSize, (cellExtent[1] - j)*cellSize)) \
-                            for j in range(cellExtent[1])] for i in range(cellExtent[0])]
- 
-    def initialize(self):
-        cellExtent = self.searchGrid.getExtentInCells()
-        for i in range(cellExtent[0]):
-            for j in range(cellExtent[1]):
-                self.rectangles[i][j].draw(self.window)
                 
     def reset(self):
         # Nothing to do - rendering is stateless
@@ -181,3 +161,6 @@ class SearchGridDrawer(BaseDrawer):
         if (self.goal is not None):
             coords = self.goal.coords
             self.rectangles[coords[0]][coords[1]].setFill('blue')
+
+ #   class OccupancyGridDrawer(BaseDrawer):
+ #   pass
