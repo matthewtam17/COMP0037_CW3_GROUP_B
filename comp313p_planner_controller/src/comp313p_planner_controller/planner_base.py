@@ -2,7 +2,7 @@
 
 from occupancy_grid import OccupancyGrid
 from search_grid import SearchGrid
-from grid_drawer import SearchGridDrawer
+from grid_drawer import *
 import time
 from collections import deque
 from cell import *
@@ -25,7 +25,8 @@ class PlannerBase(object):
         self.pauseTimeInSeconds = 0
         self.iterationsBetweenGraphicsUpdate = 10000
         self.iterationsSinceLastGraphicsUpdate = 0
-        self.plannerDrawer = None
+        self.searchGridDrawer = None
+        self.occupancyGridDrawer = None
         self.windowHeightInPixels = 700
         self.runInteractively = False
 
@@ -35,8 +36,8 @@ class PlannerBase(object):
         # Record the decision here. We can only configure the drawer if it's already been
         # created.
         self.runInteractively = runInteractively
-        if self.plannerDrawer is not None:
-            self.plannerDrawer.setRunInterctively(runInteractively)
+        if self.searchGridDrawer is not None:
+            self.searchGridDrawer.setRunInterctively(runInteractively)
         
     # Show graphics?
     def setShowGraphics(self, showGraphics):
@@ -44,7 +45,7 @@ class PlannerBase(object):
 
     # Getter to get the graphics
     def getPlannerDrawer(self):
-        return self.plannerDrawer
+        return self.searchGridDrawer
         
     # Change the default window height in pixels
     def setWindowHeightInPixels(self, windowHeightInPixels):
@@ -67,18 +68,21 @@ class PlannerBase(object):
             return
         
         # HACK: AT THE MOMENT I CAN'T GET THE WINDOW TO DRAW NEATLY
-        if (self.plannerDrawer is not None):
-            self.plannerDrawer.close()
-            self.plannerDrawer = None
+        if (self.searchGridDrawer is not None):
+            self.searchGridDrawer.close()
+            self.occupancyGridDrawer.close()
+            self.searchGridDrawer = None
         
         # If we don't have the planner set up yet, create it      
-        if (self.plannerDrawer is None):
+        if (self.searchGridDrawer is None):
             self.createPlannerDrawer()
-            self.plannerDrawer.setRunInteractively(self.runInteractively)
-            self.plannerDrawer.setStartAndGoal(self.start, self.goal)
-            self.plannerDrawer.open()
+            self.searchGridDrawer.setRunInteractively(self.runInteractively)
+            self.searchGridDrawer.setStartAndGoal(self.start, self.goal)
+            self.searchGridDrawer.open()
+            self.occupancyGridDrawer.open()
         else:
-            self.plannerDrawer.reset()
+            self.searchGridDrawer.reset()
+            self.occupancyGridDrawer.reset()
             
         # Now force an initial draw
         self.drawCurrentState(forceUpdate=True)
@@ -99,12 +103,13 @@ class PlannerBase(object):
         # Reset the draw counter
         self.iterationsSinceLastGraphicsUpdate = 0
 
-        self.plannerDrawer.update()
+        self.searchGridDrawer.update()
         time.sleep(self.pauseTimeInSeconds)
 
     # Create the drawer which shows the planner's progress
     def createPlannerDrawer(self):
-        self.plannerDrawer = SearchGridDrawer(self.title, self.searchGrid, self.windowHeightInPixels)
+        self.searchGridDrawer = SearchGridDrawer('SG: ' + self.title, self.searchGrid, self.windowHeightInPixels)
+        self.occupancyGridDrawer = OccupancyGridDrawer('OG :' + self.title, self.occupancyGrid, self.windowHeightInPixels)
 
     # Set the pause time
     def setPauseTime(self, pauseTimeInSeconds):

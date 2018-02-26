@@ -21,7 +21,8 @@ class BaseDrawer(object):
         self.start = None
         self.goal = None
         self.runInteractively = False
-
+        self.cellExtent = extent
+        
         # Work out the cell size
         cellSize = self.pixelsPerMetre
 
@@ -57,9 +58,8 @@ class BaseDrawer(object):
         return screenCoordinate
  
     def initialize(self):
-        cellExtent = self.searchGrid.getExtentInCells()
-        for i in range(cellExtent[0]):
-            for j in range(cellExtent[1]):
+        for i in range(self.cellExtent[0]):
+            for j in range(self.cellExtent[1]):
                 self.rectangles[i][j].draw(self.window)
 
     # Set the start and goal. The type stored here depends upon the planning algorithm 
@@ -162,5 +162,22 @@ class SearchGridDrawer(BaseDrawer):
             coords = self.goal.coords
             self.rectangles[coords[0]][coords[1]].setFill('blue')
 
- #   class OccupancyGridDrawer(BaseDrawer):
- #   pass
+class OccupancyGridDrawer(BaseDrawer):
+
+    def __init__(self, title, occupancyGrid, maximumWindowHeightInPixels):
+        BaseDrawer.__init__(self, title, occupancyGrid.getExtentInCells(), 
+                            maximumWindowHeightInPixels)
+        self.occupancyGrid = occupancyGrid;
+
+    def drawGrid(self):
+
+        # Draw the cells using shading
+        cellExtent = self.occupancyGrid.getExtentInCells()
+        for i in range(cellExtent[0]):
+            if rospy.is_shutdown():
+                return
+            for j in range(cellExtent[1]):
+                cellWeight = self.occupancyGrid.getCell(i, j)
+                hexWeight = '{:02x}'.format(int(cellWeight*255))
+                colour = '#' + hexWeight + hexWeight + hexWeight
+                self.rectangles[i][j].setFill(colour);

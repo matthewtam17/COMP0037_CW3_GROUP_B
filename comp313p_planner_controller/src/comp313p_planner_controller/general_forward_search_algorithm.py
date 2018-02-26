@@ -201,9 +201,9 @@ class GeneralForwardSearchAlgorithm(PlannerBase):
         
         # Draw the path if requested
         if (self.showGraphics == True):
-            self.plannerDrawer.update()
-            self.plannerDrawer.drawPathGraphicsWithCustomColour(path, colour)
-            self.plannerDrawer.waitForKeyPress()
+            self.searchGridDrawer.update()
+            self.searchGridDrawer.drawPathGraphicsWithCustomColour(path, colour)
+            self.searchGridDrawer.waitForKeyPress()
         
         # Return the path
         return path
