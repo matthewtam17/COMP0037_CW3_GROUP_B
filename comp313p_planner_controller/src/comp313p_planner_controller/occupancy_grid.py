@@ -53,13 +53,13 @@ class OccupancyGrid(object):
         print("Map Height (cells): {}".format(self.heightInCells))
 
         # Copy the data from the occupancy grid message
-        newGrid = [[0 for y in range(self.heightInCells)] for x in range(self.widthInCells)]
+        self.grid = [[0 for y in range(self.heightInCells)] for x in range(self.widthInCells)]
 
         for x in range(self.widthInCells):
             for y in range(self.heightInCells):
-                newGrid[x][self.heightInCells-y-1] = float(data[len(data)-(self.widthInCells-x-1)-self.widthInCells*y-1]) \
+                self.grid[x][self.heightInCells-y-1] = float(data[len(data)-(self.widthInCells-x-1)-self.widthInCells*y-1]) \
                                                        / 100.0
-
+                
         # Process the map
         self.scaleMap()
         self.expandObstaclesToAccountForRobotSize()
