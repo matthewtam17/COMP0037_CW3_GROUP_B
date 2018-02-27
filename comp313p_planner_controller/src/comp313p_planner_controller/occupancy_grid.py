@@ -24,22 +24,23 @@ class OccupancyGrid(object):
         self.widthInCells = widthInCells
         self.heightInCells = heightInCells
         self.extentInCells = (self.widthInCells, self.heightInCells)
-
         self.resolution = resolution
-
         self.width = widthInCells * self.resolution
         self.height = heightInCells * self.resolution
         self.extent = (self.width, self.height)
-
+        self.robotRadius = 0
+        self.scale = 1
         self.grid = [[0 for y in range(self.heightInCells)] for x in range(self.widthInCells)]
         self.complete_grid = []
-        self.scale = 1
-
         self.originalGrid = None
 
     # Set the scale for the map.
     def setScale(self, scale):
         self.scale = scale
+
+    # Set the radius of the robot
+    def setRobotRadius(self, robotRadius):
+        self.robotRadius = robotRadius
         
     # Set the data from the array received from the map server. The
     # memory layout is different, so we have to flip it here. The map
@@ -53,15 +54,21 @@ class OccupancyGrid(object):
         print("Map Width (cells): {}".format(self.widthInCells))
         print("Map Height (cells): {}".format(self.heightInCells))
 
-        # Get the complete map
+        # Copy the data from the occupancy grid message
+        newGrid = [[0 for y in range(self.heightInCells)] for x in range(self.widthInCells)]
+
         for x in range(self.widthInCells):
             for y in range(self.heightInCells):
-                if (data[len(data)-(self.widthInCells-x-1)-self.widthInCells*y-1] == 100):
-                    self.grid[x][self.heightInCells-y-1] = 1
-                else:
-                    self.grid[x][self.heightInCells-y-1] = 0
-                    
-        self.scaleMap()
+                newGrid[x][self.heightInCells-y-1] = float(data[len(data)-(self.widthInCells-x-1)-self.widthInCells*y-1]) \
+                                                       100.0
+
+        # Process the map
+        scaledMap = self.scaleMap(newGrid)
+        obstacleExpandedMap = self.expandObstaclesToAccountForRobotSize(scaledMap)
+
+        # Assign as the new map
+        self.grid = obstacleExpandedMap
+
                    
     # Pre process the map so that we expand all the obstacles by a
     # circle of radius robotRadius metres. This is a way to account
@@ -69,18 +76,13 @@ class OccupancyGrid(object):
     # Minkowski sum. Practically, this is a really bad way to write
     # this! It also currently uses the crude aproximation that the
     # robot shape is a square
-    def expandObstaclesToAccountForCircularRobotOfRadius(self, robotRadius):
+    def expandObstaclesToAccountForRobotSize(self, grid):
 
         # Compute the size we need to grow the obstacle
-        s = int(math.ceil(robotRadius / self.resolution))
-        print 's=' + str(s)
-
-        # Always scale from the original grid. If it doesn't exist, make a copy
-        if self.originalGrid is None:
-            self.originalGrid =  [[self.grid[x][y] for y in range(self.heightInCells)] for x in range(self.widthInCells)]
+        s = int(math.ceil(self.robotRadius / self.resolution))
         
         # Allocate the new occupancy grid, which will contain the new obstacles
-        newGrid = [[0 for y in range(self.heightInCells)] for y in range(self.widthInCells)]
+        newGrid = [[0 for y in range(self.heightInCells)] for x in range(self.widthInCells)]
         
         # Iterate through all the cells in the first grid. If they are a 1, set all
         # cells within radius robotRadius to occupied as well. Note the magic +1 in the
@@ -88,14 +90,14 @@ class OccupancyGrid(object):
         # https://www.pythoncentral.io/pythons-range-function-explained/
         for x in range(self.widthInCells):
             for y in range(self.heightInCells):
-                if self.originalGrid[x][y] == 1:
+                if grid[x][y] == 1:
                     for gridX in range(clamp(x-s, 0, self.widthInCells),clamp(x+s+1, 0, self.widthInCells)):
                         for gridY in range(clamp(y-s, 0, self.heightInCells),clamp(y+s+1, 0, self.heightInCells)):
                             newGrid[gridX][gridY] = 1
 
-        self.grid = newGrid
+        return newGrid
                          
-    def scaleMap(self):
+    def scaleMap(self, grid):
     
         planning_map = [[0 for y in range(self.heightInCells/self.scale)] for x in range(self.widthInCells/self.scale)]
         print("Planning map size\nWidth: {}\nHeight: {}".format(len(planning_map), len(planning_map[0])))

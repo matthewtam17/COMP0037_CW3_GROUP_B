@@ -28,14 +28,14 @@ class PassivePlannerController(PlannerControllerBase):
 
         # If we can't reach the goal, give up and return
         if pathToGoalFound is False:
-            rospy.logwarn("Could not reach the goal at (%d, %d); moving to next goal", \
+            rospy.logwarn("Could not find a path to the goal at (%d, %d)", \
                           goalCellCoords[0], goalCellCoords[1])
             return False
             
         # Extract the path
         path = self.planner.extractPathToGoal()
 
-        # Drive the path to the goal.
+        # Drive along the path the goal
         goalNotReached = self.controller.drivePathToGoal(path, goal.theta, self.planner.getPlannerDrawer())
 
         return goalNotReached is False

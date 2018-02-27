@@ -1,15 +1,17 @@
 # This class manages the key logic for the reactive planner and controller
 
 import rospy
+from planner_controller_base import PlannerControllerBase
 
-class ReactivePlannerController(object):
+class ReactivePlannerController(PlannerControllerBase):
 
     def driveToGoal(self, goal):
 
         # Get the coal coordinate in cells
         goalCellCoords = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates((goal.x,goal.y))
 
-        # Reactive planner main loop
+        # Reactive planner main loop - keep iterating until the goal is reached or the robot gets
+        # stuck.
 
         goalNotReached = True
         
@@ -29,14 +31,14 @@ class ReactivePlannerController(object):
 
             # If we can't reach the goal, give up and return
             if pathToGoalFound is False:
-                rospy.logwarn("Could not reach the goal at (%d, %d); moving to next goal", \
+                rospy.logwarn("Could not find a path to the goal at (%d, %d)", \
                               goalCellCoords[0], goalCellCoords[1])
                 return False
             
             # Extract the path
             path = self.planner.extractPathToGoal()
 
-            # Drive the path to the goal.
+            # Drive along the path the goal
             goalNotReached = self.robotController.drivePathToGoal(path, goal.theta, self.planner.getPlannerDrawer())
             
             
