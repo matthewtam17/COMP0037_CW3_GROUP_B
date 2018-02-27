@@ -183,7 +183,6 @@ class OccupancyGridDrawer(BaseDrawer):
             for j in range(cellExtent[1]):
                 cellWeight = 1.0 - self.occupancyGrid.getCell(i, j)
                 hexWeight = '{:02x}'.format(int(cellWeight*255))
-                print str(cellWeight)
                 colour = '#' + hexWeight + hexWeight + hexWeight
                 self.rectangles[i][j].setFill(colour);
 
