@@ -104,6 +104,7 @@ class PlannerBase(object):
         self.iterationsSinceLastGraphicsUpdate = 0
 
         self.searchGridDrawer.update()
+        self.occupancyGridDrawer.update()
         time.sleep(self.pauseTimeInSeconds)
 
     # Create the drawer which shows the planner's progress

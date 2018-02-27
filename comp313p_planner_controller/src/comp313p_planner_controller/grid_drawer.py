@@ -47,7 +47,11 @@ class BaseDrawer(object):
     # Reset the graphics to the default state
     def reset(self):
         raise NotImplementedError()
-        
+
+    # Reset the graphics to the default state
+    def update(self):
+        raise NotImplementedError()
+
     # Convert workspace coordinates to window coordinates. This has to
     # take account of the scaling and the fact that graphics packages
     # use a left handed coordinate system with the origin in the top
@@ -70,18 +74,6 @@ class BaseDrawer(object):
     # Specify if the drawer runs interactively. This causes it to pause
     def setRunInteractively(self, runInteractively):
         self.runInteractively = runInteractively
-        
-    # Go through and draw all objects        
-    def update(self):
-        
-        # Draw the current plan
-        self.drawPlanGraphics()
-        
-        # Overlay on top the start and the goal
-        self.drawStartAndGoalGraphics()
-
-        # Flush the graphics
-        self.flushAndUpdateWindow()
 
     def flushAndUpdateWindow(self):
         # Flush the results
@@ -111,6 +103,18 @@ class SearchGridDrawer(BaseDrawer):
     def reset(self):
         # Nothing to do - rendering is stateless
         pass
+
+    # Go through and draw all objects        
+    def update(self):
+        
+        # Draw the current plan
+        self.drawPlanGraphics()
+        
+        # Overlay on top the start and the goal
+        self.drawStartAndGoalGraphics()
+
+        # Flush the graphics
+        self.flushAndUpdateWindow()
 
     def setSearchGrid(self,new_sg):
 	self.searchGrid=new_sg
@@ -177,7 +181,17 @@ class OccupancyGridDrawer(BaseDrawer):
             if rospy.is_shutdown():
                 return
             for j in range(cellExtent[1]):
-                cellWeight = self.occupancyGrid.getCell(i, j)
+                cellWeight = 1.0 - self.occupancyGrid.getCell(i, j)
                 hexWeight = '{:02x}'.format(int(cellWeight*255))
+                print str(cellWeight)
                 colour = '#' + hexWeight + hexWeight + hexWeight
                 self.rectangles[i][j].setFill(colour);
+
+    # Go through and draw all objects        
+    def update(self):
+        
+        # Draw the current plan
+        self.drawGrid()
+
+        # Flush the graphics
+        self.flushAndUpdateWindow()
