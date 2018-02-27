@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(comp313p_planner_controller)
+project(comp313p_reactive_planner_controller)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
