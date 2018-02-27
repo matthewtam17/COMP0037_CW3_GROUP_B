@@ -22,6 +22,9 @@ from comp313p_planner_controller.fifo_planner import FIFOPlanner
 # The controller to drive the robot along the path
 from comp313p_planner_controller.move2goal_controller import Move2GoalController
 
+# The planner controller which executes the main planning and control loop
+from comp313p_planner_controller.passive_planner_controller import PassivePlannerController
+
 # Self class interfaces with the planner and the controller
 class PlannerControllerNode(object):
 
@@ -31,7 +34,6 @@ class PlannerControllerNode(object):
         self.waitForGoal =  threading.Condition()
         self.waitForDriveCompleted =  threading.Condition()
         self.goal = None
-        pass
     
     def createOccupancyGridFromMapServer(self):
         # Get the map service
@@ -59,6 +61,9 @@ class PlannerControllerNode(object):
     def createRobotController(self):
         self.robotController = Move2GoalController(self.occupancyGrid)
 
+    def createPlannerController(self):
+        self.plannerController = PassivePlannerController(self.occupancyGrid, self.planner, self.robotController)
+
     def handleDriveToGoal(self, goal):
         # Report to the main loop that we have a new goal
         self.waitForGoal.acquire()
@@ -72,50 +77,6 @@ class PlannerControllerNode(object):
         self.waitForDriveCompleted.release()
 
         return GoalResponse(True)
-
-    # Run the planner. Note that we do not take account of the robot orientation when planning.
-    # The reason is simplicity; adding orientation means we have a full 3D planning problem.
-    # As a result, the plan will not be as efficient as it could be.
-    def driveToGoal(self, goal):
-
-        # Get the current pose of the robot
-        pose = self.robotController.getCurrentPose()
-        start = (pose.x, pose.y)
-
-        print "start = " + str(start)
-        print "goal = " + str(goal)
-        
-        # Call the planner
-        startCellCoords = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates(start)
-        goalCellCoords = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates((goal.x,goal.y))
-
-        print "startCellCoords = " + str(startCellCoords)
-        print "goalCellCoords = " + str(goalCellCoords)
-
-         # Exit if we need to
-        if rospy.is_shutdown() is True:
-            return False
-
-        # Get the plan
-        goalReached = self.planner.search(startCellCoords, goalCellCoords)
-
-        # Exit if we need to
-        if rospy.is_shutdown() is True:
-            return False
-
-        # If we can't reach the goal, give up and return
-        if goalReached is False:
-            rospy.logwarn("Could not reach the goal at (%d, %d); moving to next goal", \
-                          goalCellCoords[0], goalCellCoords[1])
-            return False
-        
-        # Extract the path
-        path = self.planner.extractPathToGoal()
-
-        # Now drive it
-        self.robotController.drivePathToGoal(path, goal.theta, self.planner.getPlannerDrawer())
-
-        return True
     
     def run(self):
 
@@ -127,6 +88,9 @@ class PlannerControllerNode(object):
         
         # Set up the robot controller
         self.createRobotController()
+
+        # Set up the planner controller, which puts the two together
+        self.createPlannerController()
 
         # Set up the wait for the service. Note that we can't directly
         # handle all the driving operations in the service
@@ -149,7 +113,7 @@ class PlannerControllerNode(object):
             if (self.goal is None):
                 continue
 
-            self.driveToGoal(self.goal)
+            self.plannerController.driveToGoal(self.goal)
             self.goal = None
 
             # Signal back to the service handler that we are done

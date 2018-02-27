@@ -32,8 +32,8 @@ class ControllerBase(object):
         # Set the pose to an initial value to stop things crashing
         self.pose = Pose2D()
 
-        # Store the occupany grid - used to transform from cell
-        # coordinates to world driving coordinates.
+        # Store the occupancy grid. This is dynamically updated as a result of new map
+        # information becoming available.
         self.occupancyGrid = occupancyGrid
         
         # This is the rate at which we broadcast updates to the simulator in Hz.
