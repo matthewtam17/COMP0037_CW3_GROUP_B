@@ -39,6 +39,10 @@ class ControllerBase(object):
         # This is the rate at which we broadcast updates to the simulator in Hz.
         self.rate = rospy.Rate(10)
 
+        # This flag says if the occupancy grid has changed
+        self.hasOccupancyGridChanged = True
+        
+
     # Get the pose of the robot. Store this in a Pose2D structure because
     # this is easy to use. Use radians for angles because these are used
     # inside the control system.
@@ -79,11 +83,16 @@ class ControllerBase(object):
         for waypointNumber in range(0, len(path.waypoints)):
             cell = path.waypoints[waypointNumber]
             waypoint = self.occupancyGrid.getWorldCoordinatesFromCellCoordinates(cell.coords)
+
             rospy.loginfo("Driving to waypoint (%f, %f)", waypoint[0], waypoint[1])
-            self.driveToWaypoint(waypoint)
+
+            
+            if self.driveToWaypoint(waypoint) is False:
+                return False
+                
             # Handle ^C
             if rospy.is_shutdown() is True:
-                break
+                return False
 
         rospy.loginfo('Rotating to goal orientation (' + str(goalOrientation) + ')')
         

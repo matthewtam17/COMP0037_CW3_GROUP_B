@@ -3,6 +3,12 @@ import rospy
 import threading
 import math
 
+# NOTE: THERE ARE SOME VERY, VERY BAD HACKS HERE WITH THREADING AT THE
+# MOMENT. WE'LL HAVE TO SEE IF WE CAN GET AWAY WITH IT IN PYTHON. THE
+# MAIN PROBLEM IS THAT WE HAVE TO RUN THE GUI IN THE MAIN THREAD, BUT
+# ROS PUTS ALL OF THE MESSAGE HANDLERS IN A SEPARATE THREAD. WHAT'S
+# DONE RIGHT NOW COULD BE GENEROUSLY DESCRIBED AS A CHAOTIC MESS.
+
 # Robot pose
 from geometry_msgs.msg import Pose
 
@@ -51,6 +57,10 @@ class PlannerControllerNode(object):
         self.occupancyGrid = OccupancyGrid(map.info.width, map.info.height, map.info.resolution)
         self.occupancyGrid.setScale(rospy.get_param('plan_scale', 5))
         self.occupancyGrid.setRobotRadius(rospy.get_param('robot_radius', 0.2))
+        self.occupancyGrid.setFromDataArrayFromMapServer(map.data)
+
+    # TODO: Change this method to be a callback to support changes in the map
+    def updateOccupancyGridFromMapServer(self, map):
         self.occupancyGrid.setFromDataArrayFromMapServer(map.data)
 
     def createPlanner(self):

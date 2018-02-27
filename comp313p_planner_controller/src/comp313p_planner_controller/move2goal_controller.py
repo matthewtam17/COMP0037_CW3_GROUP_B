@@ -71,6 +71,13 @@ class Move2GoalController(ControllerBase):
                 
             self.rate.sleep()
 
+            # Check if the occupancy grid has changed. If so, monitor if we can still reach the
+            # goal or not
+            if self.occupancyGridHasChanged is True:
+                if self.checkIfWaypointIsReachable(waypoint) is False:
+                    return False
+                self.occupancyGridHasChanged = False
+
             distanceError = sqrt(pow((waypoint[0] - self.pose.x), 2) + pow((waypoint[1] - self.pose.y), 2))
             angleError = self.shortestAngularDistance(self.pose.theta,
                                                       atan2(waypoint[1] - self.pose.y, waypoint[0] - self.pose.x))
@@ -79,6 +86,8 @@ class Move2GoalController(ControllerBase):
         vel_msg.linear.x = 0
         vel_msg.angular.z = 0
         self.velocityPublisher.publish(vel_msg)
+
+        return True
 
     def rotateToGoalOrientation(self, goalOrientation):
         vel_msg = Twist()
@@ -106,4 +115,5 @@ class Move2GoalController(ControllerBase):
         # Stop movement once finished
         vel_msg.angular.z = 0
         self.velocityPublisher.publish(vel_msg)
-        
+
+        return True
