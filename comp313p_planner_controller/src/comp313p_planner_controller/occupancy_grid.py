@@ -21,6 +21,8 @@ class OccupancyGrid(object):
     # in metres. By default, all the cells are set to "0" which means
     # that there are no obstacles.
     def __init__(self, widthInCells, heightInCells, resolution):
+        self.robotRadius = 0
+        self.scale = 1
         self.widthInCells = widthInCells
         self.heightInCells = heightInCells
         self.extentInCells = (self.widthInCells, self.heightInCells)
@@ -28,11 +30,7 @@ class OccupancyGrid(object):
         self.width = widthInCells * self.resolution
         self.height = heightInCells * self.resolution
         self.extent = (self.width, self.height)
-        self.robotRadius = 0
-        self.scale = 1
         self.grid = [[0 for y in range(self.heightInCells)] for x in range(self.widthInCells)]
-        self.complete_grid = []
-        self.originalGrid = None
 
     # Set the scale for the map.
     def setScale(self, scale):
@@ -60,23 +58,19 @@ class OccupancyGrid(object):
         for x in range(self.widthInCells):
             for y in range(self.heightInCells):
                 newGrid[x][self.heightInCells-y-1] = float(data[len(data)-(self.widthInCells-x-1)-self.widthInCells*y-1]) \
-                                                       100.0
+                                                       / 100.0
 
         # Process the map
-        scaledMap = self.scaleMap(newGrid)
-        obstacleExpandedMap = self.expandObstaclesToAccountForRobotSize(scaledMap)
+        self.scaleMap()
+        self.expandObstaclesToAccountForRobotSize()
 
-        # Assign as the new map
-        self.grid = obstacleExpandedMap
-
-                   
     # Pre process the map so that we expand all the obstacles by a
     # circle of radius robotRadius metres. This is a way to account
     # for the geometry. Technically, this is known as taking the
     # Minkowski sum. Practically, this is a really bad way to write
     # this! It also currently uses the crude aproximation that the
     # robot shape is a square
-    def expandObstaclesToAccountForRobotSize(self, grid):
+    def expandObstaclesToAccountForRobotSize(self):
 
         # Compute the size we need to grow the obstacle
         s = int(math.ceil(self.robotRadius / self.resolution))
@@ -90,14 +84,14 @@ class OccupancyGrid(object):
         # https://www.pythoncentral.io/pythons-range-function-explained/
         for x in range(self.widthInCells):
             for y in range(self.heightInCells):
-                if grid[x][y] == 1:
+                if self.grid[x][y] == 1:
                     for gridX in range(clamp(x-s, 0, self.widthInCells),clamp(x+s+1, 0, self.widthInCells)):
                         for gridY in range(clamp(y-s, 0, self.heightInCells),clamp(y+s+1, 0, self.heightInCells)):
                             newGrid[gridX][gridY] = 1
 
-        return newGrid
+        self.grid = newGrid
                          
-    def scaleMap(self, grid):
+    def scaleMap(self):
     
         planning_map = [[0 for y in range(self.heightInCells/self.scale)] for x in range(self.widthInCells/self.scale)]
         print("Planning map size\nWidth: {}\nHeight: {}".format(len(planning_map), len(planning_map[0])))
@@ -138,21 +132,14 @@ class OccupancyGrid(object):
 
                 planning_map[x][y] = occupied
 
-        self.grid = planning_map
-
-        if self.originalGrid is None:
-            self.originalGrid = copy.deepcopy(self.grid)
-            
-
         self.widthInCells = self.widthInCells / self.scale
         self.heightInCells = self.heightInCells / self.scale
         self.extentInCells = (self.widthInCells, self.heightInCells)
-
         self.resolution = self.resolution * self.scale
-
         self.width = self.widthInCells * self.resolution
         self.height = self.heightInCells * self.resolution
         self.extent = (self.width, self.height)
+        self.grid = planning_map
 
     # The width of the occupancy map in cells
     def getWidth(self):
