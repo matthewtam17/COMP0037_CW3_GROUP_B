@@ -64,8 +64,8 @@ class OccupancyGrid(object):
         :param val: cell value
         :return:
         """
-        self.grid = [[initialValue for y in range(self.heightInCells / self.scale)] for x in
-                        range(self.widthInCells / self.scale)]
+        self.grid = [[initialValue for y in range(self.heightInCells)] for x in
+                        range(self.widthInCells)]
 
     # Set the data from the array received from the map server. The
     # memory layout is different, so we have to flip it here. The map
