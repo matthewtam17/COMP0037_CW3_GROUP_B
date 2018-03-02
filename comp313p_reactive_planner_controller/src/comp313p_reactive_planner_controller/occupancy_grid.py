@@ -20,7 +20,7 @@ class OccupancyGrid(object):
     # height. The resolution says the length of the side of each cell
     # in metres. By default, all the cells are set to "0" which means
     # that there are no obstacles.
-    def __init__(self, widthInCells, heightInCells, resolution):
+    def __init__(self, widthInCells, heightInCells, resolution, initialValue = 0):
         self.robotRadius = 0
         self.scale = 1
         self.widthInCells = widthInCells
@@ -30,7 +30,7 @@ class OccupancyGrid(object):
         self.width = widthInCells * self.resolution
         self.height = heightInCells * self.resolution
         self.extent = (self.width, self.height)
-        self.grid = [[0 for y in range(self.heightInCells)] for x in range(self.widthInCells)]
+        self.grid = [[initialValue for y in range(self.heightInCells)] for x in range(self.widthInCells)]
 
     # Set the scale for the map.
     def setScale(self, scale):
@@ -40,6 +40,36 @@ class OccupancyGrid(object):
     def setRobotRadius(self, robotRadius):
         self.robotRadius = robotRadius
         
+
+    def scaleEmptyMap(self):
+
+        planning_map = [[self.getCell(0, 0) for y in range(self.heightInCells / self.scale)] for x in
+                        range(self.widthInCells / self.scale)]
+
+        self.grid = planning_map
+
+        if self.originalGrid is None:
+            self.originalGrid = copy.deepcopy(self.grid)
+
+        self.widthInCells = self.widthInCells / self.scale
+        self.heightInCells = self.heightInCells / self.scale
+        self.extentInCells = (self.widthInCells, self.heightInCells)
+
+        self.resolution = self.resolution * self.scale
+
+        self.width = self.widthInCells * self.resolution
+        self.height = self.heightInCells * self.resolution
+        self.extent = (self.width, self.height)
+
+    def clearMap(self, initialValue=0):
+        """
+        Function to clear the entire map
+        :param val: cell value
+        :return:
+        """
+        self.grid = [[initialValue for y in range(self.heightInCells / self.scale)] for x in
+                        range(self.widthInCells / self.scale)]
+
     # Set the data from the array received from the map server. The
     # memory layout is different, so we have to flip it here. The map
     # server also scales 100 to mean free and 0 to mean blocked. We

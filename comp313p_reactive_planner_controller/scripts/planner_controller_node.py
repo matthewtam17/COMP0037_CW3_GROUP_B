@@ -17,26 +17,16 @@ from nav_msgs.srv import GetMap
 
 # The service messages this node sends. This is actually a report
 # that the robot has reached its goal
-from comp313p_planner_controller.srv import *
+from comp313p_reactive_planner_controller.srv import *
 
 # The occupancy grid, used to store our representation of the map
-from comp313p_planner_controller.occupancy_grid import OccupancyGrid
-
-# The planner used to figure out the path
-from comp313p_planner_controller.fifo_planner import FIFOPlanner
-
-# The controller to drive the robot along the path
-from comp313p_planner_controller.move2goal_controller import Move2GoalController
-
-# The planner controller which executes the main planning and control loop
-from comp313p_planner_controller.passive_planner_controller import PassivePlannerController
+from comp313p_reactive_planner_controller.occupancy_grid import OccupancyGrid
 
 # Self class interfaces with the planner and the controller
-class PlannerControllerNode(object):
+class ReactivePlannerControllerNode(object):
 
     def __init__(self):
         rospy.init_node('planner_controller', anonymous=True)
-        
         self.waitForGoal =  threading.Condition()
         self.waitForDriveCompleted =  threading.Condition()
         self.goal = None
