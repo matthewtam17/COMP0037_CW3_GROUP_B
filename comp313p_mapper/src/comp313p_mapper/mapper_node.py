@@ -4,50 +4,62 @@ import sys
 import rospy
 import math
 import tf
-import numpy as np
-from nav_msgs.srv import GetMap
-from comp313p_planner_controller.occupancy_grid import OccupancyGrid
-from comp313p_planner_controller.search_grid import SearchGrid
-from comp313p_planner_controller.grid_drawer import SearchGridDrawer
-from comp313p_planner_controller.cell import CellLabel
-from sensor_msgs.msg import LaserScan
-from nav_msgs.msg import Odometry
 import copy
 
+import numpy as np
+from nav_msgs.srv import GetMap
+from comp313p_reactive_planner_controller.occupancy_grid import OccupancyGrid
+from comp313p_reactive_planner_controller.grid_drawer import OccupancyGridDrawer
+from comp313p_reactive_planner_controller.cell import CellLabel
+from sensor_msgs.msg import LaserScan
+from nav_msgs.msg import Odometry
 
-# This class creates a simulation of SLAM data:
-# uses True data to create a map that is initialised from robot starting location and publishes robot odometry
-#  that is initialised at starting location
+# This class implements basic mapping capabilities. Given knowledge
+# about the robot's position and orientation, it processes laser scans
+# to produce a new occupancy grid. If this grid differs from the
+# previous one, a new grid is created and broadcast.
 
-class MappingSystem(object):
+class MapperNode(object):
+
     def __init__(self):
-        rospy.init_node('mock_slam_node', anonymous=True)
-        rospy.wait_for_service('static_map')
-        rospy.loginfo('------> 0')
+
+        rospy.init_node('mapper_node', anonymous=True)
+	rospy.wait_for_service('static_map')
+	rospy.loginfo('------> 0')
         self.mapServer = rospy.ServiceProxy('static_map', GetMap)
-        rospy.loginfo('------> 1')
+	rospy.loginfo('------> 1')
         resp = self.mapServer()
         self.occupancyGrid = OccupancyGrid(resp.map.info.width, resp.map.info.height, resp.map.info.resolution, 0.5)
-        self.occupancyGrid.setScale(rospy.get_param('plan_scale', 5))
-        self.occupancyGrid.scaleEmptyMap()
-        rospy.loginfo('------> 2')
-        self.searchGrid = SearchGrid.fromOccupancyGrid(self.occupancyGrid)
-        rospy.loginfo('------> 3')
-        self.gridDrawer = SearchGridDrawer('Map', self.searchGrid, 600)
-        self.gridDrawer.open()
-        rospy.loginfo('------> 4')
+	self.occupancyGrid.setScale(rospy.get_param('plan_scale',5))
+	self.occupancyGrid.scaleEmptyMap()
+                         
+        self.deltaOccupancyGrid = OccupancyGrid(resp.map.info.width, resp.map.info.height, resp.map.info.resolution, 0)
+	self.deltaOccupancyGrid.setScale(rospy.get_param('plan_scale',5))
+	self.deltaOccupancyGrid.scaleEmptyMap()
+
+	rospy.loginfo('------> 2')
+	rospy.loginfo('------> 3')
+        self.occupancyGridDrawer = OccupancyGridDrawer('Mapper Node Occupancy Grid',\
+                                                       self.occupancyGrid,rospy.get_param('maximum_window_height_in_pixels', 700))
+	self.occupancyGridDrawer.open()
+        #self.deltaOccupancyGridDrawer = OccupancyGridDrawer('Mapper Node Delta Occupancy Grid',\
+#                                                            self.deltaOccupancyGrid,rospy.get_param('maximum_window_height_in_pixels', 700))
+	#self.deltaOccupancyGridDrawer.open()
+	rospy.loginfo('------> 4')
         self.local_odometry = Odometry()
-        self.laser_sub = rospy.Subscriber("robot0/laser_0", LaserScan, self.parse_scan, queue_size=1)
+        self.laser_sub= rospy.Subscriber("robot0/laser_0", LaserScan, self.parse_scan, queue_size=1)
         self.odom_sub = rospy.Subscriber("robot0/odom", Odometry, self.update_odometry)
-        # rospy.Timer(rospy.Duration(1),self.update_visualisation)
-        rospy.loginfo('------> Initialised')
+	rospy.loginfo('------> Initialised')
 
     def update_odometry(self, msg):
         self.local_odometry = msg
 
     def parse_scan(self, msg):
+
         occupied_points = []
         current_pose = copy.deepcopy(self.local_odometry.pose.pose)
+        gridHasChanged = False
+
         for ii in range(int(math.floor((msg.angle_max - msg.angle_min) / msg.angle_increment))):
             # rospy.loginfo("{} {} {}".format(msg.ranges[ii],msg.angle_min,msg.angle_max))
             valid = (msg.ranges[ii] > msg.range_min) and (msg.ranges[ii] < msg.range_max)
@@ -70,19 +82,26 @@ class MappingSystem(object):
 
             for point in between:
                 try:
-                    if self.occupancyGrid.getCell(point[0], point[1]) != 1.0:
+                    if self.occupancyGrid.getCell(point[0], point[1]) != 0.0:
                         self.occupancyGrid.setCell(point[0], point[1], 0)
+                        self.deltaOccupancyGrid.setCell(point[0], point[1], 1.0)
+                        gridHasChanged = True
                 except IndexError as e:
                     print(e)
+                    print "between: " + str(point[0]) + ", " + str(point[1])
 
         for point in occupied_points:
             try:
-                # if self.occupancyGrid.getCell(point[0], point[1]) is not 1:
-                self.occupancyGrid.setCell(point[0], point[1], 1.0)
+                if self.occupancyGrid.getCell(point[0], point[1]) != 1.0:
+                    self.occupancyGrid.setCell(point[0], point[1], 1.0)
+                    self.deltaOccupancyGrid.setCell(point[0], point[1], 1.0)
+                    gridHasChanged = True
             except IndexError as e:
                 print(e)
+                print "occupied_points: " + str(point[0]) + ", " + str(point[1])
 
-        self.searchGrid.updateFromOccupancyGrid()
+        if gridHasChanged is True:
+            print "grid has changed"
 
     def ray_trace(self, dist, angle, scanmsg):
         """
@@ -101,16 +120,17 @@ class MappingSystem(object):
                                math.sin(angle) * a + self.local_odometry.pose.pose.position.y]
             points.append(self.occupancyGrid.getCellCoordinatesFromWorldCoordinates(point_world_coo))
         return points
+        
+    def update_visualisation(self):	 
+	self.occupancyGridDrawer.update()
+	#self.deltaOccupancyGridDrawer.update()
+        self.deltaOccupancyGrid.clearMap(0)
+	
+    def run(self):
+        while not rospy.is_shutdown():
+            rospy.sleep(1)
+            self.update_visualisation()
+        
+  
 
-    def update_visualisation(self):
-        # self.gridDrawer.setSearchGrid(self.searchGrid)
-        self.gridDrawer.update()
-
-
-if __name__ == '__main__':
-    mock = MappingSystem()
-
-    rate = rospy.Rate(10)
-    while not rospy.is_shutdown():
-        mock.update_visualisation()
-        rate.sleep()
+  
