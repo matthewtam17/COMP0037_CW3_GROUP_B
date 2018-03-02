@@ -48,9 +48,6 @@ class OccupancyGrid(object):
 
         self.grid = planning_map
 
-        if self.originalGrid is None:
-            self.originalGrid = copy.deepcopy(self.grid)
-
         self.widthInCells = self.widthInCells / self.scale
         self.heightInCells = self.heightInCells / self.scale
         self.extentInCells = (self.widthInCells, self.heightInCells)
@@ -230,8 +227,8 @@ class OccupancyGrid(object):
     # the grid. The conversion uses integer rounding.
     def getCellCoordinatesFromWorldCoordinates(self, worldCoords):
 
-        cellCoords = (clamp(int(worldCoords[0] / self.resolution), 0, self.extentInCells[0]), \
-                      clamp(int(worldCoords[1] / self.resolution), 0, self.extentInCells[1]))
+        cellCoords = (clamp(int(round(worldCoords[0] / self.resolution)), 0, self.extentInCells[0]), \
+                      clamp(int(round(worldCoords[1] / self.resolution)), 0, self.extentInCells[1]))
         
         return cellCoords
     
