@@ -20,7 +20,7 @@ class OccupancyGrid(object):
     # height. The resolution says the length of the side of each cell
     # in metres. By default, all the cells are set to "0" which means
     # that there are no obstacles.
-    def __init__(self, widthInCells, heightInCells, resolution, initialValue = 0):
+    def __init__(self, widthInCells, heightInCells, resolution, initialValue = 0.0):
         self.robotRadius = 0
         self.scale = 1
         self.widthInCells = widthInCells
@@ -154,10 +154,9 @@ class OccupancyGrid(object):
                         break
 
                     for y_check in y_range:
-                        value = self.grid[x_check][y_check]
+                        occupied = max(occupied, self.grid[x_check][y_check])
 
-                        if value > 0 or occupied == 1:
-                            occupied = 1
+                        if occupied == 1:
                             break
 
                 planning_map[x][y] = occupied
