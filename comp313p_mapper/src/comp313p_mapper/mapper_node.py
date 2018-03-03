@@ -57,7 +57,6 @@ class MapperNode(object):
         self.mostRecentTwist = Twist();
         self.twistSubscriber = rospy.Subscriber('/robot0/cmd_vel', Twist, self.twistCallback, queue_size=1)
         self.laseSubscriber = rospy.Subscriber("robot0/laser_0", LaserScan, self.parseScanCallback, queue_size=1)
-
         
         # Set up the lock to ensure thread safety
         self.dataCopyLock = Lock()
@@ -67,16 +66,19 @@ class MapperNode(object):
     def odometryCallback(self, msg):
         self.dataCopyLock.acquire()
         self.mostRecentOdometry = msg
-        print 'odometry: ' + str(msg.header.stamp)
         self.dataCopyLock.release()
 
     def twistCallback(self, msg):
         self.dataCopyLock.acquire()
         self.mostRecentVelocity = msg
-        print 'twist: ' + str(rospy.Time().now())
         self.dataCopyLock.release()
 
-
+    # Predict the pose of the robot to the current time. This is to
+    # hopefully make the pose of the robot a bit more accurate. The
+    # equation is: currentPose = lastPose + dT * lastTwist. Note this
+    # isn't quite right. e.g. a more proper implementation would store
+    # a history of velocities and interpolate over them.
+    
     def predictPose(self, predictTime):
 
         # Copy the last odometry and velocity
@@ -88,16 +90,19 @@ class MapperNode(object):
 
         dT = predictTime - currentPoseTime
 
-        print str(dT)
-
         quaternion = (currentPose.orientation.x, currentPose.orientation.y,
                       currentPose.orientation.z, currentPose.orientation.w)
         euler = tf.transformations.euler_from_quaternion(quaternion)
 
         theta = euler[2]
         
-        # Motion model adapted from stdr
-        # if (abs(mostRecentVelocity.angular.z) < 1e-6):
+        # These are the "ideal motion model" prediction equations from
+        # stdr which attempt to accurately describe the trajectory of
+        # the robot if it turns as it moves. The equations are precise
+        # if the angular and linear velocity is constant over the
+        # prediction interval.
+
+        #if (abs(mostRecentVelocity.angular.z) < 1e-6):
         x = currentPose.position.x + dT * currentTwist.linear.x * math.cos(theta)
         y = currentPose.position.y + dT * currentTwist.linear.x * math.sin(theta)
         #else:
@@ -114,41 +119,57 @@ class MapperNode(object):
         #_currentTwist.linear.x / _currentTwist.angular.z * 
         #cosf(_pose.theta + dt.to_sec() * _currentTwist.angular.z);
         #    }
-        theta = theta + currentTwist.angular.z * dT;
+        theta = theta + currentTwist.angular.z * dT
 
         return x, y, theta
 
         
     def parseScanCallback(self, msg):
 
-        print 'scan: ' + str(msg.header.stamp)
-
-        # Prediction interval; note we do not handle the velocity properly
+        # Predict the robot pose to the time the scan was taken
         x, y, theta = self.predictPose(msg.header.stamp.to_sec())
         
-        occupied_points = []
         gridHasChanged = False
 
+        # For each ray, check the range is good. If so, check all the
+        # cells along the ray and mark cells as either open or
+        # blocked. To get around numerical issues, we trace along each
+        # ray in turn and terminate when we hit the first obstacle or at the end of the ray.
         for ii in range(int(math.floor((msg.angle_max - msg.angle_min) / msg.angle_increment))):
             # rospy.loginfo("{} {} {}".format(msg.ranges[ii],msg.angle_min,msg.angle_max))
-            valid = (msg.ranges[ii] > msg.range_min) and (msg.ranges[ii] < msg.range_max)
 
+            detectedRange = msg.ranges[ii]
+            
+            # If the detection is below the minimum range, assume this ray is busted and continue
+            if (detectedRange < msg.range_min):
+                continue
+
+            # Make sure the result is numerically valid
+            if detectedRange > msg.range_max:
+                rayEndsInObject
+                detectedRange = msg.range_max
+
+            # Get the angle of this ray
             angle = msg.angle_min + msg.angle_increment * ii + theta
 
-            # If the range is valid find the end point add it to occupied points and set the distance for ray tracing
-            if valid:
-                point_world_coo = [math.cos(angle) * msg.ranges[ii] + x,
-                                   math.sin(angle) * msg.ranges[ii] + y]
+            # Get the list of cells which sit on this ray. The ray is
+            # scaled so that the last sell is at the detected range
+            # from the sensor.
+            between = self.ray_trace(detectedRange, x, y, angle, msg)
 
-                occupied_points.append(self.occupancyGrid.getCellCoordinatesFromWorldCoordinates(point_world_coo))
-                dist = msg.ranges[ii]
-            else:
-                dist = msg.range_max
-            between = self.ray_trace(dist- 0.1, x, y, angle, msg)
-
+            # Traverse along the ray and set cells. We can only change
+            # cells from unknown (0.5) to free. If we encounter a
+            # blocked cell, terminate. Sometimes the ray can slightly
+            # extend through a blocked cell due to numerical rounding
+            # issues.
+            traversedToEnd = True
             for point in between:
                 try:
-                    if self.occupancyGrid.getCell(point[0], point[1]) != 0.0:
+                    if self.occupancyGrid.getCell(point[0], point[1]) == 1.0:
+                        traversedToEnd = False
+                        break
+                    
+                    if self.occupancyGrid.getCell(point[0], point[1]) == 0.5:
                         self.occupancyGrid.setCell(point[0], point[1], 0)
                         self.deltaOccupancyGrid.setCell(point[0], point[1], 1.0)
                         gridHasChanged = True
@@ -156,18 +177,19 @@ class MapperNode(object):
                     print(e)
                     print "between: " + str(point[0]) + ", " + str(point[1])
 
-        for point in occupied_points:
-            try:
-                if self.occupancyGrid.getCell(point[0], point[1]) != 1.0:
-                    self.occupancyGrid.setCell(point[0], point[1], 1.0)
-                    self.deltaOccupancyGrid.setCell(point[0], point[1], 1.0)
-                    gridHasChanged = True
-            except IndexError as e:
-                print(e)
-                print "occupied_points: " + str(point[0]) + ", " + str(point[1])
+            # If we got to the end okay, see if we have to mark the
+            # state of the end cell to occupied or not. To do this, we 
 
-#        if gridHasChanged is True:
-#            print "grid has changed"
+            # Note that we can change a cell
+            # from unknown and free to occupied, but we cannot change
+            # the state from occupied back to anything else. This gets
+            # around the issue that there can be "blinking" between
+            # whether a cell is occupied or not.
+            if (traversedToEnd is True) & (detectedRange <= msg.range_max):
+                lastPoint = between[-1]
+                if self.occupancyGrid.getCell(lastPoint[0], lastPoint[1]) < 1.0:
+                    self.occupancyGrid.setCell(point[0], point[1], 0)
+                    self.deltaOccupancyGrid.setCell(point[0], point[1], 1.0)
 
     def ray_trace(self, dist, x, y, angle, scanmsg):
         """
