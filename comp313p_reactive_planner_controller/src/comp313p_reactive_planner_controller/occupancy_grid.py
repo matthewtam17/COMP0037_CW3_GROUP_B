@@ -36,11 +36,19 @@ class OccupancyGrid(object):
     def setScale(self, scale):
         self.scale = scale
 
+    def getScale(self):
+        return self.scale
+        
     # Set the radius of the robot
     def setRobotRadius(self, robotRadius):
         self.robotRadius = robotRadius
         
+    def getExtent(self):
+        return self.extent
 
+    def getExtentInCells(self):
+        return self.extentInCells
+        
     def scaleEmptyMap(self):
 
         planning_map = [[self.getCell(0, 0) for y in range(self.heightInCells / self.scale)] for x in
