@@ -16,6 +16,7 @@ from nav_msgs.msg import Odometry
 from threading import Lock
 from geometry_msgs.msg  import Twist
 from comp313p_mapper.msg import MapUpdate
+from bresenhamalgorithm import bresenham
 
 # This class implements basic mapping capabilities. Given knowledge
 # about the robot's position and orientation, it processes laser scans
@@ -158,12 +159,18 @@ class MapperNode(object):
 
         theta = theta + currentTwist.angular.z * dT
 
-        return x, y, theta
+        tooFast = (abs(currentTwist.linear.x) > 4) | (abs(currentTwist.angular.z) > math.radians(10))
+        
+        return x, y, theta, tooFast
 
     def parseScan(self, msg):
 
         # Predict the robot pose to the time the scan was taken
-        x, y, theta = self.predictPose(msg.header.stamp.to_sec())
+        x, y, theta, tooFast = self.predictPose(msg.header.stamp.to_sec())
+
+        # If the robot is travelling too quickly, don't bother trying to analyse the scan
+        if tooFast is True:
+            return
         
         # Clear the flag which shows that the map has changed
         gridHasChanged = False
@@ -212,7 +219,7 @@ class MapperNode(object):
                         traversedToEnd = False
                         break
                     
-                    if self.occupancyGrid.getCell(point[0], point[1]) == 0.5:
+                    if abs(self.occupancyGrid.getCell(point[0], point[1])-0.5) < 0.1:
                         self.occupancyGrid.setCell(point[0], point[1], 0)
                         self.deltaOccupancyGrid.setCell(point[0], point[1], 1.0)
                         self.showDeltaOccupancyGrid.setCell(point[0], point[1], 1.0)
@@ -249,6 +256,31 @@ class MapperNode(object):
         :param scanmsg: Laser Scan message
         :return: list of points in between the origin and end point
         """
+        startPoint = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates([math.cos(angle) * scanmsg.range_min + x, \
+                                                                              math.sin(angle) * scanmsg.range_min + y])
+        endPoint = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates([math.cos(angle) * dist + x, \
+                                                                              math.sin(angle) * dist + y])
+
+        pointsOld = self.ray_trace_old(dist, x, y, angle, scanmsg)
+
+        points = bresenham(endPoint, startPoint)
+
+        print str(startPoint) + ':' + str(points.path[0])
+        print str(endPoint) + ':' + str(points.path[-1])
+        
+        assert startPoint == points.path[0]
+        assert endPoint == points.path[-1]
+
+        
+
+        #print str(points.path)
+        
+        
+        return points.path
+        #return pointsOld
+
+    def ray_trace_old(self, dist, x, y, angle, scanmsg):
+
         points = []
 
         space = np.linspace(scanmsg.range_min, dist, scanmsg.range_max * 5)
@@ -256,8 +288,17 @@ class MapperNode(object):
             point_world_coo = [math.cos(angle) * a + x,
                                math.sin(angle) * a + y]
             points.append(self.occupancyGrid.getCellCoordinatesFromWorldCoordinates(point_world_coo))
-        return points
+
+
+        print 'old:' + str(points[0]) + '=>' +  str(points[-1])
+
+
+        print str(points)
         
+        return points
+
+
+    
     def update_visualisation(self):
 
         if self.updateVisualisation is False:
