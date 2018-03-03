@@ -46,9 +46,9 @@ class MapperNode(object):
         self.occupancyGridDrawer = OccupancyGridDrawer('Mapper Node Occupancy Grid',\
                                                        self.occupancyGrid,rospy.get_param('maximum_window_height_in_pixels', 700))
 	self.occupancyGridDrawer.open()
-        #self.deltaOccupancyGridDrawer = OccupancyGridDrawer('Mapper Node Delta Occupancy Grid',\
-#                                                            self.deltaOccupancyGrid,rospy.get_param('maximum_window_height_in_pixels', 700))
-	#self.deltaOccupancyGridDrawer.open()
+        self.deltaOccupancyGridDrawer = OccupancyGridDrawer('Mapper Node Delta Occupancy Grid',\
+                                                            self.deltaOccupancyGrid,rospy.get_param('maximum_window_height_in_pixels', 700))
+	self.deltaOccupancyGridDrawer.open()
 	rospy.loginfo('------> 4')
 
         # Set up the subscribers. These track the robot position, speed and laser scans.
@@ -102,23 +102,16 @@ class MapperNode(object):
         # if the angular and linear velocity is constant over the
         # prediction interval.
 
-        #if (abs(mostRecentVelocity.angular.z) < 1e-6):
-        x = currentPose.position.x + dT * currentTwist.linear.x * math.cos(theta)
-        y = currentPose.position.y + dT * currentTwist.linear.x * math.sin(theta)
-        #else:
-        # #   currentPose.position.x = currentPose.position.x - currentTwist.linear.x / currentTwist.angular.z * \
-        # #                            sin(theta) + currentTwist.linear.x / currentTwist.angular.z * \
-        # #                            sinf(theta + dT * currentTwist.angular.z);
+        if (abs(currentTwist.angular.z) < 1e-6):
+            x = currentPose.position.x + dT * currentTwist.linear.x * math.cos(theta)
+            y = currentPose.position.y + dT * currentTwist.linear.x * math.sin(theta)
+        else:
+            x = currentPose.position.x - currentTwist.linear.x / currentTwist.angular.z * sin(theta) + \
+                currentTwist.linear.x / currentTwist.angular.z * sin(theta + dT * currentTwist.angular.z)
 
-        #    currentPose.position.y = currentPose.position.y - currentTwist.linear.x / currentTwist.angular.z * \
-        #                             sin(theta) + currentTwist.linear.x / currentTwist.angular.z * \
-        #                             sinf(theta + dT * currentTwist.angular.z);
+            y = currentPose.position.y - currentTwist.linear.x / currentTwist.angular.z * cos(theta) + \
+                currentTwist.linear.x / currentTwist.angular.z * cos(theta + dT * currentTwist.angular.z);
 
-        #_pose.y -= - _currentTwist.linear.x / _currentTwist.angular.z * 
-        # cosf(_pose.theta) + 
-        #_currentTwist.linear.x / _currentTwist.angular.z * 
-        #cosf(_pose.theta + dt.to_sec() * _currentTwist.angular.z);
-        #    }
         theta = theta + currentTwist.angular.z * dT
 
         return x, y, theta
@@ -144,9 +137,12 @@ class MapperNode(object):
             if (detectedRange < msg.range_min):
                 continue
 
-            # Make sure the result is numerically valid
-            if detectedRange > msg.range_max:
-                rayEndsInObject
+            rayEndsOnObject = True
+
+            # If the detection range is beyond the end of the sensor,
+            # this is the mark which says that nothing was detected
+            if detectedRange >= msg.range_max:
+                rayEndsOnObject = False
                 detectedRange = msg.range_max
 
             # Get the angle of this ray
@@ -165,7 +161,7 @@ class MapperNode(object):
             traversedToEnd = True
             for point in between:
                 try:
-                    if self.occupancyGrid.getCell(point[0], point[1]) == 1.0:
+                    if self.occupancyGrid.getCell(point[0], point[1]) > 0.5:
                         traversedToEnd = False
                         break
                     
@@ -185,10 +181,10 @@ class MapperNode(object):
             # the state from occupied back to anything else. This gets
             # around the issue that there can be "blinking" between
             # whether a cell is occupied or not.
-            if (traversedToEnd is True) & (detectedRange <= msg.range_max):
+            if (traversedToEnd is True) & (rayEndsOnObject is True):
                 lastPoint = between[-1]
                 if self.occupancyGrid.getCell(lastPoint[0], lastPoint[1]) < 1.0:
-                    self.occupancyGrid.setCell(point[0], point[1], 0)
+                    self.occupancyGrid.setCell(point[0], point[1], 1)
                     self.deltaOccupancyGrid.setCell(point[0], point[1], 1.0)
 
     def ray_trace(self, dist, x, y, angle, scanmsg):
@@ -211,7 +207,7 @@ class MapperNode(object):
         
     def update_visualisation(self):	 
 	self.occupancyGridDrawer.update()
-	#self.deltaOccupancyGridDrawer.update()
+	self.deltaOccupancyGridDrawer.update()
         self.deltaOccupancyGrid.clearMap(0)
 	
     def run(self):
