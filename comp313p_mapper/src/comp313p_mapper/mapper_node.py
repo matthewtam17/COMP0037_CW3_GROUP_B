@@ -15,6 +15,7 @@ from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Odometry
 from threading import Lock
 from geometry_msgs.msg  import Twist
+from comp313p_mapper.msg import MapUpdate
 
 # This class implements basic mapping capabilities. Given knowledge
 # about the robot's position and orientation, it processes laser scans
@@ -27,27 +28,40 @@ class MapperNode(object):
 
     def __init__(self):
 
+        # Get the ground truth map from stdr; we use this to figure out the dimensions of the map       
         rospy.init_node('mapper_node', anonymous=True)
-	rospy.wait_for_service('static_map')
-	rospy.loginfo('------> 0')
         self.mapServer = rospy.ServiceProxy('static_map', GetMap)
-	rospy.loginfo('------> 1')
         resp = self.mapServer()
+
+        # Create the publisher
+        self.mapUpdatePublisher = rospy.Publisher('updated_map', MapUpdate, queue_size = 1)
+        
+        # Create the occupancy grid map. This is the "raw" one from the sensor.
         self.occupancyGrid = OccupancyGrid(resp.map.info.width, resp.map.info.height, resp.map.info.resolution, 0.5)
 	self.occupancyGrid.setScale(rospy.get_param('plan_scale',5))
 	self.occupancyGrid.scaleEmptyMap()
                          
+        # Create the delta occupancy grid map. This stores the difference since the last time the map was sent out
         self.deltaOccupancyGrid = OccupancyGrid(resp.map.info.width, resp.map.info.height, resp.map.info.resolution, 0)
 	self.deltaOccupancyGrid.setScale(rospy.get_param('plan_scale',5))
 	self.deltaOccupancyGrid.scaleEmptyMap()
 
+        # Create the show delta occupancy grid map. This stores the difference since the last time the map was sent out.
+        # Done as a cheesy way to sort out threading issues
+        self.showDeltaOccupancyGrid = OccupancyGrid(resp.map.info.width, resp.map.info.height, resp.map.info.resolution, 0)
+	self.showDeltaOccupancyGrid.setScale(rospy.get_param('plan_scale',5))
+	self.showDeltaOccupancyGrid.scaleEmptyMap()
+
 	rospy.loginfo('------> 2')
 	rospy.loginfo('------> 3')
+
+        windowHeight = rospy.get_param('maximum_window_height_in_pixels', 700)
+        
         self.occupancyGridDrawer = OccupancyGridDrawer('Mapper Node Occupancy Grid',\
-                                                       self.occupancyGrid,rospy.get_param('maximum_window_height_in_pixels', 700))
+                                                       self.occupancyGrid, windowHeight)
 	self.occupancyGridDrawer.open()
         self.deltaOccupancyGridDrawer = OccupancyGridDrawer('Mapper Node Delta Occupancy Grid',\
-                                                            self.deltaOccupancyGrid,rospy.get_param('maximum_window_height_in_pixels', 700))
+                                                            self.showDeltaOccupancyGrid, windowHeight)
 	self.deltaOccupancyGridDrawer.open()
 	rospy.loginfo('------> 4')
 
@@ -56,8 +70,11 @@ class MapperNode(object):
         self.odometrySubscriber = rospy.Subscriber("robot0/odom", Odometry, self.odometryCallback, queue_size=1)
         self.mostRecentTwist = Twist();
         self.twistSubscriber = rospy.Subscriber('/robot0/cmd_vel', Twist, self.twistCallback, queue_size=1)
-        self.laseSubscriber = rospy.Subscriber("robot0/laser_0", LaserScan, self.parseScanCallback, queue_size=1)
-        
+        self.laserSubscriber = rospy.Subscriber("robot0/laser_0", LaserScan, self.laserScanCallback, queue_size=1)
+
+        # Flag set to true if graphics can be updated
+        self.updateVisualisation = False
+
         # Set up the lock to ensure thread safety
         self.dataCopyLock = Lock()
 
@@ -73,6 +90,33 @@ class MapperNode(object):
         self.mostRecentVelocity = msg
         self.dataCopyLock.release()
 
+
+    # Handle the laser scan callback. First process the scans and update the various maps
+    
+    def laserScanCallback(self, msg):
+
+        # Process the scan
+        gridHasChanged = self.parseScan(msg)
+
+        # If nothing has changed, return
+        if gridHasChanged is False:
+            return
+
+        self.updateVisualisation = True
+
+        # Construct the map update message
+        mapUpdateMessage = MapUpdate()
+
+        mapUpdateMessage.header.stamp = rospy.Time().now()
+        mapUpdateMessage.scale = self.occupancyGrid.getScale()
+        mapUpdateMessage.extentInCells = self.occupancyGrid.getExtentInCells()
+        mapUpdateMessage.extent = self.occupancyGrid.getExtent()
+        mapUpdateMessage.occupancyGrid = copy.deepcopy(self.occupancyGrid)
+        mapUpdateMessage.deltaOccupancyGrid = copy.deepcopy(self.deltaOccupancyGrid)
+
+        # Send it out
+        self.mapUpdatePublisher.publish(mapUpdateMessage)
+        
     # Predict the pose of the robot to the current time. This is to
     # hopefully make the pose of the robot a bit more accurate. The
     # equation is: currentPose = lastPose + dT * lastTwist. Note this
@@ -116,14 +160,17 @@ class MapperNode(object):
 
         return x, y, theta
 
-        
-    def parseScanCallback(self, msg):
+    def parseScan(self, msg):
 
         # Predict the robot pose to the time the scan was taken
         x, y, theta = self.predictPose(msg.header.stamp.to_sec())
         
+        # Clear the flag which shows that the map has changed
         gridHasChanged = False
 
+        # Clear the delta map, to imply that no changes have been detected
+        self.deltaOccupancyGrid.clearMap(0)
+        
         # For each ray, check the range is good. If so, check all the
         # cells along the ray and mark cells as either open or
         # blocked. To get around numerical issues, we trace along each
@@ -168,10 +215,12 @@ class MapperNode(object):
                     if self.occupancyGrid.getCell(point[0], point[1]) == 0.5:
                         self.occupancyGrid.setCell(point[0], point[1], 0)
                         self.deltaOccupancyGrid.setCell(point[0], point[1], 1.0)
+                        self.showDeltaOccupancyGrid.setCell(point[0], point[1], 1.0)
                         gridHasChanged = True
                 except IndexError as e:
                     print(e)
                     print "between: " + str(point[0]) + ", " + str(point[1])
+                    print "extent: " + str(self.occupancyGrid.getExtent())
 
             # If we got to the end okay, see if we have to mark the
             # state of the end cell to occupied or not. To do this, we 
@@ -186,6 +235,10 @@ class MapperNode(object):
                 if self.occupancyGrid.getCell(lastPoint[0], lastPoint[1]) < 1.0:
                     self.occupancyGrid.setCell(point[0], point[1], 1)
                     self.deltaOccupancyGrid.setCell(point[0], point[1], 1.0)
+                    self.showDeltaOccupancyGrid.setCell(point[0], point[1], 1.0)
+                    gridHasChanged = True
+
+        return gridHasChanged
 
     def ray_trace(self, dist, x, y, angle, scanmsg):
         """
@@ -205,14 +258,19 @@ class MapperNode(object):
             points.append(self.occupancyGrid.getCellCoordinatesFromWorldCoordinates(point_world_coo))
         return points
         
-    def update_visualisation(self):	 
+    def update_visualisation(self):
+
+        if self.updateVisualisation is False:
+            return
+        
 	self.occupancyGridDrawer.update()
 	self.deltaOccupancyGridDrawer.update()
-        self.deltaOccupancyGrid.clearMap(0)
+        self.showDeltaOccupancyGrid.clearMap(0)
+        self.updateVisualisation = False
 	
     def run(self):
         while not rospy.is_shutdown():
-            rospy.sleep(1)
+            rospy.sleep(2)
             self.update_visualisation()
         
   

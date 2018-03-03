@@ -1,0 +1,9 @@
+Header header
+
+float32 scale
+int16[] extentInCells
+float32[] extent
+float32 resolution
+
+float32[] occupancyGrid
+float32[] deltaOccupancyGrid
