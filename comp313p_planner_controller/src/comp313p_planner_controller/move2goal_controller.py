@@ -48,7 +48,7 @@ class Move2GoalController(ControllerBase):
             #print("Current Pose: x: {}, y:{} , theta: {}\nGoal: x: {}, y: {}\n".format(self.pose.x, self.pose.y,
             #                                                                           self.pose.theta, waypoint[0],
             #                                                                           waypoint[1]))
-            print("Distance Error: {}\nAngular Error: {}".format(distanceError, angleError))
+            #print("Distance Error: {}\nAngular Error: {}".format(distanceError, angleError))
 
             # Proportional Controller
             # linear velocity in the x-axis: only switch on when the angular error is sufficiently small
