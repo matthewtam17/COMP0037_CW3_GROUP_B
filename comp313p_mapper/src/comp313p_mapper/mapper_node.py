@@ -35,9 +35,12 @@ class MapperNode(object):
         self.mapServer = rospy.ServiceProxy('static_map', GetMap)
         resp = self.mapServer()
 
-        # Create the publisher
+        # Create the publisher for the regular map messages
         self.mapUpdatePublisher = rospy.Publisher('updated_map', MapUpdate, queue_size = 1)
-        
+ 
+        # Register the supported services
+        self.changeMapperStateService = rospy.Service('change_mapper_state', ChangeMapperState, self.mappingStateService)
+        self.requestMapUpdateService = rospy.Service('request_map_update', RequestMapUpdate, self.requestMapUpdateService)
 
         # Get the map scale
         mapScale = rospy.get_param('plan_scale',5)
@@ -66,7 +69,6 @@ class MapperNode(object):
         self.deltaOccupancyGridDrawer = OccupancyGridDrawer('Mapper Node Delta Occupancy Grid',\
                                                             self.showDeltaOccupancyGrid, windowHeight)
 	self.deltaOccupancyGridDrawer.open()
-	rospy.loginfo('------> 4')
 
         # Set up the subscribers. These track the robot position, speed and laser scans.
         self.mostRecentOdometry = Odometry()
@@ -85,8 +87,6 @@ class MapperNode(object):
         self.noTwistReceived = True
 
 
-        self.service = rospy.Service('change_mapper_state', ChangeMapperState, self.mappingStateService)
-
         self.enableMapping = rospy.get_param('start_with_mapping_enabled', True)
 
     def odometryCallback(self, msg):
@@ -104,6 +104,10 @@ class MapperNode(object):
     def mappingStateService(self, changeMapperState):
         self.enableMapping = changeMapperState.enableMapping
         return ChangeMapperStateResponse()
+
+    def requestMapUpdateService(self, deltaOccupancyGridRequired):
+        mapUpdateMessage = self.constructMapUpdateMessage(deltaOccupancyGridRequired)
+        return RequestMapUpdateServiceResponse(mapUpdateMessage)
 
     # Handle the laser scan callback. First process the scans and update the various maps
     
@@ -124,19 +128,11 @@ class MapperNode(object):
         if gridHasChanged is False:
             return
 
+        # Mark that there is a pending update to the visualisation
         self.updateVisualisation = True
 
-        # Construct the map update message
-        mapUpdateMessage = MapUpdate()
-
-        mapUpdateMessage.header.stamp = rospy.Time().now()
-        mapUpdateMessage.scale = self.occupancyGrid.getScale()
-        mapUpdateMessage.extentInCells = self.occupancyGrid.getExtentInCells()
-        mapUpdateMessage.extent = self.occupancyGrid.getExtent()
-        mapUpdateMessage.occupancyGrid = copy.deepcopy(self.occupancyGrid)
-        mapUpdateMessage.deltaOccupancyGrid = copy.deepcopy(self.deltaOccupancyGrid)
-
-        # Send it out
+        # Construct the map update message and send it out
+        mapUpdateMessage = self.constructMapUpdateMessage(True)
         self.mapUpdatePublisher.publish(mapUpdateMessage)
         
     # Predict the pose of the robot to the current time. This is to
@@ -287,36 +283,9 @@ class MapperNode(object):
         endPoint = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates([math.cos(angle) * dist + x, \
                                                                               math.sin(angle) * dist + y])
 
-        #pointsOld = self.ray_trace_old(dist, x, y, angle, scanmsg)
-
         points = bresenham(endPoint, startPoint)
-        #print str(startPoint) + ':' + str(points.path[0])
-        #print str(dist)
-        #print str(endPoint) + ':' + str(startPoint)
-        #print str(endPoint) + ':' + str(points.path[-1])
-        
-        #assert startPoint == points.path[0]
-        #assert endPoint == points.path[-1]
 
         return points.path
-
-    def ray_trace_old(self, dist, x, y, angle, scanmsg):
-
-        points = []
-
-        space = np.linspace(scanmsg.range_min, dist, scanmsg.range_max * 5)
-        for a in space:
-            point_world_coo = [math.cos(angle) * a + x,
-                               math.sin(angle) * a + y]
-            points.append(self.occupancyGrid.getCellCoordinatesFromWorldCoordinates(point_world_coo))
-
-
-        print 'old:' + str(points[0]) + '=>' +  str(points[-1])
-
-
-        return points
-
-
     
     def update_visualisation(self):
 
@@ -327,7 +296,23 @@ class MapperNode(object):
 	self.deltaOccupancyGridDrawer.update()
         self.showDeltaOccupancyGrid.clearMap(0)
         self.updateVisualisation = False
-	
+
+    def constructMapUpdateMessage(self, deltaMapRequired):
+        # Construct the map update message
+        mapUpdateMessage = MapUpdate()
+
+        mapUpdateMessage.header.stamp = rospy.Time().now()
+        mapUpdateMessage.scale = self.occupancyGrid.getScale()
+        mapUpdateMessage.extentInCells = self.occupancyGrid.getExtentInCells()
+        mapUpdateMessage.extent = self.occupancyGrid.getExtent()
+        mapUpdateMessage.occupancyGrid = copy.deepcopy(self.occupancyGrid)
+
+        if deltaMapRequired is True:
+            mapUpdateMessage.deltaOccupancyGrid = copy.deepcopy(self.deltaOccupancyGrid)
+
+        return mapUpdateMessage
+
+        
     def run(self):
         while not rospy.is_shutdown():
             rospy.sleep(2)
