@@ -28,7 +28,7 @@ class MapperNode(object):
 
     def __init__(self):
 
-        rospy.sleep(4)
+        rospy.sleep(0.1)
 
         # Get the ground truth map from stdr; we use this to figure out the dimensions of the map       
         rospy.init_node('mapper_node', anonymous=True)

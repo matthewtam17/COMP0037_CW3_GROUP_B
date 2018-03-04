@@ -31,8 +31,8 @@ class Move2GoalController(ControllerBase):
         rospy.loginfo('Got the change_mapper_state service')
 
         # Flag to toggle the mapper state
-        
-        self.enableMapper = True
+        self.enableSettingMapperState = rospy.get_param('enable_change_mapper_state', True)
+        self.mappingState = True
     
     def get_distance(self, goal_x, goal_y):
         distance = sqrt(pow((goal_x - self.pose.x), 2) + pow((goal_y - self.pose.y), 2))
@@ -75,13 +75,17 @@ class Move2GoalController(ControllerBase):
 
             #print("Linear Velocity: {}\nAngular Velocity: {}\n\n".format(vel_msg.linear.x, math.degrees(vel_msg.angular.z)))
 
-            # Toggle switching the mapping on and off, depending on how fast the robot is turning
-            if (self.enableMapper is True) and (abs(vel_msg.angular.z) > math.radians(0.1)):
-                self.enableMapper = False
-                self.changeMapperStateService(False)
-            elif (self.enableMapper is False) and (abs(vel_msg.angular.z) < math.radians(0.1)):
-                self.enableMapper = True
-                self.changeMapperStateService(True)
+            # Toggle switching the mapping on and off, depending on
+            # how fast the robot is turning. This has to happen first
+            # to make sure the mapping is disabled before the new
+            # twist message is sent.
+            if self.enableSettingMapperState is True:
+                if (self.mappingState is True) and (abs(vel_msg.angular.z) > math.radians(0.1)):
+                    self.mappingState = False
+                    self.changeMapperStateService(False)
+                elif (self.mappingState is False) and (abs(vel_msg.angular.z) < math.radians(0.1)):
+                    self.mappingState = True
+                    self.changeMapperStateService(True)
             
             # Publishing our vel_msg
             self.velocityPublisher.publish(vel_msg)

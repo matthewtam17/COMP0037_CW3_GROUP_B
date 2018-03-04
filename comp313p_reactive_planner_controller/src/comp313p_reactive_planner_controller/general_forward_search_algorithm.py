@@ -89,7 +89,7 @@ class GeneralForwardSearchAlgorithm(PlannerBase):
         # Create the search grid from the occupancy grid and seed
         # unvisited and occupied cells.
         if (self.searchGrid is None):
-            self.searchGrid = SearchGrid.fromOccupancyGrid(self.occupancyGrid)
+            self.searchGrid = SearchGrid.fromOccupancyGrid(self.occupancyGrid, self.robotRadius)
         else:
             self.searchGrid.updateFromOccupancyGrid()
 

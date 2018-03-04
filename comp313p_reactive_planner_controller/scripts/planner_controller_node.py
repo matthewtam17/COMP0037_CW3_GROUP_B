@@ -24,7 +24,7 @@ from comp313p_reactive_planner_controller.occupancy_grid import OccupancyGrid
 
 from comp313p_reactive_planner_controller.passive_planner_controller import PassivePlannerController
 
-from comp313p_reactive_planner_controller.fifo_planner import FIFOPlanner
+from comp313p_reactive_planner_controller.a_star_planner import AStarPlanner
 
 from comp313p_reactive_planner_controller.move2goal_controller import Move2GoalController
 
@@ -52,7 +52,6 @@ class PlannerControllerNode(object):
         # Allocate the occupancy grid and set the data from the array sent back by the map server
         self.occupancyGrid = OccupancyGrid(map.info.width, map.info.height, map.info.resolution)
         self.occupancyGrid.setScale(rospy.get_param('plan_scale', 5))
-        self.occupancyGrid.setRobotRadius(rospy.get_param('robot_radius', 0.2))
         self.occupancyGrid.setFromDataArrayFromMapServer(map.data)
 
     # TODO: Change this method to be a callback to support changes in the map
@@ -60,7 +59,7 @@ class PlannerControllerNode(object):
         self.occupancyGrid.setFromDataArrayFromMapServer(map.data)
 
     def createPlanner(self):
-        self.planner = FIFOPlanner('FIFO', self.occupancyGrid)
+        self.planner = AStarPlanner('FIFO', self.occupancyGrid)
         self.planner.setPauseTime(0)
         self.planner.windowHeightInPixels = rospy.get_param('maximum_window_height_in_pixels', 700)
         

@@ -17,8 +17,10 @@ class PlannerBase(object):
         self.title = title
         self.occupancyGrid = occupancyGrid
         self.searchGrid = None
-        
-        print "Occupancy grid dimensions = " + str(occupancyGrid.getWidthInCells()) + "x" + str(occupancyGrid.getHeightInCells())
+
+        self.robotRadius = rospy.get_param('robot_radius', 0.2)
+
+        rospy.loginfo("Occupancy grid dimensions = %dx%d", occupancyGrid.getWidthInCells(), occupancyGrid.getHeightInCells())
         
         # Graphics and debug output support
         self.showGraphics = True
