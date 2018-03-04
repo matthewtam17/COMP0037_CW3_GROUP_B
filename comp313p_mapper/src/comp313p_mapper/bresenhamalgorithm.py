@@ -2,7 +2,6 @@
 
 class bresenham:
 	def __init__(self, start, end):
-                print str(start) + '=>' + str(end)
 		self.start = list(start)
 		self.end = list(end)
 		self.path = []
@@ -14,6 +13,7 @@ class bresenham:
 			self.end = self.swap(self.end[0],self.end[1])
 		
 		if self.start[0] > self.end[0]:
+                        flipPath = False
 			_x0 = int(self.start[0])
 			_x1 = int(self.end[0])
 			self.start[0] = _x1
@@ -23,12 +23,18 @@ class bresenham:
 			_y1 = int(self.end[1])
 			self.start[1] = _y1
 			self.end[1] = _y0
+                else:
+                        flipPath = True
 		
 		dx = self.end[0] - self.start[0]
 		dy = abs(self.end[1] - self.start[1])
 		error = 0
-		derr = dy/float(dx)
-		
+
+                if dx == 0:
+                        return
+
+                derr = dy/float(dx)
+                
 		ystep = 0
 		y = self.start[1]
 		
@@ -46,5 +52,10 @@ class bresenham:
 			if error >= 0.5:
 				y += ystep
 				error -= 1.0
+
+                if flipPath is True:
+                        self.path = self.path[::-1]
+
+                        
 	def swap(self,n1,n2):
 		return [n2,n1]

@@ -79,22 +79,31 @@ class MapperNode(object):
         # Set up the lock to ensure thread safety
         self.dataCopyLock = Lock()
 
+        self.noOdometryReceived = True
+        self.noTwistReceived = True
+
         rospy.loginfo('------> Initialised')
 
     def odometryCallback(self, msg):
         self.dataCopyLock.acquire()
         self.mostRecentOdometry = msg
+        self.noOdometryReceived = False
         self.dataCopyLock.release()
 
     def twistCallback(self, msg):
         self.dataCopyLock.acquire()
         self.mostRecentVelocity = msg
+        self.noTwistReceived = False
         self.dataCopyLock.release()
 
 
     # Handle the laser scan callback. First process the scans and update the various maps
     
     def laserScanCallback(self, msg):
+
+        # Can't process anything until we have the first scan
+        if (self.noOdometryReceived is True) or (self.noTwistReceived is True):
+            return
 
         # Process the scan
         gridHasChanged = self.parseScan(msg)
@@ -159,7 +168,7 @@ class MapperNode(object):
 
         theta = theta + currentTwist.angular.z * dT
 
-        tooFast = (abs(currentTwist.linear.x) > 4) | (abs(currentTwist.angular.z) > math.radians(10))
+        tooFast = (abs(currentTwist.linear.x) > 4) | (abs(currentTwist.angular.z) > math.radians(1))
         
         return x, y, theta, tooFast
 
@@ -188,7 +197,7 @@ class MapperNode(object):
             detectedRange = msg.ranges[ii]
             
             # If the detection is below the minimum range, assume this ray is busted and continue
-            if (detectedRange < msg.range_min):
+            if (detectedRange <= msg.range_min):
                 continue
 
             rayEndsOnObject = True
@@ -207,6 +216,10 @@ class MapperNode(object):
             # from the sensor.
             between = self.ray_trace(detectedRange, x, y, angle, msg)
 
+            # If between is empty, something went wrong with the ray cast, so skip
+            if len(between) == 0:
+                continue
+
             # Traverse along the ray and set cells. We can only change
             # cells from unknown (0.5) to free. If we encounter a
             # blocked cell, terminate. Sometimes the ray can slightly
@@ -219,7 +232,7 @@ class MapperNode(object):
                         traversedToEnd = False
                         break
                     
-                    if abs(self.occupancyGrid.getCell(point[0], point[1])-0.5) < 0.1:
+                    if self.occupancyGrid.getCell(point[0], point[1]) == 0.5:
                         self.occupancyGrid.setCell(point[0], point[1], 0)
                         self.deltaOccupancyGrid.setCell(point[0], point[1], 1.0)
                         self.showDeltaOccupancyGrid.setCell(point[0], point[1], 1.0)
@@ -240,9 +253,9 @@ class MapperNode(object):
             if (traversedToEnd is True) & (rayEndsOnObject is True):
                 lastPoint = between[-1]
                 if self.occupancyGrid.getCell(lastPoint[0], lastPoint[1]) < 1.0:
-                    self.occupancyGrid.setCell(point[0], point[1], 1)
-                    self.deltaOccupancyGrid.setCell(point[0], point[1], 1.0)
-                    self.showDeltaOccupancyGrid.setCell(point[0], point[1], 1.0)
+                    self.occupancyGrid.setCell(lastPoint[0], lastPoint[1], 1)
+                    self.deltaOccupancyGrid.setCell(lastPoint[0], lastPoint[1], 1.0)
+                    self.showDeltaOccupancyGrid.setCell(lastPoint[0], lastPoint[1], 1.0)
                     gridHasChanged = True
 
         return gridHasChanged
@@ -261,23 +274,18 @@ class MapperNode(object):
         endPoint = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates([math.cos(angle) * dist + x, \
                                                                               math.sin(angle) * dist + y])
 
-        pointsOld = self.ray_trace_old(dist, x, y, angle, scanmsg)
+        #pointsOld = self.ray_trace_old(dist, x, y, angle, scanmsg)
 
         points = bresenham(endPoint, startPoint)
+        #print str(startPoint) + ':' + str(points.path[0])
+        #print str(dist)
+        #print str(endPoint) + ':' + str(startPoint)
+        #print str(endPoint) + ':' + str(points.path[-1])
+        
+        #assert startPoint == points.path[0]
+        #assert endPoint == points.path[-1]
 
-        print str(startPoint) + ':' + str(points.path[0])
-        print str(endPoint) + ':' + str(points.path[-1])
-        
-        assert startPoint == points.path[0]
-        assert endPoint == points.path[-1]
-
-        
-
-        #print str(points.path)
-        
-        
         return points.path
-        #return pointsOld
 
     def ray_trace_old(self, dist, x, y, angle, scanmsg):
 
@@ -293,8 +301,6 @@ class MapperNode(object):
         print 'old:' + str(points[0]) + '=>' +  str(points[-1])
 
 
-        print str(points)
-        
         return points
 
 
