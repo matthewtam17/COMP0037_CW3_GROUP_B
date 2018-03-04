@@ -3,8 +3,8 @@
 # See run_fifo_standalone.py for documentation. The only difference is that
 # a LIFO planner is created instead of a FIFO planner.
 
-from comp313p_planner_controller.occupancy_grid import OccupancyGrid
-from comp313p_planner_controller.lifo_planner import LIFOPlanner
+from comp313p_reactive_planner_controller.occupancy_grid import OccupancyGrid
+from comp313p_reactive_planner_controller.lifo_planner import LIFOPlanner
 
 occupancyGrid = OccupancyGrid(21, 21, 0.5)
 

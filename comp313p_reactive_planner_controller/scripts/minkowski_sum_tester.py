@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
-from comp313p_planner_controller.occupancy_grid import OccupancyGrid
-from comp313p_planner_controller.fifo_planner import FIFOPlanner
+from comp313p_reactive_planner_controller.occupancy_grid import OccupancyGrid
+from comp313p_reactive_planner_controller.fifo_planner import FIFOPlanner
 
 # Create the occupancy grid
 occupancyGrid = OccupancyGrid(21, 21, 0.5)

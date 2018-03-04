@@ -4,7 +4,7 @@
 
 import rospy
 import sys
-from comp313p_planner_controller.srv import *
+from comp313p_reactive_planner_controller.srv import *
 from nav_msgs.srv import GetMap
 from stdr_msgs.srv import MoveRobot
 from geometry_msgs.msg import Pose2D

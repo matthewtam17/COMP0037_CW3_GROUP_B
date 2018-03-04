@@ -3,8 +3,8 @@ import rospy
 from geometry_msgs.msg  import Twist
 from geometry_msgs.msg  import Pose
 from math import pow,atan2,sqrt
-from comp313p_planner_controller.planned_path import PlannedPath
-from comp313p_planner_controller.controller_base import ControllerBase
+from comp313p_reactive_planner_controller.planned_path import PlannedPath
+from comp313p_reactive_planner_controller.controller_base import ControllerBase
 from comp313p_mapper.srv import *
 import math
 import angles
