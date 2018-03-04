@@ -16,6 +16,7 @@ from nav_msgs.msg import Odometry
 from threading import Lock
 from geometry_msgs.msg  import Twist
 from comp313p_mapper.msg import MapUpdate
+from comp313p_mapper.srv import ChangeMappingState
 from bresenhamalgorithm import bresenham
 
 # This class implements basic mapping capabilities. Given knowledge
@@ -82,6 +83,11 @@ class MapperNode(object):
         self.noOdometryReceived = True
         self.noTwistReceived = True
 
+
+        self.service = rospy.Service('change_mapping_state', ChangeMappingState, self.mappingStateService)
+
+        self.enableMapping = rospy.get_param('start_with_mapping_enabled', True)
+
         rospy.loginfo('------> Initialised')
 
     def odometryCallback(self, msg):
@@ -96,10 +102,16 @@ class MapperNode(object):
         self.noTwistReceived = False
         self.dataCopyLock.release()
 
+    def mappingStateService(self, changeMappingState):
+        self.enableMapping = changeMappingState.enableMapping
 
     # Handle the laser scan callback. First process the scans and update the various maps
     
     def laserScanCallback(self, msg):
+
+        # Can't process anything until stuff is enabled
+        if self.enableMapping is False:
+            return
 
         # Can't process anything until we have the first scan
         if (self.noOdometryReceived is True) or (self.noTwistReceived is True):
@@ -149,7 +161,7 @@ class MapperNode(object):
         euler = tf.transformations.euler_from_quaternion(quaternion)
 
         theta = euler[2]
-        
+
         # These are the "ideal motion model" prediction equations from
         # stdr which attempt to accurately describe the trajectory of
         # the robot if it turns as it moves. The equations are precise
@@ -168,7 +180,7 @@ class MapperNode(object):
 
         theta = theta + currentTwist.angular.z * dT
 
-        tooFast = (abs(currentTwist.linear.x) > 4) | (abs(currentTwist.angular.z) > math.radians(1))
+        tooFast = (abs(currentTwist.linear.x) > 4) | (abs(currentTwist.angular.z) > math.radians(0.1))
         
         return x, y, theta, tooFast
 
@@ -179,6 +191,7 @@ class MapperNode(object):
 
         # If the robot is travelling too quickly, don't bother trying to analyse the scan
         if tooFast is True:
+            print 'Too Fast'
             return
         
         # Clear the flag which shows that the map has changed
