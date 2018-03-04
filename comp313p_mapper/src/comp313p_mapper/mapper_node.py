@@ -16,7 +16,7 @@ from nav_msgs.msg import Odometry
 from threading import Lock
 from geometry_msgs.msg  import Twist
 from comp313p_mapper.msg import MapUpdate
-from comp313p_mapper.srv import ChangeMapperState
+from comp313p_mapper.srv import *
 from bresenhamalgorithm import bresenham
 
 # This class implements basic mapping capabilities. Given knowledge
@@ -85,11 +85,9 @@ class MapperNode(object):
         self.noTwistReceived = True
 
 
-        self.service = rospy.Service('change_mapping_state', ChangeMapperState, self.mappingStateService)
+        self.service = rospy.Service('change_mapper_state', ChangeMapperState, self.mappingStateService)
 
         self.enableMapping = rospy.get_param('start_with_mapping_enabled', True)
-
-        rospy.loginfo('------> Initialised')
 
     def odometryCallback(self, msg):
         self.dataCopyLock.acquire()
@@ -103,8 +101,9 @@ class MapperNode(object):
         self.noTwistReceived = False
         self.dataCopyLock.release()
 
-    def mappingStateService(self, changeMappingState):
-        self.enableMapping = changeMappingState.enableMapping
+    def mappingStateService(self, changeMapperState):
+        self.enableMapping = changeMapperState.enableMapping
+        return ChangeMapperStateResponse()
 
     # Handle the laser scan callback. First process the scans and update the various maps
     

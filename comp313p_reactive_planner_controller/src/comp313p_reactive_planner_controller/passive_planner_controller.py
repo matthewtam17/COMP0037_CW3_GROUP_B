@@ -2,7 +2,7 @@
 
 import rospy
 
-from planner_controller_base import PlannerControllerBase
+from comp313p_reactive_planner_controller.planner_controller_base import PlannerControllerBase
 
 class PassivePlannerController(PlannerControllerBase):
 

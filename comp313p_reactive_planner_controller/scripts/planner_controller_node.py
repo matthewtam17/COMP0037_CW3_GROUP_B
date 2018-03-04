@@ -22,8 +22,14 @@ from comp313p_reactive_planner_controller.srv import *
 # The occupancy grid, used to store our representation of the map
 from comp313p_reactive_planner_controller.occupancy_grid import OccupancyGrid
 
+from comp313p_reactive_planner_controller.passive_planner_controller import PassivePlannerController
+
+from comp313p_reactive_planner_controller.fifo_planner import FIFOPlanner
+
+from comp313p_reactive_planner_controller.move2goal_controller import Move2GoalController
+
 # Self class interfaces with the planner and the controller
-class ReactivePlannerControllerNode(object):
+class PlannerControllerNode(object):
 
     def __init__(self):
         rospy.init_node('planner_controller', anonymous=True)

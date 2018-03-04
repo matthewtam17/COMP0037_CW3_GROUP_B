@@ -28,7 +28,7 @@ class Move2GoalController(ControllerBase):
         rospy.loginfo('Waiting for change_mapper_state')
         rospy.wait_for_service('change_mapper_state')
         self.changeMapperStateService = rospy.ServiceProxy('change_mapper_state', ChangeMapperState)
-        rospy.loginfo('Got the drive_to_goal service')
+        rospy.loginfo('Got the change_mapper_state service')
 
         # Flag to toggle the mapper state
         
@@ -78,10 +78,10 @@ class Move2GoalController(ControllerBase):
             # Toggle switching the mapping on and off, depending on how fast the robot is turning
             if (self.enableMapper is True) and (abs(vel_msg.angular.z) > math.radians(0.1)):
                 self.enableMapper = False
-                #self.mapperChangeService(False)
+                self.changeMapperStateService(False)
             elif (self.enableMapper is False) and (abs(vel_msg.angular.z) < math.radians(0.1)):
                 self.enableMapper = True
-                #self.mapperChangeService(True)
+                self.changeMapperStateService(True)
             
             # Publishing our vel_msg
             self.velocityPublisher.publish(vel_msg)
@@ -92,10 +92,10 @@ class Move2GoalController(ControllerBase):
 
             # Check if the occupancy grid has changed. If so, monitor if we can still reach the
             # goal or not
-            if self.occupancyGridHasChanged is True:
-                if self.checkIfWaypointIsReachable(waypoint) is False:
-                    return False
-                self.occupancyGridHasChanged = False
+            #if self.occupancyGridHasChanged is True:
+            #    if self.checkIfWaypointIsReachable(waypoint) is False:
+            #        return False
+            #    self.occupancyGridHasChanged = False
 
             distanceError = sqrt(pow((waypoint[0] - self.pose.x), 2) + pow((waypoint[1] - self.pose.y), 2))
             angleError = self.shortestAngularDistance(self.pose.theta,
