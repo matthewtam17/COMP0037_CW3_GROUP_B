@@ -16,19 +16,19 @@ from nav_msgs.msg import Odometry
 from threading import Lock
 from geometry_msgs.msg  import Twist
 from comp313p_mapper.msg import MapUpdate
-from comp313p_mapper.srv import ChangeMappingState
+from comp313p_mapper.srv import ChangeMapperState
 from bresenhamalgorithm import bresenham
 
 # This class implements basic mapping capabilities. Given knowledge
 # about the robot's position and orientation, it processes laser scans
 # to produce a new occupancy grid. If this grid differs from the
 # previous one, a new grid is created and broadcast.
-#
-
 
 class MapperNode(object):
 
     def __init__(self):
+
+        rospy.sleep(4)
 
         # Get the ground truth map from stdr; we use this to figure out the dimensions of the map       
         rospy.init_node('mapper_node', anonymous=True)
@@ -38,26 +38,27 @@ class MapperNode(object):
         # Create the publisher
         self.mapUpdatePublisher = rospy.Publisher('updated_map', MapUpdate, queue_size = 1)
         
+
+        # Get the map scale
+        mapScale = rospy.get_param('plan_scale',5)
+
         # Create the occupancy grid map. This is the "raw" one from the sensor.
         self.occupancyGrid = OccupancyGrid(resp.map.info.width, resp.map.info.height, resp.map.info.resolution, 0.5)
-	self.occupancyGrid.setScale(rospy.get_param('plan_scale',5))
+	self.occupancyGrid.setScale(mapScale)
 	self.occupancyGrid.scaleEmptyMap()
                          
         # Create the delta occupancy grid map. This stores the difference since the last time the map was sent out
         self.deltaOccupancyGrid = OccupancyGrid(resp.map.info.width, resp.map.info.height, resp.map.info.resolution, 0)
-	self.deltaOccupancyGrid.setScale(rospy.get_param('plan_scale',5))
+	self.deltaOccupancyGrid.setScale(mapScale)
 	self.deltaOccupancyGrid.scaleEmptyMap()
 
         # Create the show delta occupancy grid map. This stores the difference since the last time the map was sent out.
         # Done as a cheesy way to sort out threading issues
         self.showDeltaOccupancyGrid = OccupancyGrid(resp.map.info.width, resp.map.info.height, resp.map.info.resolution, 0)
-	self.showDeltaOccupancyGrid.setScale(rospy.get_param('plan_scale',5))
+	self.showDeltaOccupancyGrid.setScale(mapScale)
 	self.showDeltaOccupancyGrid.scaleEmptyMap()
 
-	rospy.loginfo('------> 2')
-	rospy.loginfo('------> 3')
-
-        windowHeight = rospy.get_param('maximum_window_height_in_pixels', 700)
+        windowHeight = rospy.get_param('maximum_window_height_in_pixels', 600)
         
         self.occupancyGridDrawer = OccupancyGridDrawer('Mapper Node Occupancy Grid',\
                                                        self.occupancyGrid, windowHeight)
@@ -84,7 +85,7 @@ class MapperNode(object):
         self.noTwistReceived = True
 
 
-        self.service = rospy.Service('change_mapping_state', ChangeMappingState, self.mappingStateService)
+        self.service = rospy.Service('change_mapping_state', ChangeMapperState, self.mappingStateService)
 
         self.enableMapping = rospy.get_param('start_with_mapping_enabled', True)
 
@@ -180,7 +181,7 @@ class MapperNode(object):
 
         theta = theta + currentTwist.angular.z * dT
 
-        tooFast = (abs(currentTwist.linear.x) > 4) | (abs(currentTwist.angular.z) > math.radians(0.1))
+        tooFast = abs(currentTwist.linear.x) > 4
         
         return x, y, theta, tooFast
 

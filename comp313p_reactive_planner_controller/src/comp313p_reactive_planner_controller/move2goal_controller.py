@@ -5,6 +5,7 @@ from geometry_msgs.msg  import Pose
 from math import pow,atan2,sqrt
 from comp313p_planner_controller.planned_path import PlannedPath
 from comp313p_planner_controller.controller_base import ControllerBase
+from comp313p_mapper.srv import *
 import math
 import angles
 
@@ -21,8 +22,17 @@ class Move2GoalController(ControllerBase):
         # Get the proportional gain settings
         self.distanceErrorGain = rospy.get_param('distance_error_gain', 1)
         self.angleErrorGain = rospy.get_param('angle_error_gain', 4)
-
         self.driveAngleErrorTolerance = math.radians(rospy.get_param('angle_error_tolerance', 1))
+
+        # Get the service to switch the mapper on and off
+        rospy.loginfo('Waiting for change_mapper_state')
+        rospy.wait_for_service('change_mapper_state')
+        self.changeMapperStateService = rospy.ServiceProxy('change_mapper_state', ChangeMapperState)
+        rospy.loginfo('Got the drive_to_goal service')
+
+        # Flag to toggle the mapper state
+        
+        self.enableMapper = True
     
     def get_distance(self, goal_x, goal_y):
         distance = sqrt(pow((goal_x - self.pose.x), 2) + pow((goal_y - self.pose.y), 2))
@@ -64,6 +74,15 @@ class Move2GoalController(ControllerBase):
 
 
             #print("Linear Velocity: {}\nAngular Velocity: {}\n\n".format(vel_msg.linear.x, math.degrees(vel_msg.angular.z)))
+
+            # Toggle switching the mapping on and off, depending on how fast the robot is turning
+            if (self.enableMapper is True) and (abs(vel_msg.angular.z) > math.radians(0.1)):
+                self.enableMapper = False
+                #self.mapperChangeService(False)
+            elif (self.enableMapper is False) and (abs(vel_msg.angular.z) < math.radians(0.1)):
+                self.enableMapper = True
+                #self.mapperChangeService(True)
+            
             # Publishing our vel_msg
             self.velocityPublisher.publish(vel_msg)
             if (self.plannerDrawer is not None):
