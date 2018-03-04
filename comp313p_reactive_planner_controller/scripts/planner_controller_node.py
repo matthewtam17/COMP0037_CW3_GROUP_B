@@ -28,7 +28,8 @@ from comp313p_reactive_planner_controller.a_star_planner import AStarPlanner
 
 from comp313p_reactive_planner_controller.move2goal_controller import Move2GoalController
 
-# Self class interfaces with the planner and the controller
+# This class is the main node and orchestrates everything else
+
 class PlannerControllerNode(object):
 
     def __init__(self):
@@ -38,28 +39,40 @@ class PlannerControllerNode(object):
         self.goal = None
     
     def createOccupancyGridFromMapServer(self):
-        # Get the map service
-        rospy.loginfo('Waiting for static_map to become available.')
-        rospy.wait_for_service('static_map') 
-        self.mapServer = rospy.ServiceProxy('static_map', GetMap)
-        rospy.loginfo('Found static_map; requesting map data')
 
-        # Query the map status
-        response = self.mapServer()
-        map = response.map
-        rospy.loginfo('Got map data')
+        # If we are using the ground truth map, get it directly from stdr. Otherwise,
+        # retrieve it from the mapper node
 
-        # Allocate the occupancy grid and set the data from the array sent back by the map server
-        self.occupancyGrid = OccupancyGrid(map.info.width, map.info.height, map.info.resolution)
-        self.occupancyGrid.setScale(rospy.get_param('plan_scale', 5))
-        self.occupancyGrid.setFromDataArrayFromMapServer(map.data)
+        if rospy.get_param('use_stdr_map', True):
+            rospy.loginfo('Using the ground truth map from stdr')
+
+            # Get the map service
+            rospy.loginfo('Waiting for static_map to become available.')
+            rospy.wait_for_service('static_map') 
+            self.mapServer = rospy.ServiceProxy('static_map', GetMap)
+            rospy.loginfo('Found static_map; requesting map data')
+            
+            # Query the map status
+            response = self.mapServer()
+            map = response.map
+            rospy.loginfo('Got map data')
+            
+            # Allocate the occupancy grid and set the data from the array sent back by the map server
+            self.occupancyGrid = OccupancyGrid(map.info.width, map.info.height, map.info.resolution)
+            self.occupancyGrid.setScale(rospy.get_param('plan_scale', 5))
+            self.occupancyGrid.setFromDataArrayFromMapServer(map.data)
+
+        else:
+            rospy.loginfo('Use the map from comp313p_mapper')
+            rospy.wait_for_service('request_map_update') 
+            
 
     # TODO: Change this method to be a callback to support changes in the map
     def updateOccupancyGridFromMapServer(self, map):
         self.occupancyGrid.setFromDataArrayFromMapServer(map.data)
 
     def createPlanner(self):
-        self.planner = AStarPlanner('FIFO', self.occupancyGrid)
+        self.planner = AStarPlanner('AStar+Octile+Weight=1', self.occupancyGrid)
         self.planner.setPauseTime(0)
         self.planner.windowHeightInPixels = rospy.get_param('maximum_window_height_in_pixels', 700)
         
