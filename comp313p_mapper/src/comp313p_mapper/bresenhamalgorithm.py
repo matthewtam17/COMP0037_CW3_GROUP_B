@@ -1,4 +1,7 @@
-
+# Adapted from the code at
+# https://gist.github.com/flags/1132363. Specfically, removed print
+# statements, reordered the points so that list runs from the start to
+# the end, produce an empty path if there is a divide by zero error.
 
 class bresenham:
 	def __init__(self, start, end):
