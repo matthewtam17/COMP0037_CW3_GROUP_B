@@ -119,6 +119,10 @@ class Move2GoalController(ControllerBase):
 
         angleError = self.shortestAngularDistance(self.pose.theta, goalOrientation)
 
+        if self.enableSettingMapperState is True:
+            self.mappingState = False
+            self.changeMapperStateService(False)
+
         while (math.fabs(angleError) >= self.goalAngleErrorTolerance) & (not rospy.is_shutdown()):
             #print 'Angular Error: ' + str(angleError)
 
@@ -138,5 +142,9 @@ class Move2GoalController(ControllerBase):
         # Stop movement once finished
         vel_msg.angular.z = 0
         self.velocityPublisher.publish(vel_msg)
+
+        if self.enableSettingMapperState is True:
+            self.mappingState = True
+            self.changeMapperStateService(True)
 
         return True
