@@ -6,7 +6,7 @@ from cell import *
 
 class CellBasedForwardSearch(GeneralForwardSearchAlgorithm):
 
-    # Self implements a simple FIFO search algorithm
+    # This implements a simple FIFO search algorithm
     
     def __init__(self, title, occupancyGrid):
         GeneralForwardSearchAlgorithm.__init__(self, title, occupancyGrid)
