@@ -314,6 +314,7 @@ class MapperNode(object):
 
         mapUpdateMessage.header.stamp = rospy.Time().now()
         mapUpdateMessage.scale = self.occupancyGrid.getScale()
+        mapUpdateMessage.resolution = self.occupancyGrid.getResolution()
         mapUpdateMessage.extentInCells = self.occupancyGrid.getExtentInCells()
         mapUpdateMessage.occupancyGrid = self.occupancyGrid.getGridAsVector()
 
