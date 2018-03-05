@@ -177,7 +177,7 @@ class MapperNode(object):
                 currentTwist.linear.x / currentTwist.angular.z * sin(theta + dT * currentTwist.angular.z)
 
             y = currentPose.position.y - currentTwist.linear.x / currentTwist.angular.z * cos(theta) + \
-                currentTwist.linear.x / currentTwist.angular.z * cos(theta + dT * currentTwist.angular.z);
+                currentTwist.linear.x / currentTwist.angular.z * cos(theta + dT * currentTwist.angular.z)
 
         theta = theta + currentTwist.angular.z * dT
 
@@ -325,7 +325,7 @@ class MapperNode(object):
         
     def run(self):
         while not rospy.is_shutdown():
-            rospy.sleep(1)
+            rospy.sleep(0.1)
             self.updateVisualisation()
         
   
