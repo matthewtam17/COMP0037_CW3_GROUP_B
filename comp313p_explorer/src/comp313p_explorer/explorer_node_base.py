@@ -1,4 +1,6 @@
 import rospy
+import threading
+
 from comp313p_mapper.msg import *
 from comp313p_reactive_planner_controller.srv import *
 from comp313p_reactive_planner_controller.occupancy_grid import OccupancyGrid
@@ -15,20 +17,28 @@ class ExplorerNodeBase(object):
         self.driveToGoalService = rospy.ServiceProxy('drive_to_goal', Goal)
         rospy.loginfo('Got the drive_to_goal service')
 
+        self.waitForGoal =  threading.Condition()
+        self.waitForDriveCompleted =  threading.Condition()
+        self.goal = None
+
         # Subscribe to get the map update messages
         self.mapUpdateSubscriber = rospy.Subscriber('updated_map', MapUpdate, self.mapUpdateCallback)
+        self.noMapReceived = True
 
         # Clear the map variables
         self.occupancyGrid = None
         self.deltaOccupancyGrid = None
 
+        # Flags used to control the graphical output. Note that we
+        # can't create the drawers until we receive the first map
+        # message.
         self.showOccupancyGrid = rospy.get_param('show_explorer_occupancy_grid', True)
         self.showDeltaOccupancyGrid = rospy.get_param('show_explorer_delta_occupancy_grid', True)
-
         self.occupancyGridDrawer = None
         self.deltaOccupancyGridDrawer = None
         self.visualisationUpdateRequired = False
-       
+
+        
     def mapUpdateCallback(self, msg):
         rospy.loginfo("map update received")
         
@@ -41,20 +51,36 @@ class ExplorerNodeBase(object):
         self.occupancyGrid.updateGridFromVector(msg.occupancyGrid)
         self.deltaOccupancyGrid.updateGridFromVector(msg.deltaOccupancyGrid)
 
+        
+        # Update the frontiers
+        self.updateFrontiers()
+
         # Flag there's something to show graphically
         self.visualisationUpdateRequired = True
 
-        # Update the frontiers
-        #anyFrontiersRemaining = self.updateFrontiers()
-
-        # Create a new robot waypoint if required
-        #chooseNewDestination, newDestination = self.chooseNewDestination()
-
         # If a new destination is required, send it out
 
-    # Simple helper to see if a cell is on a frontier or not
-    def isFrontierCell(self, coords):
-        return False
+    # This method determines if a cell is a frontier cell or not. A
+    # frontier cell is open and has at least one neighbour which is
+    # unknown.
+    def isFrontierCell(self, x, y):
+
+        # Check the cell to see if it's open
+        if self.occupancyGrid.getCell(x, y) != 0:
+            return False
+
+        # Check the neighbouring cells; if at least one of them is unknown, it's a frontier
+        return self.checkIfCellIsUnknown(x, y, -1, -1) | self.checkIfCellIsUnknown(x, y, 0, -1) \
+            | self.checkIfCellIsUnknown(x, y, 1, -1) | self.checkIfCellIsUnknown(x, y, 1, 0) \
+            | self.checkIfCellIsUnknown(x, y, 1, 1) | self.checkIfCellIsUnknown(x, y, 0, 1) \
+            | self.checkIfCellIsUnknown(x, y, -1, 1) | self.checkIfCellIsUnknown(x, y, -1, 0)
+            
+    def checkIfCellIsUnknown(self, x, y, offsetX, offsetY):
+        newX = x + offsetX
+        newY = y + offsetY
+        return (newX >= 0) & (newX < self.occupancyGrid.getWidthInCells()) \
+            & (newY >= 0) & (newY < self.occupancyGrid.getHeightInCells()) \
+            & (self.occupancyGrid.getCell(newX, newY) == 0.5)
 
     # You should provide your own implementation of this method which
     # maintains and updates the frontiers.  The method should return
@@ -62,7 +88,10 @@ class ExplorerNodeBase(object):
     # False, it is assumed that the map is completely explored and the
     # explorer will exit.
     def updateFrontiers(self):
-        pass
+        raise NotImplementedError()
+
+    def chooseNewDestination(self):
+        raise NotImplementedError()
 
     def updateVisualisation(self):
 
@@ -89,8 +118,61 @@ class ExplorerNodeBase(object):
 	    self.deltaOccupancyGridDrawer.update()
 
         self.visualisationUpdateRequired = False
-    
+
+    def sendGoalToRobot(self, goal):
+        rospy.logwarn("Sending the robot to " + str(goal))
+        try:
+            response = self.driveToGoalService(goal[0], goal[1], 0)
+            return response.reachedGoal
+        except rospy.ServiceException, e:
+            print "Service call failed: %s"%e
+            return False
+
+
+    class ExplorerThread(threading.Thread):
+        def __init__(self, explorer):
+            threading.Thread.__init__(self)
+            self.explorer = explorer
+            self.running = False
+
+
+        def isRunning(self):
+            return self.running
+            
+        def run(self):
+
+            self.running = True
+
+            while not rospy.is_shutdown():
+                # Create a new robot waypoint if required
+                newDestinationAvailable, newDestination = self.explorer.chooseNewDestination()
+
+                # Convert to world coordinates, because this is what the robot understands
+                if newDestinationAvailable is True:
+                    print 'newDestination = ' + str(newDestination)
+                    newDestinationInWorldCoordinates = self.explorer.occupancyGrid.getWorldCoordinatesFromCellCoordinates(newDestination)
+                    attempt = self.explorer.sendGoalToRobot(newDestinationInWorldCoordinates)
+                    print 'attempt=' + str(attempt)
+                    
+                if attempt is False:
+                    return
+                    
+        
     def run(self):
+
+        explorerThread = ExplorerNodeBase.ExplorerThread(self)
+            
         while not rospy.is_shutdown():
+
             rospy.sleep(0.1)
+            
             self.updateVisualisation()
+
+            if self.occupancyGrid is None:
+                continue
+
+            if explorerThread.isRunning() is False:
+                explorerThread.start()
+
+            
+            
