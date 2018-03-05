@@ -38,6 +38,8 @@ class OccupancyGrid(object):
 
         self = cls(mapUpdateMessage.extentInCells[0], mapUpdateMessage.extentInCells[1], mapUpdateMessage.resolution)
         self.scale = mapUpdateMessage.scale
+
+        return self
         
     # Set the scale for the map.
     def setScale(self, scale):
@@ -60,7 +62,8 @@ class OccupancyGrid(object):
         assert len(gridAsVector) == self.widthInCells * self.heightInCells
 
         # Now assign; adapted from https://stackoverflow.com/questions/14681609/create-a-2d-list-out-of-1d-list
-        self.grid = [gridAsVector[i:i+widthInCells] for i in xrange(0, len(gridAsVector), self.widthInCells)]
+        #self.grid = [gridAsVector[i:i+self.widthInCells] for i in xrange(0, len(gridAsVector), self.widthInCells)]
+        self.grid = [gridAsVector[i:i+self.heightInCells] for i in xrange(0, len(gridAsVector), self.heightInCells)]
     
     def scaleEmptyMap(self):
 
