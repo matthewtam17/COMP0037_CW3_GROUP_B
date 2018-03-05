@@ -31,10 +31,10 @@ class AStarPlanner(DijkstraPlanner):
             
         self.alpha = rospy.get_param('a_star_heuristic_weight', 1)
 
-    # Update the cost to self cell and sort according to self cumulative cost
+    # Update the cost to self cell and sort according to the cumulative cost
     def pushCellOntoQueue(self, cell):
 
-        # Work out the cost of the action from the parent to self cell
+        # Work out the cost of the action from the parent to this cell
         # which defines the cost so far
         if (cell.parent is not None):
             d = self.computeLStageAdditiveCost(cell.parent, cell)
