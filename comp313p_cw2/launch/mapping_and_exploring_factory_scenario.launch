@@ -20,7 +20,4 @@
 
   <node pkg="comp313p_reactive_planner_controller" name="planner_controller" type="planner_controller_node.py" output="screen"/>
     <include file="$(find comp313p_mapper)/launch/mapper.launch" />
-    <include file="$(find comp313p_explorer)/launch/explorer.launch" />
-    <node pkg="comp313p_the_boss" name="the_boss" type="boss_node.py" args="$(arg goal_file)" output="screen"/>
-
 </launch>
