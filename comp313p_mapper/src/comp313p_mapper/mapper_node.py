@@ -315,11 +315,10 @@ class MapperNode(object):
         mapUpdateMessage.header.stamp = rospy.Time().now()
         mapUpdateMessage.scale = self.occupancyGrid.getScale()
         mapUpdateMessage.extentInCells = self.occupancyGrid.getExtentInCells()
-        mapUpdateMessage.extent = self.occupancyGrid.getExtent()
-        mapUpdateMessage.occupancyGrid = copy.deepcopy(self.occupancyGrid.getGrid())
+        mapUpdateMessage.occupancyGrid = self.occupancyGrid.getGridAsVector()
 
         if deltaMapRequired is True:
-            mapUpdateMessage.deltaOccupancyGrid = copy.deepcopy(self.deltaOccupancyGrid.getGrid())
+            mapUpdateMessage.deltaOccupancyGrid = self.deltaOccupancyGrid.getGridAsVector()
 
         return mapUpdateMessage
 
