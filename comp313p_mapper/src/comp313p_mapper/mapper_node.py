@@ -35,6 +35,11 @@ class MapperNode(object):
         self.mapServer = rospy.ServiceProxy('static_map', GetMap)
         resp = self.mapServer()
 
+
+        # Drawing options
+        self.showOccupancyGrid = rospy.get_param('show_mapper_occupancy_grid', True)
+        self.showDeltaOccupancyGrid = rospy.get_param('show_mapper_delta_occupancy_grid', True)
+        
         # Create the publisher for the regular map messages
         self.mapUpdatePublisher = rospy.Publisher('updated_map', MapUpdate, queue_size = 1)
  
@@ -55,20 +60,20 @@ class MapperNode(object):
 	self.deltaOccupancyGrid.setScale(mapScale)
 	self.deltaOccupancyGrid.scaleEmptyMap()
 
-        # Create the show delta occupancy grid map. This stores the difference since the last time the map was sent out.
-        # Done as a cheesy way to sort out threading issues
-        self.showDeltaOccupancyGrid = OccupancyGrid(resp.map.info.width, resp.map.info.height, resp.map.info.resolution, 0)
-	self.showDeltaOccupancyGrid.setScale(mapScale)
-	self.showDeltaOccupancyGrid.scaleEmptyMap()
-
         windowHeight = rospy.get_param('maximum_window_height_in_pixels', 600)
-        
-        self.occupancyGridDrawer = OccupancyGridDrawer('Mapper Node Occupancy Grid',\
-                                                       self.occupancyGrid, windowHeight)
-	self.occupancyGridDrawer.open()
-        self.deltaOccupancyGridDrawer = OccupancyGridDrawer('Mapper Node Delta Occupancy Grid',\
-                                                            self.showDeltaOccupancyGrid, windowHeight)
-	self.deltaOccupancyGridDrawer.open()
+
+        if self.showOccupancyGrid is True:        
+            self.occupancyGridDrawer = OccupancyGridDrawer('Mapper Node Occupancy Grid',\
+                                                           self.occupancyGrid, windowHeight)
+	    self.occupancyGridDrawer.open()
+
+        if self.showDeltaOccupancyGrid is True:
+            self.deltaOccupancyGridForShow = OccupancyGrid(resp.map.info.width, resp.map.info.height, resp.map.info.resolution, 0)
+	    self.deltaOccupancyGridForShow.setScale(mapScale)
+	    self.deltaOccupancyGridForShow.scaleEmptyMap()
+            self.deltaOccupancyGridDrawer = OccupancyGridDrawer('Mapper Node Delta Occupancy Grid',\
+                                                                self.deltaOccupancyGridForShow, windowHeight)
+	    self.deltaOccupancyGridDrawer.open()
 
         # Set up the subscribers. These track the robot position, speed and laser scans.
         self.mostRecentOdometry = Odometry()
@@ -78,7 +83,7 @@ class MapperNode(object):
         self.laserSubscriber = rospy.Subscriber("robot0/laser_0", LaserScan, self.laserScanCallback, queue_size=1)
 
         # Flag set to true if graphics can be updated
-        self.updateVisualisation = False
+        self.visualisationUpdateRequired = False
 
         # Set up the lock to ensure thread safety
         self.dataCopyLock = Lock()
@@ -87,7 +92,7 @@ class MapperNode(object):
         self.noTwistReceived = True
 
 
-        self.enableMapping = rospy.get_param('start_with_mapping_enabled', True)
+        self.enableMapping = True
 
     def odometryCallback(self, msg):
         self.dataCopyLock.acquire()
@@ -129,7 +134,7 @@ class MapperNode(object):
             return
 
         # Mark that there is a pending update to the visualisation
-        self.updateVisualisation = True
+        self.visualisationUpdateRequired = True
 
         # Construct the map update message and send it out
         mapUpdateMessage = self.constructMapUpdateMessage(True)
@@ -244,7 +249,8 @@ class MapperNode(object):
                     if self.occupancyGrid.getCell(point[0], point[1]) == 0.5:
                         self.occupancyGrid.setCell(point[0], point[1], 0)
                         self.deltaOccupancyGrid.setCell(point[0], point[1], 1.0)
-                        self.showDeltaOccupancyGrid.setCell(point[0], point[1], 1.0)
+                        if self.showDeltaOccupancyGrid is True:
+                            self.deltaOccupancyGridForShow.setCell(point[0], point[1], 1.0)
                         gridHasChanged = True
                 except IndexError as e:
                     print(e)
@@ -264,7 +270,8 @@ class MapperNode(object):
                 if self.occupancyGrid.getCell(lastPoint[0], lastPoint[1]) < 1.0:
                     self.occupancyGrid.setCell(lastPoint[0], lastPoint[1], 1)
                     self.deltaOccupancyGrid.setCell(lastPoint[0], lastPoint[1], 1.0)
-                    self.showDeltaOccupancyGrid.setCell(lastPoint[0], lastPoint[1], 1.0)
+                    if self.showDeltaOccupancyGrid is True:
+                        self.deltaOccupancyGridForShow.setCell(lastPoint[0], lastPoint[1], 1.0)
                     gridHasChanged = True
 
         return gridHasChanged
@@ -287,15 +294,19 @@ class MapperNode(object):
 
         return points.path
     
-    def update_visualisation(self):
+    def updateVisualisation(self):
 
-        if self.updateVisualisation is False:
+        if self.visualisationUpdateRequired is False:
             return
-        
-	self.occupancyGridDrawer.update()
-	self.deltaOccupancyGridDrawer.update()
-        self.showDeltaOccupancyGrid.clearMap(0)
-        self.updateVisualisation = False
+
+        if self.showOccupancyGrid is True:        
+	    self.occupancyGridDrawer.update()
+
+        if self.showDeltaOccupancyGrid is True:
+	    self.deltaOccupancyGridDrawer.update()
+            self.deltaOccupancyGridForShow.clearMap(0)
+
+        self.visualisationUpdateRequired = False
 
     def constructMapUpdateMessage(self, deltaMapRequired):
         # Construct the map update message
@@ -305,18 +316,18 @@ class MapperNode(object):
         mapUpdateMessage.scale = self.occupancyGrid.getScale()
         mapUpdateMessage.extentInCells = self.occupancyGrid.getExtentInCells()
         mapUpdateMessage.extent = self.occupancyGrid.getExtent()
-        mapUpdateMessage.occupancyGrid = copy.deepcopy(self.occupancyGrid)
+        mapUpdateMessage.occupancyGrid = copy.deepcopy(self.occupancyGrid.getGrid())
 
         if deltaMapRequired is True:
-            mapUpdateMessage.deltaOccupancyGrid = copy.deepcopy(self.deltaOccupancyGrid)
+            mapUpdateMessage.deltaOccupancyGrid = copy.deepcopy(self.deltaOccupancyGrid.getGrid())
 
         return mapUpdateMessage
 
         
     def run(self):
         while not rospy.is_shutdown():
-            rospy.sleep(2)
-            self.update_visualisation()
+            rospy.sleep(1)
+            self.updateVisualisation()
         
   
 

@@ -43,7 +43,11 @@ class OccupancyGrid(object):
 
     def getExtentInCells(self):
         return self.extentInCells
-        
+
+
+    def getGrid(self):
+        return sum(self.grid, [])
+    
     def scaleEmptyMap(self):
 
         planning_map = [[self.getCell(0, 0) for y in range(self.heightInCells / self.scale)] for x in
