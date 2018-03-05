@@ -42,15 +42,9 @@ class SearchGrid(object):
         return self.robotRadius
 
     # Reset the state of the search grid to the value of the occupancy grid
-    def updateFromOccupancyGrid(self):
-        self.grid = [[Cell((x, y), self.occupancyGrid.getCell(x,y)) for y in range(self.height)] \
-                     for x in range(self.width)]
-
-        self.expandObstaclesToAccountForRobotSize()
 
     def getCellFromCoords(self, coords):
         return self.grid[coords[0]][coords[1]]
-
     
     # Pre process the map so that we expand all the obstacles by a
     # circle of radius robotRadius metres. This is a way to account
@@ -58,7 +52,7 @@ class SearchGrid(object):
     # Minkowski sum. Practically, this is a really bad way to write
     # this! It also currently uses the crude aproximation that the
     # robot shape is a square
-    def expandObstaclesToAccountForRobotSize(self):
+    def updateFromOccupancyGrid(self):
 
         # Compute the size we need to grow the obstacle
         s = int(math.ceil(self.robotRadius / self.occupancyGrid.getResolution()))
@@ -69,6 +63,8 @@ class SearchGrid(object):
         # Allocate the new occupancy grid, which will contain the new obstacles
         newGrid = [[Cell((x, y), self.occupancyGrid.getCell(x,y)) for y in range(heightInCells)] \
                    for x in range(widthInCells)]
+
+        print 'newGrid size = ' + str(widthInCells) + 'x' + str(heightInCells)
         
         # Iterate through all the cells in the first grid. If they are
         # marked as OBSTRUCTED, set all cells within radius
@@ -78,7 +74,7 @@ class SearchGrid(object):
         # https://www.pythoncentral.io/pythons-range-function-explained/
         for x in range(widthInCells):
             for y in range(heightInCells):
-                if self.grid[x][y].label == CellLabel.OBSTRUCTED:
+                if self.occupancyGrid.getCell(x,y) == 1:
                     for gridX in range(clamp(x-s, 0, widthInCells),clamp(x+s+1, 0, widthInCells)):
                         for gridY in range(clamp(y-s, 0, heightInCells),clamp(y+s+1, 0, heightInCells)):
                             newGrid[gridX][gridY] = Cell((gridX, gridY), 1)
