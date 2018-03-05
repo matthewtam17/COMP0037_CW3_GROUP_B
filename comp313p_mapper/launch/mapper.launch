@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-  <param name="start_with_mapping_enabled" type="bool" value = "true"/>
-  <param name="show_map_occupancy_grid" type="bool" value = "true"/>
-  <param name="show_delta_occupancy_grid" type="bool" value = "true"/>
+  <param name="show_mapper_occupancy_grid" type="bool" value = "true"/>
+  <param name="show_mapper_delta_occupancy_grid" type="bool" value = "true"/>
   <node pkg="comp313p_mapper" name="mapper_node" type="mapperNode" output="screen"/>
 </launch>
