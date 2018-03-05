@@ -37,6 +37,7 @@ class PlannerControllerNode(object):
         self.waitForGoal =  threading.Condition()
         self.waitForDriveCompleted =  threading.Condition()
         self.goal = None
+        self.goalReached = False
     
     def createOccupancyGridFromMapServer(self):
 
@@ -94,7 +95,7 @@ class PlannerControllerNode(object):
         self.waitForDriveCompleted.wait()
         self.waitForDriveCompleted.release()
 
-        return GoalResponse(True)
+        return GoalResponse(self.goalReached)
     
     def run(self):
 
@@ -131,7 +132,7 @@ class PlannerControllerNode(object):
             if (self.goal is None):
                 continue
 
-            self.plannerController.driveToGoal(self.goal)
+            self.goalReached = self.plannerController.driveToGoal(self.goal)
             self.goal = None
 
             # Signal back to the service handler that we are done

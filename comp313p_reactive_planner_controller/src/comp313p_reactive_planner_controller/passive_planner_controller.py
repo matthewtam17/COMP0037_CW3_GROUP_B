@@ -36,6 +36,6 @@ class PassivePlannerController(PlannerControllerBase):
         path = self.planner.extractPathToGoal()
 
         # Drive along the path the goal
-        goalNotReached = self.controller.drivePathToGoal(path, goal.theta, self.planner.getPlannerDrawer())
+        goalReached = self.controller.drivePathToGoal(path, goal.theta, self.planner.getPlannerDrawer())
 
-        return goalNotReached is False
+        return goalReached
