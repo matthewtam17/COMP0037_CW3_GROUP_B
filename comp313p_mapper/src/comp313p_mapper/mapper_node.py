@@ -110,9 +110,10 @@ class MapperNode(object):
         self.enableMapping = changeMapperState.enableMapping
         return ChangeMapperStateResponse()
 
-    def requestMapUpdateService(self, deltaOccupancyGridRequired):
-        mapUpdateMessage = self.constructMapUpdateMessage(deltaOccupancyGridRequired)
-        return RequestMapUpdateServiceResponse(mapUpdateMessage)
+    def requestMapUpdateService(self, request):
+        rospy.loginfo('requestMapUpdateService with deltaOccupancyGridRequired %d', request.deltaOccupancyGridRequired)
+        mapUpdateMessage = self.constructMapUpdateMessage(request.deltaOccupancyGridRequired)
+        return RequestMapUpdateResponse(mapUpdateMessage)
 
     # Handle the laser scan callback. First process the scans and update the various maps
     
