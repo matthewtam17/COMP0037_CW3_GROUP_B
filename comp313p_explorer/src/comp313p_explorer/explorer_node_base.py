@@ -2,6 +2,7 @@ import rospy
 import threading
 
 from comp313p_mapper.msg import *
+from comp313p_mapper.srv import *
 from comp313p_reactive_planner_controller.srv import *
 from comp313p_reactive_planner_controller.occupancy_grid import OccupancyGrid
 from comp313p_reactive_planner_controller.grid_drawer import OccupancyGridDrawer
@@ -37,6 +38,13 @@ class ExplorerNodeBase(object):
         self.occupancyGridDrawer = None
         self.deltaOccupancyGridDrawer = None
         self.visualisationUpdateRequired = False
+
+        # Request an initial map to get the ball rolling
+        #rospy.loginfo('Waiting for service request_map_update')
+        #rospy.wait_for_service('request_map_update')
+        #mapRequestService = rospy.ServiceProxy('request_map_update', RequestMapUpdate)
+        #mapUpdate = mapRequestService(True)
+        #self.mapUpdateCallback(mapUpdate.initialMapUpdate)
 
         
     def mapUpdateCallback(self, msg):
@@ -93,6 +101,9 @@ class ExplorerNodeBase(object):
     def chooseNewDestination(self):
         raise NotImplementedError()
 
+    def destinationReached(self, goalReached):
+        raise NotImplementedError()
+
     def updateVisualisation(self):
 
         if self.visualisationUpdateRequired is False:
@@ -134,16 +145,20 @@ class ExplorerNodeBase(object):
             threading.Thread.__init__(self)
             self.explorer = explorer
             self.running = False
+            self.completed = False;
 
 
         def isRunning(self):
             return self.running
-            
+
+        def hasCompleted(self):
+            return self.completed
+
         def run(self):
 
             self.running = True
 
-            while not rospy.is_shutdown():
+            while (rospy.is_shutdown() is False) & (self.completed is False):
                 # Create a new robot waypoint if required
                 newDestinationAvailable, newDestination = self.explorer.chooseNewDestination()
 
@@ -152,17 +167,18 @@ class ExplorerNodeBase(object):
                     print 'newDestination = ' + str(newDestination)
                     newDestinationInWorldCoordinates = self.explorer.occupancyGrid.getWorldCoordinatesFromCellCoordinates(newDestination)
                     attempt = self.explorer.sendGoalToRobot(newDestinationInWorldCoordinates)
-                    print 'attempt=' + str(attempt)
+                    self.explorer.destinationReached(newDestination, attempt)
+                else:
+                    self.completed = True
                     
-                if attempt is False:
-                    return
-                    
-        
+       
     def run(self):
 
         explorerThread = ExplorerNodeBase.ExplorerThread(self)
-            
-        while not rospy.is_shutdown():
+
+        keepRunning = True
+        
+        while (rospy.is_shutdown() is False) & (keepRunning is True):
 
             rospy.sleep(0.1)
             
@@ -173,6 +189,10 @@ class ExplorerNodeBase(object):
 
             if explorerThread.isRunning() is False:
                 explorerThread.start()
+
+            if explorerThread.hasCompleted() is True:
+                explorerThread.join()
+                keepRunning = False
 
             
             
