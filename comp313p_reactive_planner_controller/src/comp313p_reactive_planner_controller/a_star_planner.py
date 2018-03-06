@@ -27,7 +27,7 @@ class AStarPlanner(DijkstraPlanner):
             self.heuristic = CostToComeHeuristic.EUCLIDEAN
         else:
             rospy.logwarn('Unknown heuristic %s; defaulting to OCTILE', heuristic)
-            self.heuristic = CostToComeHeuristic.EUCLIDEAN
+            self.heuristic = CostToComeHeuristic.OCTILE
             
         self.alpha = rospy.get_param('a_star_heuristic_weight', 1)
 
