@@ -17,9 +17,10 @@ class ExplorerNode(ExplorerNodeBase):
 
     def chooseNewDestination(self):
 
-        print 'blackList:'
-        for coords in self.blackList:
-            print str(coords)
+
+#         print 'blackList:'
+#         for coords in self.blackList:
+#             print str(coords)
 
         for x in range(0, self.occupancyGrid.getWidthInCells()):
             for y in range(0, self.occupancyGrid.getHeightInCells()):
@@ -38,6 +39,6 @@ class ExplorerNode(ExplorerNodeBase):
 
     def destinationReached(self, goal, goalReached):
         if goalReached is False:
-            print 'Adding ' + str(goal) + ' to the naughty step'
+#             print 'Adding ' + str(goal) + ' to the naughty step'
             self.blackList.append(goal)
             

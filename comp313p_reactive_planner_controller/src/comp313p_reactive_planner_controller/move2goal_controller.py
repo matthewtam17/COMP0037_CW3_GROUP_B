@@ -32,6 +32,7 @@ class Move2GoalController(ControllerBase):
 
         # Flag to toggle the mapper state
         self.enableSettingMapperState = rospy.get_param('enable_change_mapper_state', True)
+        rospy.logerr('enableSettingMapperState=%d', self.enableSettingMapperState)
         self.mappingState = True
     
     def get_distance(self, goal_x, goal_y):
@@ -54,7 +55,7 @@ class Move2GoalController(ControllerBase):
         distanceError = sqrt(dX * dX + dY * dY)
         angleError = self.shortestAngularDistance(self.pose.theta, atan2(dY, dX))
        
-        while (distanceError >= self.distanceErrorTolerance) & (not rospy.is_shutdown()):
+        while (distanceError >= self.distanceErrorTolerance) & (not self.abortCurrentGoal) & (not rospy.is_shutdown()):
             #print("Current Pose: x: {}, y:{} , theta: {}\nGoal: x: {}, y: {}\n".format(self.pose.x, self.pose.y,
             #                                                                           self.pose.theta, waypoint[0],
             #                                                                           waypoint[1]))
@@ -106,9 +107,7 @@ class Move2GoalController(ControllerBase):
                                                       atan2(waypoint[1] - self.pose.y, waypoint[0] - self.pose.x))
 
         # Stopping our robot after the movement is over
-        vel_msg.linear.x = 0
-        vel_msg.angular.z = 0
-        self.velocityPublisher.publish(vel_msg)
+        self.stopRobot()
 
         return True
 
@@ -140,8 +139,7 @@ class Move2GoalController(ControllerBase):
             angleError = self.shortestAngularDistance(self.pose.theta, goalOrientation)
 
         # Stop movement once finished
-        vel_msg.angular.z = 0
-        self.velocityPublisher.publish(vel_msg)
+        self.stopRobot()
 
         if self.enableSettingMapperState is True:
             self.mappingState = True

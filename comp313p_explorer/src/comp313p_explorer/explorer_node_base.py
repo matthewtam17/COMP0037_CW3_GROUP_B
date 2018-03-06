@@ -1,11 +1,13 @@
 import rospy
 import threading
+import math
 
 from comp313p_mapper.msg import *
 from comp313p_mapper.srv import *
 from comp313p_reactive_planner_controller.srv import *
 from comp313p_reactive_planner_controller.occupancy_grid import OccupancyGrid
 from comp313p_reactive_planner_controller.grid_drawer import OccupancyGridDrawer
+from geometry_msgs.msg  import Twist
 
 class ExplorerNodeBase(object):
 
@@ -40,12 +42,16 @@ class ExplorerNodeBase(object):
         self.visualisationUpdateRequired = False
 
         # Request an initial map to get the ball rolling
-        #rospy.loginfo('Waiting for service request_map_update')
-        #rospy.wait_for_service('request_map_update')
-        #mapRequestService = rospy.ServiceProxy('request_map_update', RequestMapUpdate)
-        #mapUpdate = mapRequestService(True)
-        #self.mapUpdateCallback(mapUpdate.initialMapUpdate)
+        rospy.loginfo('Waiting for service request_map_update')
+        rospy.wait_for_service('request_map_update')
+        mapRequestService = rospy.ServiceProxy('request_map_update', RequestMapUpdate)
+        mapUpdate = mapRequestService(True)
 
+        while mapUpdate.initialMapUpdate.isPriorMap is True:
+            self.kickstartSimulator()
+            mapUpdate = mapRequestService(True)
+            
+        self.mapUpdateCallback(mapUpdate.initialMapUpdate)
         
     def mapUpdateCallback(self, msg):
         rospy.loginfo("map update received")
@@ -58,15 +64,12 @@ class ExplorerNodeBase(object):
         # Update the grids
         self.occupancyGrid.updateGridFromVector(msg.occupancyGrid)
         self.deltaOccupancyGrid.updateGridFromVector(msg.deltaOccupancyGrid)
-
         
         # Update the frontiers
         self.updateFrontiers()
 
         # Flag there's something to show graphically
         self.visualisationUpdateRequired = True
-
-        # If a new destination is required, send it out
 
     # This method determines if a cell is a frontier cell or not. A
     # frontier cell is open and has at least one neighbour which is
@@ -139,7 +142,15 @@ class ExplorerNodeBase(object):
             print "Service call failed: %s"%e
             return False
 
-
+    # Special case. If this is the first time everything has
+    # started, stdr needs a kicking to generate the first
+    # laser message. Telling it to take a very small movement appears to be sufficient
+    def kickstartSimulator(self):
+        velocityPublisher = rospy.Publisher('/robot0/cmd_vel', Twist, queue_size=1)
+        velocityMessage = Twist()
+        velocityPublisher.publish(velocityMessage)
+        rospy.sleep(1)
+            
     class ExplorerThread(threading.Thread):
         def __init__(self, explorer):
             threading.Thread.__init__(self)
@@ -159,6 +170,12 @@ class ExplorerNodeBase(object):
             self.running = True
 
             while (rospy.is_shutdown() is False) & (self.completed is False):
+
+                # Special case. If this is the first time everything
+                # has started, stdr needs a kicking to generate laser
+                # messages. To do this, we get the robot to
+                
+
                 # Create a new robot waypoint if required
                 newDestinationAvailable, newDestination = self.explorer.chooseNewDestination()
 

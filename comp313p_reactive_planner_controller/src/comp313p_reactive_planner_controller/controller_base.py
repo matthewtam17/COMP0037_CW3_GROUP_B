@@ -39,8 +39,8 @@ class ControllerBase(object):
         # This is the rate at which we broadcast updates to the simulator in Hz.
         self.rate = rospy.Rate(10)
 
-        # This flag says if the occupancy grid has changed
-        self.hasOccupancyGridChanged = True
+        # This flag says if the current goal should be aborted
+        self.abortCurrentGoal = False
         
 
     # Get the pose of the robot. Store this in a Pose2D structure because
@@ -63,9 +63,17 @@ class ControllerBase(object):
     def getCurrentPose(self):
         return self.pose
 
+    # If set to true, the robot should abort driving to the current goal.
+    def setAbortCurrentGoal(self):
+        self.abortCurrentGoal = True
+    
     # Handle the logic of driving the robot to the next waypoint
     def driveToWaypoint(self, waypoint):
         raise NotImplementedError()
+
+    def stopRobot(self):
+        stopMessage = Twist()
+        self.velocityPublisher.publish(stopMessage)
 
     # Handle the logic of rotating the robot to its final orientation
     def rotateToGoalOrientation(self, waypoint):
@@ -75,6 +83,8 @@ class ControllerBase(object):
     # the planner drawer because we have to keep updating it to
     # make sure the graphics are redrawn properly.
     def drivePathToGoal(self, path, goalOrientation, plannerDrawer):
+
+        self.abortCurrentGoal = False
         self.plannerDrawer = plannerDrawer
 
         rospy.loginfo('Driving path to goal with ' + str(len(path.waypoints)) + ' waypoint(s)')
@@ -86,8 +96,13 @@ class ControllerBase(object):
 
             rospy.loginfo("Driving to waypoint (%f, %f)", waypoint[0], waypoint[1])
 
+            if self.abortCurrentGoal is True:
+                self.stopRobotMovement()
+                return False
+
             
             if self.driveToWaypoint(waypoint) is False:
+                self.stopRobotMovement()
                 return False
                 
             # Handle ^C

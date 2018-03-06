@@ -90,7 +90,7 @@ class MapperNode(object):
 
         self.noOdometryReceived = True
         self.noTwistReceived = True
-
+        self.noLaserScanReceived = True
 
         self.enableMapping = True
 
@@ -108,6 +108,7 @@ class MapperNode(object):
 
     def mappingStateService(self, changeMapperState):
         self.enableMapping = changeMapperState.enableMapping
+        rospy.loginfo('Changing the enableMapping state to %d', self.enableMapping)
         return ChangeMapperStateResponse()
 
     def requestMapUpdateService(self, request):
@@ -136,6 +137,9 @@ class MapperNode(object):
 
         # Mark that there is a pending update to the visualisation
         self.visualisationUpdateRequired = True
+
+        # Mark that a laser scan has been received
+        self.noLaserScanReceived = False
 
         # Construct the map update message and send it out
         mapUpdateMessage = self.constructMapUpdateMessage(True)
@@ -314,6 +318,7 @@ class MapperNode(object):
         mapUpdateMessage = MapUpdate()
 
         mapUpdateMessage.header.stamp = rospy.Time().now()
+        mapUpdateMessage.isPriorMap = self.noLaserScanReceived
         mapUpdateMessage.scale = self.occupancyGrid.getScale()
         mapUpdateMessage.resolution = self.occupancyGrid.getResolution()
         mapUpdateMessage.extentInCells = self.occupancyGrid.getExtentInCells()
