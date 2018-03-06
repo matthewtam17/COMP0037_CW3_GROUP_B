@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
-# Self script runs "the boss". Self sends out a set of goals to the robot in turn.
+# This script runs "the boss". This sends out a set of goals to the
+# robot in turn.
 
 import rospy
 import sys
-from comp313p_planner_controller.srv import *
+from comp313p_reactive_planner_controller.srv import *
 from nav_msgs.srv import GetMap
 from stdr_msgs.srv import MoveRobot
 from geometry_msgs.msg import Pose2D
@@ -63,6 +64,8 @@ class BossNode(object):
         response = self.mapServer()
         map = response.map
         rospy.loginfo('Got map data')
+        mapScale = rospy.get_param('plan_scale',5)
+	self.occupancyGrid.setScale(mapScale)
 
         # Iterate over the goals and create them
         for g in range(0, 15):
