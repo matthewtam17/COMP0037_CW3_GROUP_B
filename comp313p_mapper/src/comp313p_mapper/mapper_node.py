@@ -28,8 +28,6 @@ class MapperNode(object):
 
     def __init__(self):
 
-        rospy.sleep(0.1)
-
         # Get the ground truth map from stdr; we use this to figure out the dimensions of the map       
         rospy.init_node('mapper_node', anonymous=True)
         self.mapServer = rospy.ServiceProxy('static_map', GetMap)
@@ -160,7 +158,7 @@ class MapperNode(object):
         currentTwist = copy.deepcopy(self.mostRecentTwist)
         self.dataCopyLock.release()
 
-        dT = predictTime - currentPoseTime
+        dT = 0#predictTime - currentPoseTime
 
         quaternion = (currentPose.orientation.x, currentPose.orientation.y,
                       currentPose.orientation.z, currentPose.orientation.w)
@@ -185,20 +183,13 @@ class MapperNode(object):
                 currentTwist.linear.x / currentTwist.angular.z * cos(theta + dT * currentTwist.angular.z)
 
         theta = theta + currentTwist.angular.z * dT
-
-        tooFast = abs(currentTwist.linear.x) > 4
         
-        return x, y, theta, tooFast
+        return x, y, theta
 
     def parseScan(self, msg):
 
         # Predict the robot pose to the time the scan was taken
-        x, y, theta, tooFast = self.predictPose(msg.header.stamp.to_sec())
-
-        # If the robot is travelling too quickly, don't bother trying to analyse the scan
-        if tooFast is True:
-            print 'Too Fast'
-            return
+        x, y, theta = self.predictPose(msg.header.stamp.to_sec())
         
         # Clear the flag which shows that the map has changed
         gridHasChanged = False
@@ -301,17 +292,29 @@ class MapperNode(object):
     
     def updateVisualisation(self):
 
-        if self.visualisationUpdateRequired is False:
-            return
+        # If anything has changed the state of the occupancy grids,
+        # visualisationUpdateRequired is set to true. Therefore, the
+        # graphics are updated. If set to false, we flush anyway to
+        # make sure that the windows are properly (re)drawn in VNC.
+        
+        if self.visualisationUpdateRequired is True:
 
-        if self.showOccupancyGrid is True:        
-	    self.occupancyGridDrawer.update()
+            if self.showOccupancyGrid is True:        
+	        self.occupancyGridDrawer.update()
 
-        if self.showDeltaOccupancyGrid is True:
-	    self.deltaOccupancyGridDrawer.update()
-            self.deltaOccupancyGridForShow.clearMap(0)
+            if self.showDeltaOccupancyGrid is True:
+	        self.deltaOccupancyGridDrawer.update()
+                self.deltaOccupancyGridForShow.clearMap(0)
 
-        self.visualisationUpdateRequired = False
+            self.visualisationUpdateRequired = False
+
+        else:
+
+            if self.showOccupancyGrid is True:        
+	        self.occupancyGridDrawer.flushAndUpdateWindow()
+
+            if self.showDeltaOccupancyGrid is True:
+	        self.deltaOccupancyGridDrawer.flushAndUpdateWindow()
 
     def constructMapUpdateMessage(self, deltaMapRequired):
         # Construct the map update message
@@ -332,8 +335,8 @@ class MapperNode(object):
         
     def run(self):
         while not rospy.is_shutdown():
-            rospy.sleep(0.1)
             self.updateVisualisation()
+            rospy.sleep(0.1)
         
   
 
