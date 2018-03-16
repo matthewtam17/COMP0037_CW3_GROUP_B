@@ -95,6 +95,8 @@ class GeneralForwardSearchAlgorithm(PlannerBase):
     # cells in the search grid and the search algorithm is then run.
     def search(self, startCoords, goalCoords):
 
+        self.handleChangeToOccupancyGrid()
+        
         # Empty the queue. self is needed to make sure everything is reset
         while (self.isQueueEmpty() == False):
             self.popCellFromQueue()
