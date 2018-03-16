@@ -21,6 +21,8 @@ class PlannerBase(object):
         self.robotRadius = rospy.get_param('robot_radius', 0.2)
 
         rospy.loginfo("Occupancy grid dimensions = %dx%d", occupancyGrid.getWidthInCells(), occupancyGrid.getHeightInCells())
+
+        self.handleChangeToOccupancyGrid()
         
         # Graphics and debug output support
         self.showGraphics = True
@@ -31,6 +33,10 @@ class PlannerBase(object):
         self.occupancyGridDrawer = None
         self.windowHeightInPixels = 700
         self.runInteractively = False
+
+    # This method is called if the occupancy grid changes
+    def handleChangeToOccupancyGrid(self):
+        raise NotImplementedError()
 
     # Pause for key presses?
     def setRunInteractively(self, runInteractively):

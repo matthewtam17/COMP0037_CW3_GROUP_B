@@ -2,6 +2,7 @@
 <launch>
   <param name="use_sim_time" type="bool" value="true" />
   <param name="enable_change_mapper_state" type="bool" value="true" />
+  <param name="use_fifo_planner" type="bool" value="true" />
   <rosparam param="clock_send_rate">40</rosparam>
   <rosparam param="time_scale_factor">1</rosparam>
   <arg name="map_file" default="$(find comp313p_resources)/maps/factory.yaml"/>

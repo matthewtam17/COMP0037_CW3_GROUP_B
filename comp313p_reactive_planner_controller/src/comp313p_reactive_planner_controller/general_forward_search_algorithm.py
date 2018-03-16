@@ -59,6 +59,10 @@ class GeneralForwardSearchAlgorithm(PlannerBase):
     # Handle the case that a cell has been visited already.
     def resolveDuplicate(self, cell):
         raise NotImplementedError()
+
+    # Get the search grid
+    def getSearchGrid(self):
+        return self.searchGrid
     
     # Compute the additive cost of performing a step from the parent to the
     # current cell. This calculation is carried out the same way no matter
@@ -76,7 +80,16 @@ class GeneralForwardSearchAlgorithm(PlannerBase):
         L = sqrt(dX * dX + dY * dY)
         
         return L
-        
+
+    # Update the seach grid
+    def handleChangeToOccupancyGrid(self):
+        # Create the search grid from the occupancy grid and seed
+        # unvisited and occupied cells.
+        if (self.searchGrid is None):
+            self.searchGrid = SearchGrid.fromOccupancyGrid(self.occupancyGrid, self.robotRadius)
+        else:
+            self.searchGrid.updateFromOccupancyGrid()
+    
     # The main search routine. The routine searches for a path between a given
     # set of coordinates. These are then converted into start and destination
     # cells in the search grid and the search algorithm is then run.
@@ -85,13 +98,6 @@ class GeneralForwardSearchAlgorithm(PlannerBase):
         # Empty the queue. self is needed to make sure everything is reset
         while (self.isQueueEmpty() == False):
             self.popCellFromQueue()
-        
-        # Create the search grid from the occupancy grid and seed
-        # unvisited and occupied cells.
-        if (self.searchGrid is None):
-            self.searchGrid = SearchGrid.fromOccupancyGrid(self.occupancyGrid, self.robotRadius)
-        else:
-            self.searchGrid.updateFromOccupancyGrid()
 
         # Get the start cell object and label it as such. Also set its
         # path cost to 0.

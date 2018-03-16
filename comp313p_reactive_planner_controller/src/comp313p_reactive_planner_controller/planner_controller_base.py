@@ -6,6 +6,10 @@ class PlannerControllerBase(object):
         self.occupancyGrid = occupancyGrid
         self.planner = planner
         self.controller = controller
+        self.currentPlannedPath = None
+
+    def handleMapUpdate(self, mapUpdateMessage):
+        raise NotImplementedError()
     
     def driveToGoal(self, goal):
         raise NotImplementedError()

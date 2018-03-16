@@ -1,10 +1,30 @@
-# This class manages the key logic for the reactive planner and controller
+# This class manages the key logic for the reactive planner and
+# controller. This monitors the the robot mtion.
 
 import rospy
 from planner_controller_base import PlannerControllerBase
 
 class ReactivePlannerController(PlannerControllerBase):
 
+    def __init__(self, occupancyGrid, planner, controller):
+        PlannerControllerBase.__init__(self, occupancyGrid, planner, controller)
+
+    def handleMapUpdate(self, mapUpdateMessage):
+
+        # Update the occupancy grid
+        self.occupancyGrid.updateGridFromVector(mapUpdateMessage.occupancyGrid)
+        self.planner.handleChangeToOccupancyGrid()
+
+        # Get the new search grid. This has been updated to account
+        # for the occupancy grid and robot size.
+        currentSearchGrid = self.planner.getSearchGrid()
+
+        # Check if the current planned path is good
+        
+        # If not, 
+
+        pass
+    
     def driveToGoal(self, goal):
 
         # Get the coal coordinate in cells
@@ -15,11 +35,7 @@ class ReactivePlannerController(PlannerControllerBase):
 
         goalNotReached = True
         
-        while goalNotReached is True:
-
-            # If ROS is shutting down, break the loop and exit
-            if rospy.is_shutdown() is True:
-                return False
+        while (goalNotReached is True) & (rospy.is_shutdown() is False):
 
             # Set the start conditions to the current position of the robot
             pose = self.robotController.getCurrentPose()
@@ -36,9 +52,9 @@ class ReactivePlannerController(PlannerControllerBase):
                 return False
             
             # Extract the path
-            path = self.planner.extractPathToGoal()
+            self.currentPlannedPath = self.planner.extractPathToGoal()
 
             # Drive along the path the goal
-            goalNotReached = self.robotController.drivePathToGoal(path, goal.theta, self.planner.getPlannerDrawer())
+            goalNotReached = self.robotController.drivePathToGoal(self.currentPlannedPath, goal.theta, self.planner.getPlannerDrawer())
             
             
