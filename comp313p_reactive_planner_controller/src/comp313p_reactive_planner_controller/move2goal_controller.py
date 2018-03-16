@@ -32,7 +32,7 @@ class Move2GoalController(ControllerBase):
 
         # Flag to toggle the mapper state
         self.enableSettingMapperState = rospy.get_param('enable_change_mapper_state', True)
-        rospy.logerr('enableSettingMapperState=%d', self.enableSettingMapperState)
+        rospy.loginfo('enableSettingMapperState=%d', self.enableSettingMapperState)
         self.mappingState = True
     
     def get_distance(self, goal_x, goal_y):
