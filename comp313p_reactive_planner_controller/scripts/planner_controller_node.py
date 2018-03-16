@@ -66,7 +66,6 @@ class PlannerControllerNode(object):
         else:
             rospy.loginfo('Use the map from comp313p_mapper')
             rospy.wait_for_service('request_map_update') 
-            
 
     # TODO: Change this method to be a callback to support changes in the map
     def updateOccupancyGridFromMapServer(self, map):

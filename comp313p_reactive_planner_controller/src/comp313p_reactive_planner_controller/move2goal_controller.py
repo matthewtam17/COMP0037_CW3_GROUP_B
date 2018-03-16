@@ -122,7 +122,8 @@ class Move2GoalController(ControllerBase):
             self.mappingState = False
             self.changeMapperStateService(False)
 
-        while (math.fabs(angleError) >= self.goalAngleErrorTolerance) & (not rospy.is_shutdown()):
+        while (math.fabs(angleError) >= self.goalAngleErrorTolerance) & (not self.abortCurrentGoal) \
+              & (not rospy.is_shutdown()):
             #print 'Angular Error: ' + str(angleError)
 
             # angular velocity in the z-axis:
