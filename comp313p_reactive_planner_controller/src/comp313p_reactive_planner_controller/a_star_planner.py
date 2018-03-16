@@ -17,7 +17,7 @@ class AStarPlanner(DijkstraPlanner):
         DijkstraPlanner.__init__(self, title, occupancyGrid)
 
         # Set up the heuristic and the weight from the parameters
-        heuristic = rospy.get_param('a_star_heuristic', 'octile')
+        heuristic = rospy.get_param('a_star_heuristic', 'euclidean')
 
         if heuristic == 'octile':
             self.heuristic = CostToComeHeuristic.OCTILE
