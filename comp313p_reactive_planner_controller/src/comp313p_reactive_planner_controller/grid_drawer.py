@@ -101,8 +101,8 @@ class SearchGridDrawer(BaseDrawer):
         self.searchGrid = searchGrid;
                 
     def reset(self):
-        # Nothing to do - rendering is stateless
-        pass
+        self.start = None
+        self.goal = None
 
     # Go through and draw all objects        
     def update(self):
