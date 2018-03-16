@@ -186,6 +186,11 @@ class OccupancyGridDrawer(BaseDrawer):
                 colour = '#' + hexWeight + hexWeight + hexWeight
                 self.rectangles[i][j].setFill(colour);
 
+                
+    def reset(self):
+        # Nothing to do - rendering is stateless
+        pass
+
     # Go through and draw all objects        
     def update(self):
         
