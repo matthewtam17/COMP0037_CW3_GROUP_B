@@ -21,6 +21,8 @@ class PlannerBase(object):
         self.robotRadius = rospy.get_param('robot_radius', 0.2)
 
         rospy.loginfo("Occupancy grid dimensions = %dx%d", occupancyGrid.getWidthInCells(), occupancyGrid.getHeightInCells())
+
+        self.handleChangeToOccupancyGrid()
         
         # Graphics and debug output support
         self.showGraphics = True
@@ -31,6 +33,10 @@ class PlannerBase(object):
         self.occupancyGridDrawer = None
         self.windowHeightInPixels = 700
         self.runInteractively = False
+
+    # This method is called if the occupancy grid changes
+    def handleChangeToOccupancyGrid(self):
+        raise NotImplementedError()
 
     # Pause for key presses?
     def setRunInteractively(self, runInteractively):
@@ -69,13 +75,7 @@ class PlannerBase(object):
         if (self.showGraphics == False):
             return
         
-        # HACK: AT THE MOMENT I CAN'T GET THE WINDOW TO DRAW NEATLY
-        if (self.searchGridDrawer is not None):
-            self.searchGridDrawer.close()
-            self.occupancyGridDrawer.close()
-            self.searchGridDrawer = None
-        
-        # If we don't have the planner set up yet, create it      
+        # If we don't have the drawers set up yet, create them
         if (self.searchGridDrawer is None):
             self.createPlannerDrawer()
             self.searchGridDrawer.setRunInteractively(self.runInteractively)

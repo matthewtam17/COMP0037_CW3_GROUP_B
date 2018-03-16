@@ -26,6 +26,8 @@ from comp313p_reactive_planner_controller.passive_planner_controller import Pass
 
 from comp313p_reactive_planner_controller.a_star_planner import AStarPlanner
 
+from comp313p_reactive_planner_controller.fifo_planner import FIFOPlanner
+
 from comp313p_reactive_planner_controller.move2goal_controller import Move2GoalController
 
 # This class is the main node and orchestrates everything else
@@ -62,18 +64,23 @@ class PlannerControllerNode(object):
             self.occupancyGrid = OccupancyGrid(map.info.width, map.info.height, map.info.resolution)
             self.occupancyGrid.setScale(rospy.get_param('plan_scale', 5))
             self.occupancyGrid.setFromDataArrayFromMapServer(map.data)
-
         else:
             rospy.loginfo('Use the map from comp313p_mapper')
             rospy.wait_for_service('request_map_update') 
-            
 
     # TODO: Change this method to be a callback to support changes in the map
     def updateOccupancyGridFromMapServer(self, map):
         self.occupancyGrid.setFromDataArrayFromMapServer(map.data)
 
+    def mapUpdateCallback(self, msg):
+        rospy.loginfo("map update received")
+        self.plannerController.handleMapUpdateMessage(msg)
+        
     def createPlanner(self):
-        self.planner = AStarPlanner('AStar+Octile+Weight=1', self.occupancyGrid)
+        if rospy.get_param('use_fifo_planner', False) is True:
+            self.planner = FIFOPlanner('FIFO', self.occupancyGrid)
+        else:
+            self.planner = AStarPlanner('AStar+Octile+Weight=1', self.occupancyGrid)
         self.planner.setPauseTime(0)
         self.planner.windowHeightInPixels = rospy.get_param('maximum_window_height_in_pixels', 700)
         

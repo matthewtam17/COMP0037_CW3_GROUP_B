@@ -109,8 +109,19 @@ class ExplorerNodeBase(object):
 
     def updateVisualisation(self):
 
+        # If we don't need to do an update, simply flush the graphics
+        # to make sure everything appears properly in VNC
+        
         if self.visualisationUpdateRequired is False:
+
+            if self.occupancyGridDrawer is not None:
+                self.occupancyGridDrawer.flushAndUpdateWindow()
+
+            if self.deltaOccupancyGridDrawer is not None:
+                self.deltaOccupancyGridDrawer.flushAndUpdateWindow()
+
             return
+                
 
         # Update the visualisation; note that we can only create the
         # drawers here because we don't know the size of the map until

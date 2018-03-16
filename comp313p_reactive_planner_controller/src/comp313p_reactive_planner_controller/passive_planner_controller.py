@@ -1,4 +1,6 @@
-# This class handles the passive planner and controller.
+# This class handles the passive planner and controller. The passive planner controller simply
+# drives the robots from start to goal and assumes that the robot can always get there. It cannot
+# handle the case, for example, that an unexpected obstable appears.
 
 import rospy
 
@@ -8,6 +10,9 @@ class PassivePlannerController(PlannerControllerBase):
 
     def __init__(self, occupancyGrid, planner, controller):
         PlannerControllerBase.__init__(self, occupancyGrid, planner, controller)
+
+    def handleMapUpdate(self, mapUpdateMessage):
+        pass
     
     def driveToGoal(self, goal):
 
@@ -33,9 +38,9 @@ class PassivePlannerController(PlannerControllerBase):
             return False
             
         # Extract the path
-        path = self.planner.extractPathToGoal()
+        self.currentPlannedPath = self.planner.extractPathToGoal()
 
         # Drive along the path the goal
-        goalReached = self.controller.drivePathToGoal(path, goal.theta, self.planner.getPlannerDrawer())
+        goalReached = self.controller.drivePathToGoal(self.currentPlannedPath, goal.theta, self.planner.getPlannerDrawer())
 
         return goalReached

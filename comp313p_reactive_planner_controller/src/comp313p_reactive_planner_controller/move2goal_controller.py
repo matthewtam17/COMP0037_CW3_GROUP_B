@@ -32,7 +32,7 @@ class Move2GoalController(ControllerBase):
 
         # Flag to toggle the mapper state
         self.enableSettingMapperState = rospy.get_param('enable_change_mapper_state', True)
-        rospy.logerr('enableSettingMapperState=%d', self.enableSettingMapperState)
+        rospy.loginfo('enableSettingMapperState=%d', self.enableSettingMapperState)
         self.mappingState = True
     
     def get_distance(self, goal_x, goal_y):
@@ -122,7 +122,8 @@ class Move2GoalController(ControllerBase):
             self.mappingState = False
             self.changeMapperStateService(False)
 
-        while (math.fabs(angleError) >= self.goalAngleErrorTolerance) & (not rospy.is_shutdown()):
+        while (math.fabs(angleError) >= self.goalAngleErrorTolerance) & (not self.abortCurrentGoal) \
+              & (not rospy.is_shutdown()):
             #print 'Angular Error: ' + str(angleError)
 
             # angular velocity in the z-axis:

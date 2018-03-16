@@ -101,8 +101,8 @@ class SearchGridDrawer(BaseDrawer):
         self.searchGrid = searchGrid;
                 
     def reset(self):
-        # Nothing to do - rendering is stateless
-        pass
+        self.start = None
+        self.goal = None
 
     # Go through and draw all objects        
     def update(self):
@@ -185,6 +185,11 @@ class OccupancyGridDrawer(BaseDrawer):
                 hexWeight = '{:02x}'.format(int(cellWeight*255))
                 colour = '#' + hexWeight + hexWeight + hexWeight
                 self.rectangles[i][j].setFill(colour);
+
+                
+    def reset(self):
+        # Nothing to do - rendering is stateless
+        pass
 
     # Go through and draw all objects        
     def update(self):
