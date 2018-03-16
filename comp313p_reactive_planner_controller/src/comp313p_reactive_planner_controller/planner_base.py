@@ -75,13 +75,7 @@ class PlannerBase(object):
         if (self.showGraphics == False):
             return
         
-        # HACK: AT THE MOMENT I CAN'T GET THE WINDOW TO DRAW NEATLY
-        if (self.searchGridDrawer is not None):
-            self.searchGridDrawer.close()
-            self.occupancyGridDrawer.close()
-            self.searchGridDrawer = None
-        
-        # If we don't have the planner set up yet, create it      
+        # If we don't have the drawers set up yet, create them
         if (self.searchGridDrawer is None):
             self.createPlannerDrawer()
             self.searchGridDrawer.setRunInteractively(self.runInteractively)
