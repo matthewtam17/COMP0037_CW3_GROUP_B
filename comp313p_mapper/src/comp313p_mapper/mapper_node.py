@@ -40,10 +40,6 @@ class MapperNode(object):
         
         # Create the publisher for the regular map messages
         self.mapUpdatePublisher = rospy.Publisher('updated_map', MapUpdate, queue_size = 1)
- 
-        # Register the supported services
-        self.changeMapperStateService = rospy.Service('change_mapper_state', ChangeMapperState, self.mappingStateService)
-        self.requestMapUpdateService = rospy.Service('request_map_update', RequestMapUpdate, self.requestMapUpdateService)
 
         # Get the map scale
         mapScale = rospy.get_param('plan_scale',5)
@@ -73,13 +69,6 @@ class MapperNode(object):
                                                                 self.deltaOccupancyGridForShow, windowHeight)
 	    self.deltaOccupancyGridDrawer.open()
 
-        # Set up the subscribers. These track the robot position, speed and laser scans.
-        self.mostRecentOdometry = Odometry()
-        self.odometrySubscriber = rospy.Subscriber("robot0/odom", Odometry, self.odometryCallback, queue_size=1)
-        self.mostRecentTwist = Twist();
-        self.twistSubscriber = rospy.Subscriber('/robot0/cmd_vel', Twist, self.twistCallback, queue_size=1)
-        self.laserSubscriber = rospy.Subscriber("robot0/laser_0", LaserScan, self.laserScanCallback, queue_size=1)
-
         # Flag set to true if graphics can be updated
         self.visualisationUpdateRequired = False
 
@@ -91,6 +80,17 @@ class MapperNode(object):
         self.noLaserScanReceived = True
 
         self.enableMapping = True
+         
+        # Register the supported services
+        self.changeMapperStateService = rospy.Service('change_mapper_state', ChangeMapperState, self.mappingStateService)
+        self.requestMapUpdateService = rospy.Service('request_map_update', RequestMapUpdate, self.requestMapUpdateService)
+
+        # Set up the subscribers. These track the robot position, speed and laser scans.
+        self.mostRecentOdometry = Odometry()
+        self.odometrySubscriber = rospy.Subscriber("robot0/odom", Odometry, self.odometryCallback, queue_size=1)
+        self.mostRecentTwist = Twist();
+        self.twistSubscriber = rospy.Subscriber('/robot0/cmd_vel', Twist, self.twistCallback, queue_size=1)
+        self.laserSubscriber = rospy.Subscriber("robot0/laser_0", LaserScan, self.laserScanCallback, queue_size=1)
 
     def odometryCallback(self, msg):
         self.dataCopyLock.acquire()
