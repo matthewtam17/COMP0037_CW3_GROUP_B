@@ -2,7 +2,7 @@ robot:
   robot_specifications:
     - footprint:
         footprint_specifications:
-          radius: 0.100000002980232
+          radius: 0.500000002980232
           points:
             []
     - initial_pose:
