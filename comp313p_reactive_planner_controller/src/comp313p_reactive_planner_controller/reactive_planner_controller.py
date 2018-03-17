@@ -57,7 +57,7 @@ class ReactivePlannerController(PlannerControllerBase):
             start = (pose.x, pose.y)
             startCellCoords = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates(start)
 
-            print 'start=' + str(start) + '; goal=' + str(goal)
+            print 'Planning a new path: start=' + str(start) + '; goal=' + str(goal)
             
             # Plan a path using the current occupancy grid
             self.gridUpdateLock.acquire()
@@ -73,8 +73,12 @@ class ReactivePlannerController(PlannerControllerBase):
             # Extract the path
             self.currentPlannedPath = self.planner.extractPathToGoal()
 
-            # Drive along the path the goal
-            goalReached = self.controller.drivePathToGoal(self.currentPlannedPath, goal.theta, self.planner.getPlannerDrawer())
+            # Drive along the path towards the goal. This returns True
+            # if the goal was successfully reached. The controller
+            # should stop the robot and return False if the
+            # stopDrivingToCurrentGoal method is called.
+            goalReached = self.controller.drivePathToGoal(self.currentPlannedPath, \
+                                                          goal.theta, self.planner.getPlannerDrawer())
 
             rospy.logerr('goalReached=%d', goalReached)
 
