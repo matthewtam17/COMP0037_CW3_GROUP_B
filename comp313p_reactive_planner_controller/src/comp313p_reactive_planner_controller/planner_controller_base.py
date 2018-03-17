@@ -8,7 +8,7 @@ class PlannerControllerBase(object):
         self.controller = controller
         self.currentPlannedPath = None
 
-    def handleMapUpdate(self, mapUpdateMessage):
+    def mapUpdateCallback(self, mapUpdateMessage):
         raise NotImplementedError()
     
     def driveToGoal(self, goal):

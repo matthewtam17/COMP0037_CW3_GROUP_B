@@ -79,13 +79,15 @@ class PlannerBase(object):
         if (self.searchGridDrawer is None):
             self.createPlannerDrawer()
             self.searchGridDrawer.setRunInteractively(self.runInteractively)
-            self.searchGridDrawer.setStartAndGoal(self.start, self.goal)
             self.searchGridDrawer.open()
             self.occupancyGridDrawer.open()
         else:
             self.searchGridDrawer.reset()
             self.occupancyGridDrawer.reset()
             
+        # Draw the start and end points
+        self.searchGridDrawer.setStartAndGoal(self.start, self.goal)
+        
         # Now force an initial draw
         self.drawCurrentState(forceUpdate=True)
         
