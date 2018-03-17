@@ -24,17 +24,19 @@ class Move2GoalController(ControllerBase):
         self.angleErrorGain = rospy.get_param('angle_error_gain', 4)
         self.driveAngleErrorTolerance = math.radians(rospy.get_param('angle_error_tolerance', 1))
 
-        # Get the service to switch the mapper on and off
-        rospy.loginfo('Waiting for change_mapper_state')
-        rospy.wait_for_service('change_mapper_state')
-        self.changeMapperStateService = rospy.ServiceProxy('change_mapper_state', ChangeMapperState)
-        rospy.loginfo('Got the change_mapper_state service')
 
         # Flag to toggle the mapper state
         self.enableSettingMapperState = rospy.get_param('enable_change_mapper_state', True)
         rospy.loginfo('enableSettingMapperState=%d', self.enableSettingMapperState)
         self.mappingState = True
-    
+
+        # Get the service to switch the mapper on and off if required
+        if self.enableSettingMapperState is True:
+            rospy.loginfo('Waiting for change_mapper_state')
+            rospy.wait_for_service('change_mapper_state')
+            self.changeMapperStateService = rospy.ServiceProxy('change_mapper_state', ChangeMapperState)
+            rospy.loginfo('Got the change_mapper_state service')
+   
     def get_distance(self, goal_x, goal_y):
         distance = sqrt(pow((goal_x - self.pose.x), 2) + pow((goal_y - self.pose.y), 2))
         return distance
@@ -109,7 +111,7 @@ class Move2GoalController(ControllerBase):
         # Stopping our robot after the movement is over
         self.stopRobot()
 
-        return True
+        return (not self.abortCurrentGoal) & (not rospy.is_shutdown())
 
     def rotateToGoalOrientation(self, goalOrientation):
         vel_msg = Twist()
@@ -146,4 +148,4 @@ class Move2GoalController(ControllerBase):
             self.mappingState = True
             self.changeMapperStateService(True)
 
-        return True
+        return (not self.abortCurrentGoal) & (not rospy.is_shutdown())

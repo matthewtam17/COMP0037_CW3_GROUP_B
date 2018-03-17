@@ -64,7 +64,7 @@ class ControllerBase(object):
         return self.pose
 
     # If set to true, the robot should abort driving to the current goal.
-    def setAbortCurrentGoal(self):
+    def stopDrivingToCurrentGoal(self):
         self.abortCurrentGoal = True
     
     # Handle the logic of driving the robot to the next waypoint
@@ -97,12 +97,11 @@ class ControllerBase(object):
             rospy.loginfo("Driving to waypoint (%f, %f)", waypoint[0], waypoint[1])
 
             if self.abortCurrentGoal is True:
-                self.stopRobotMovement()
+                self.stopRobot()
                 return False
 
-            
             if self.driveToWaypoint(waypoint) is False:
-                self.stopRobotMovement()
+                self.stopRobot()
                 return False
                 
             # Handle ^C
@@ -112,6 +111,5 @@ class ControllerBase(object):
         rospy.loginfo('Rotating to goal orientation (' + str(goalOrientation) + ')')
         
         # Finish off by rotating the robot to the final configuration
-        if rospy.is_shutdown() is False:
-            self.rotateToGoalOrientation(goalOrientation)
+        return self.rotateToGoalOrientation(goalOrientation)
  
