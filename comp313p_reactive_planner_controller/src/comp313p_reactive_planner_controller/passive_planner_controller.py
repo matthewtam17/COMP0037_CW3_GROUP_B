@@ -11,7 +11,7 @@ class PassivePlannerController(PlannerControllerBase):
     def __init__(self, occupancyGrid, planner, controller):
         PlannerControllerBase.__init__(self, occupancyGrid, planner, controller)
 
-    def handleMapUpdate(self, mapUpdateMessage):
+    def mapUpdateCallback(self, mapUpdateMessage):
         pass
     
     def driveToGoal(self, goal):
