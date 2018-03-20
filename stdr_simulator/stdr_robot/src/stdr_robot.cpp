@@ -349,7 +349,7 @@ namespace stdr_robot
     double newX = previousPose.x;
     double newY = previousPose.y;
 
-    float distanceToNewPose = std::hypot(newPose.x-previousPose.x, newPose.y-previousPose.y);
+    float distanceToNewPose = hypot(newPose.x-previousPose.x, newPose.y-previousPose.y);
     
     while(distanceToNewPose > 0)
     {
