@@ -6,7 +6,7 @@
   <rosparam param="clock_send_rate">40</rosparam>
   <rosparam param="time_scale_factor">1</rosparam>
   <arg name="map_file" default="$(find comp313p_resources)/maps/factory.yaml"/>
-  <arg name="goal_file" default="$(find comp313p_cw2)/scenarios/factory/part_3_2_unreachable_goals.txt"/>
+  <arg name="goal_file" default="$(find comp313p_cw2)/scenarios/factory/part_3_2_unreachable_goal.txt"/>
 
   <node pkg="comp313p_time_server" name="time_server" type="time_server_node.py"/>
   <node pkg="comp313p_the_boss" name="the_boss" type="boss_node.py" args="$(arg goal_file)" output="screen"/>
