@@ -316,49 +316,14 @@ namespace stdr_robot
 
     //    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": invoked");
 
-    int xMapPrev, xMap, yMapPrev, yMap;
-    bool movingForward, movingUpward;
-
-    //Check robot's previous direction to prevent getting stuck when colliding
-    movingForward = _previousMovementXAxis? false: true;
-    if ( fabs(previousPose.x - newPose.x) > 0.001)
-    {
-      movingForward = (previousPose.x > newPose.x)? false: true;
-      _previousMovementXAxis = movingForward;
-    }
-    movingUpward = _previousMovementYAxis? false: true;
-    if ( fabs(previousPose.y - newPose.y) > 0.001)
-    {
-      movingUpward = (previousPose.y > newPose.y)? false: true;
-      _previousMovementYAxis = movingUpward;
-    }
-
-    xMapPrev = movingForward? (int)( previousPose.x / _map.info.resolution ):
-                              ceil( previousPose.x / _map.info.resolution );
-    xMap = movingForward? ceil( newPose.x / _map.info.resolution ):
-                          (int)( newPose.x / _map.info.resolution );
-
-    yMapPrev = movingUpward? (int)( previousPose.y / _map.info.resolution ):
-                              ceil( previousPose.y / _map.info.resolution );
-    yMap = movingUpward? ceil( newPose.y / _map.info.resolution ):
-                        (int)( newPose.y / _map.info.resolution );
-
-    float angle = atan2(yMap - yMapPrev, xMap - xMapPrev);
-    //int x = xMapPrev;
-    //int y = yMapPrev;
     double newX = previousPose.x;
     double newY = previousPose.y;
 
+    float angle = atan2(newPose.y-previousPose.y, newPose.x-previousPose.x);
     float distanceToNewPose = hypot(newPose.x-previousPose.x, newPose.y-previousPose.y);
     
     while(distanceToNewPose > 0)
     {
-      #if 0
-      x = xMapPrev +
-        ( movingForward? ceil( cos(angle) * d ): (int)( cos(angle) * d ) );
-      y = yMapPrev +
-        ( movingUpward? ceil( sin(angle) * d ): (int)( sin(angle) * d ) );
-      #endif
       float stepLength = std::min(0.5f*_map.info.resolution, distanceToNewPose);
       newX += stepLength * _map.info.resolution * cos(angle);
       newY += stepLength * _map.info.resolution * sin(angle);
@@ -376,8 +341,6 @@ namespace stdr_robot
         double footprint_y_1 = _footprint[index_1].first * sin(newPose.theta) +
                    _footprint[index_1].second * cos(newPose.theta);
 
-        //int xx1 = x + footprint_x_1 / _map.info.resolution;
-        //int yy1 = y + footprint_y_1 / _map.info.resolution;
 	int xx1 = (newX + footprint_x_1)/ _map.info.resolution;
         int yy1 = (newY + footprint_y_1)/ _map.info.resolution;
         
@@ -389,9 +352,6 @@ namespace stdr_robot
         int xx2 = (newX + footprint_x_2) / _map.info.resolution;
 	int yy2 = (newY + footprint_y_2) / _map.info.resolution;
 
-        //int xx2 = x + footprint_x_2 / _map.info.resolution;
-        //int yy2 = y + footprint_y_2 / _map.info.resolution;
-        
         //Here check all the points between the vertexes
         std::vector<std::pair<int,int> > pts = 
           getPointsBetween(xx1,yy1,xx2,yy2);
@@ -400,7 +360,7 @@ namespace stdr_robot
         
         for(unsigned int j = 0 ; j < pts.size() ; j++)
         {
-          static int OF = 1;
+          static int OF = 0;
 #if 0	 
 	  NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": points="
 			       << _map.data[ (pts[j].second - OF) * 
@@ -484,11 +444,6 @@ namespace stdr_robot
             return true;
           }
         }
-      }
-      if ( (movingForward && newPose.x < newX) || (movingUpward && newPose.y < newY) ||
-          (!movingForward && newPose.x > newX) || (!movingUpward && newPose.y > newY) )
-      {
-        break;
       }
     }
     return false;
