@@ -119,8 +119,8 @@ namespace stdr_gui
     float pose_theta = yaw;
     
     //!< Draw laser stuff
-    
-    for(unsigned int i = 0 ; i < scan_.ranges.size() ; i++)
+
+    for(unsigned int i = 0 ; i < scan_.ranges.size() ; i+=5)
     {
       float real_dist = scan_.ranges[i];
       if(real_dist > msg_.maxRange)
