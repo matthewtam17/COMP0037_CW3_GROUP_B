@@ -17,10 +17,19 @@ class GeneralForwardSearchAlgorithm(PlannerBase):
     
     def __init__(self, title, occupancyGrid):
         PlannerBase.__init__(self, title, occupancyGrid)
-         
+
+        # If the goal cell is occupied, the planner will still find a
+        # route. If the following flag is set to true the planner
+        # will, however, not go to the goal but stop one cell short.
+        self.removeGoalCellFromPathIfOccupied = False
+        self.goalCellLabel = None
+
         # Flag to store if the last plan was successful
         self.goalReached = None
 
+    def setRemoveGoalCellFromPathIfOccupied(self, newValue):
+        self.removeGoalCellFromPathIfOccupied = newValue
+        
     # These methods manage the queue of cells to be visied.
     def pushCellOntoQueue(self, cell):
         raise NotImplementedError()
@@ -111,10 +120,19 @@ class GeneralForwardSearchAlgorithm(PlannerBase):
         # Get the start cell object and label it as such. Also set its
         # path cost to 0.
         self.start = self.searchGrid.getCellFromCoords(startCoords)
+
+        #if self.start.label is CellLabel.OBSTRUCTED:
+        #    return False
+        
         self.start.label = CellLabel.START
         self.start.pathCost = 0
 
         self.goal = self.searchGrid.getCellFromCoords(goalCoords)
+        self.goalCellLabel = self.goal.label
+        
+        #if self.goal.label is CellLabel.OBSTRUCTED:
+        #    return False
+        
         self.goal.label = CellLabel.GOAL
 
         if rospy.is_shutdown():
@@ -186,10 +204,15 @@ class GeneralForwardSearchAlgorithm(PlannerBase):
         path = PlannedPath()
         
         path.goalReached = self.goalReached
-        
-        # Initial condition - the goal cell
-        path.waypoints.append(pathEndCell)
-               
+
+        # Add the final condition. This is the goal. Note if the goal
+        # cell was obstructed, we skip the final cell. This causes the
+        # robot to drive to the next-to-final cell. This is needed to
+        # prevent planning paths into walls.
+        #if (self.removeGoalCellFromPathIfOccupied is False) or \
+        if  (self.goalCellLabel is not CellLabel.OBSTRUCTED):
+            path.waypoints.append(pathEndCell)
+            
         # Start at the goal and find the parent. Find the cost associated with the parent
         cell = pathEndCell.parent
         path.travelCost = self.computeLStageAdditiveCost(pathEndCell.parent, pathEndCell)

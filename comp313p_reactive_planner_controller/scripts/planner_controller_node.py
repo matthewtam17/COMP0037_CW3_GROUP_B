@@ -84,6 +84,9 @@ class PlannerControllerNode(object):
             self.planner = AStarPlanner('AStar+Octile+Weight=1', self.occupancyGrid)
         self.planner.setPauseTime(0)
         self.planner.windowHeightInPixels = rospy.get_param('maximum_window_height_in_pixels', 700)
+
+        removeGoalCellFromPathIfOccupied = rospy.get_param('remove_goal_cell_from_path_if_occupied', False)
+        self.planner.setRemoveGoalCellFromPathIfOccupied(removeGoalCellFromPathIfOccupied)
         
     def createRobotController(self):
         self.robotController = Move2GoalController(self.occupancyGrid)
