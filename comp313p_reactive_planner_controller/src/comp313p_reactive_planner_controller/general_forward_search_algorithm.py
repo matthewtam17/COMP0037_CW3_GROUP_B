@@ -202,15 +202,15 @@ class GeneralForwardSearchAlgorithm(PlannerBase):
 
         # Construct the path object and mark if the goal was reached
         path = PlannedPath()
-        
+
         path.goalReached = self.goalReached
 
-        # Add the final condition. This is the goal. Note if the goal
-        # cell was obstructed, we skip the final cell. This causes the
-        # robot to drive to the next-to-final cell. This is needed to
-        # prevent planning paths into walls.
-        #if (self.removeGoalCellFromPathIfOccupied is False) or \
-        if  (self.goalCellLabel is not CellLabel.OBSTRUCTED):
+        # Add the first cell to the path. We actually grow the path
+        # backwards from the goal to the start. For the goal cell, we
+        # do not include it if (a) the goal cell was occupied when we
+        # started planning and (b) trimming the path is enabled.
+        if (self.removeGoalCellFromPathIfOccupied is False) or \
+           (self.goalCellLabel is not CellLabel.OBSTRUCTED):
             path.waypoints.append(pathEndCell)
             
         # Start at the goal and find the parent. Find the cost associated with the parent
