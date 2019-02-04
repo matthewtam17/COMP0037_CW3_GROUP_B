@@ -99,7 +99,7 @@ catkin_package(
     message_runtime
     std_msgs
 #  INCLUDE_DIRS include
-#  LIBRARIES comp313_mapper
+#  LIBRARIES comp0037_mapper
 #  CATKIN_DEPENDS rospy
 #  DEPENDS system_lib
 )
@@ -117,7 +117,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/comp313_mapper.cpp
+#   src/${PROJECT_NAME}/comp0037_mapper.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -128,7 +128,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/comp313_mapper_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/comp0037_mapper_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -185,7 +185,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_comp313_mapper.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_comp0037_mapper.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
