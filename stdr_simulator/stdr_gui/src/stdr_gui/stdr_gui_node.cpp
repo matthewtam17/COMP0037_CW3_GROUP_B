@@ -22,6 +22,7 @@
 #include <signal.h>
 #include "stdr_gui/stdr_gui_controller.h"
 #include "stdr_gui/stdr_gui_application.h"
+#include <stdlib.h> //for using the function sleep
 
 void signalHandler(int sig);
 
@@ -31,8 +32,9 @@ void signalHandler(int sig);
 @param argv [char] The input arguments
 @return int : 0 for success
 **/
-int main(int argc,char **argv)
+int main(int argc, char **argv)
 {
+  sleep(1000);
   stdr_gui::CStdrApplication app(argc, argv);
   app.setAttribute(Qt::AA_DontShowIconsInMenus, false);
   ros::init(argc, argv, "stdr_gui_node", ros::init_options::NoSigintHandler);
@@ -42,7 +44,7 @@ int main(int argc,char **argv)
   signal(SIGTERM, signalHandler);
   signal(SIGINT, signalHandler);
   signal(SIGHUP, signalHandler);
-  
+
   con.init();
   app.exec();
   return 0;
