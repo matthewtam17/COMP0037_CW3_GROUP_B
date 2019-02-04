@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package>
+    <name>comp0037_cw1</name>
+    <version>1.0.0</version>
+    <description>This package automates configuring and lauching both
+  the map server and turtlesimulator packages.</description>
+    <maintainer email="s.julier@ucl.ac.uk">Simon Julier</maintainer>
+    <license>BSD?</license>
+    <buildtool_depend>catkin</buildtool_depend>
+    <run_depend>comp0037_planner_controller</run_depend>
+    <run_depend>stdr_msgs</run_depend>
+    <run_depend>stdr_server</run_depend>
+    <run_depend>stdr_robot</run_depend>
+    <run_depend>stdr_gui</run_depend>
+    <run_depend>stdr_launchers</run_depend>
+    <run_depend>stdr_resources</run_depend>
+    <run_depend>stdr_samples</run_depend>
+    <run_depend>stdr_parser</run_depend>
+</package>
