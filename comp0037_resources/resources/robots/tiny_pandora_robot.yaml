@@ -15,7 +15,8 @@ robot:
           min_angle: -2.09439516067505
           max_range: 4.09000015258789
           min_range: 0.0599999986588955
-          num_rays: 667
+          # origial 667 --> 2.5cm resolutio at 4m.  35- leads to 4.7cm resolution at 4m
+          num_rays: 350
           frequency: 10
           frame_id: laser_0
           pose:
