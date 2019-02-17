@@ -21,7 +21,7 @@ goal = (20, 0)
 
 # Create the planner. The first field is the title which will appear in the
 # graphics window, the second the occupancy grid used.
-planner = FIFOPlanner('Depth First Search', occupancyGrid);
+planner = FIFOPlanner('Breadth First Search', occupancyGrid);
 
 # This causes the planner to slow down and pause for things like key entries
 planner.setRunInteractively(True)
