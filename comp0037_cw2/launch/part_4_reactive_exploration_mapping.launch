@@ -10,6 +10,7 @@
     <arg name="goal_file" default="$(find comp0037_cw2)/scenarios/factory/s02_goals.txt"/>
     <node pkg="comp0037_time_server" name="time_server" type="time_server_node.py"/>
     <include file="$(find stdr_robot)/launch/robot_manager.launch" />
+    <include file="$(find stdr_gui)/launch/stdr_gui.launch"/>
     <node type="stdr_server_node" pkg="stdr_server" name="stdr_server" output="screen" args="$(arg map_file)"/>
     <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)"/>
     <node pkg="tf" type="static_transform_publisher" name="world2map" args="0 0 0 0 0 0  world map 100" />

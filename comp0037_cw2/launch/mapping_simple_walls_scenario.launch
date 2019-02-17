@@ -10,6 +10,7 @@
     <node pkg="comp0037_the_boss" name="the_boss" type="boss_node.py" args="$(arg goal_file)" output="screen"/>
     <node pkg="comp0037_reactive_planner_controller" name="planner_controller" type="planner_controller_node.py" output="screen"/>
     <include file="$(find stdr_robot)/launch/robot_manager.launch" />
+    <include file="$(find stdr_gui)/launch/stdr_gui.launch"/>
     <node type="stdr_server_node" pkg="stdr_server" name="stdr_server" output="screen" args="$(arg map_file)"/>
     <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)"/>
     <node pkg="tf" type="static_transform_publisher" name="world2map" args="0 0 0 0 0 0  world map 100" />

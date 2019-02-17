@@ -34,7 +34,7 @@ void signalHandler(int sig);
 **/
 int main(int argc, char **argv)
 {
-  sleep(3);
+  sleep(1);
   stdr_gui::CStdrApplication app(argc, argv);
   app.setAttribute(Qt::AA_DontShowIconsInMenus, false);
   ros::init(argc, argv, "stdr_gui_node", ros::init_options::NoSigintHandler);
