@@ -84,8 +84,6 @@ public:
       **/
   CGuiLoader(int argc, char **argv);
 
-  ~CMapLoader();
-
   /**
       @brief Overloading of closeEvent function from QMainWindow
       @param event [QCloseEvent*] The exit event
