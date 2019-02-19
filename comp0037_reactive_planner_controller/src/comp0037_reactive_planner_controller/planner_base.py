@@ -11,7 +11,9 @@ from math import *
 
 class PlannerBase(object):
 
-    # This class implements the basic graphical support for the planners
+    # This class implements the basic graphical support for the planners. In particular, it plots both the
+    # occupancy grid (which shows the probability of occupancy) and the search grid (binary and used to
+    #  plan the path).
     
     def __init__(self, title, occupancyGrid):
         self.title = title
@@ -111,10 +113,10 @@ class PlannerBase(object):
         self.occupancyGridDrawer.update()
         time.sleep(self.pauseTimeInSeconds)
 
-    # Create the drawer which shows the planner's progress
+    # Create the drawers which show the planner's progress
     def createPlannerDrawer(self):
-        self.searchGridDrawer = SearchGridDrawer('SG: ' + self.title, self.searchGrid, self.windowHeightInPixels)
-        self.occupancyGridDrawer = OccupancyGridDrawer('OG :' + self.title, self.occupancyGrid, self.windowHeightInPixels)
+        self.searchGridDrawer = SearchGridDrawer('Planner SG: ' + self.title, self.searchGrid, self.windowHeightInPixels)
+        self.occupancyGridDrawer = OccupancyGridDrawer('Planner OG :' + self.title, self.occupancyGrid, self.windowHeightInPixels)
 
     # Set the pause time
     def setPauseTime(self, pauseTimeInSeconds):
