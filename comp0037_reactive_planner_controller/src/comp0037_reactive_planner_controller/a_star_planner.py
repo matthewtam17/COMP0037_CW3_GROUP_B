@@ -10,6 +10,7 @@ class CostToComeHeuristic(Enum):
     EUCLIDEAN = 1
     MANHATTAN = 2
     OCTILE = 3
+    SQUARED_EUCLIDEAN = 4
 
 class AStarPlanner(DijkstraPlanner):
     
@@ -25,13 +26,15 @@ class AStarPlanner(DijkstraPlanner):
             self.heuristic = CostToComeHeuristic.MANHATTAN
         elif heuristic == 'euclidean':
             self.heuristic = CostToComeHeuristic.EUCLIDEAN
+        elif heuristic == 'squared_euclidean':
+            self.heuristic = CostToComeHeuristic.SQUARED_EUCLIDEAN
         else:
             rospy.logwarn('Unknown heuristic %s; defaulting to OCTILE', heuristic)
             self.heuristic = CostToComeHeuristic.OCTILE
             
         self.alpha = rospy.get_param('a_star_heuristic_weight', 1)
 
-    # Update the cost to self cell and sort according to the cumulative cost
+    # Push the cell onto the priority queue, using the heuristic
     def pushCellOntoQueue(self, cell):
 
         # Work out the cost of the action from the parent to this cell
@@ -48,6 +51,8 @@ class AStarPlanner(DijkstraPlanner):
  
         if self.heuristic is CostToComeHeuristic.EUCLIDEAN:
             G = math.sqrt(dXG * dXG + dYG * dYG)
+        elif self.heuristic is CostToComeHeuristic.SQUARED_EUCLIDEAN:
+            G = dXG * dXG + dYG * dYG
         elif self.heuristic is CostToComeHeuristic.MANHATTAN:
             G = dXG + dYG
         elif self.heuristic is CostToComeHeuristic.OCTILE:

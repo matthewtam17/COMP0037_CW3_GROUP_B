@@ -10,7 +10,8 @@ class DijkstraPlanner(CellBasedForwardSearch):
         CellBasedForwardSearch.__init__(self, title, occupancyGrid)
         self.priorityQueue = PriorityQueue()
 
-    # Update the cost to self cell and sort according to self cumulative cost
+    # Put the cell on the queue, using the path cost as the key to
+    # determine the search order
     def pushCellOntoQueue(self, cell):
     
         if (cell.parent is not None):
@@ -34,8 +35,7 @@ class DijkstraPlanner(CellBasedForwardSearch):
     def resolveDuplicate(self, cell, parentCell):
 
         # See if the cost from the parent cell to this cell is shorter
-        # than the existing path. If so, use it instead. NOTE: This should
-        # reorder the priority queue, but my bad implementation does not.
+        # than the existing path. If so, use it instead.
         dX = cell.coords[0] - parentCell.coords[0]
         dY = cell.coords[1] - parentCell.coords[1]
         d = math.sqrt(dX * dX + dY * dY)
@@ -43,4 +43,16 @@ class DijkstraPlanner(CellBasedForwardSearch):
         if (pathCostThroughNewParent < cell.pathCost):
             cell.parent = parentCell
             cell.pathCost = pathCostThroughNewParent
- 
+            self.reorderPriorityQueue()
+
+    # Reorder the queue. I don't see another way to do this, other than
+    # create a new queue and copy over tuple-by-tuple. This rebuilds
+    # the heap trees.
+    def reorderPriorityQueue(self):
+        newQueue = PriorityQueue()
+
+        while self.priorityQueue.empty() is False:
+            tuple = self.priorityQueue.get()
+            newQueue.put(tuple)
+             
+        self.priorityQueue = newQueue
