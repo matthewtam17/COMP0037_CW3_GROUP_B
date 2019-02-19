@@ -1,4 +1,5 @@
-# This class handles the passive planner and controller.
+# This base class defines the API of a class which wraps around the planner and
+# controller to produce reactive operations.
 
 class PlannerControllerBase(object):
 
