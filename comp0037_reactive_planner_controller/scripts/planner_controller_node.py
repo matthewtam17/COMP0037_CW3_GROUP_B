@@ -24,11 +24,7 @@ from comp0037_reactive_planner_controller.occupancy_grid import OccupancyGrid
 
 from comp0037_reactive_planner_controller.passive_planner_controller import PassivePlannerController
 from comp0037_reactive_planner_controller.reactive_planner_controller import ReactivePlannerController
-
-from comp0037_reactive_planner_controller.a_star_planner import AStarPlanner
-
-from comp0037_reactive_planner_controller.fifo_planner import FIFOPlanner
-
+from comp0037_reactive_planner_controller.dijkstra_planner import DijkstraPlanner
 from comp0037_reactive_planner_controller.move2goal_controller import Move2GoalController
 
 # This class is the main node and orchestrates everything else
@@ -78,10 +74,7 @@ class PlannerControllerNode(object):
         self.plannerController.handleMapUpdateMessage(msg)
         
     def createPlanner(self):
-        if rospy.get_param('use_fifo_planner', False) is True:
-            self.planner = FIFOPlanner('FIFO', self.occupancyGrid)
-        else:
-            self.planner = AStarPlanner('AStar+Octile+Weight=1', self.occupancyGrid)
+        self.planner = DijkstraPlanner('Dijkstra', self.occupancyGrid)
         self.planner.setPauseTime(0)
         self.planner.windowHeightInPixels = rospy.get_param('maximum_window_height_in_pixels', 700)
 
