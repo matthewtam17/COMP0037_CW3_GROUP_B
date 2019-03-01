@@ -70,7 +70,7 @@ class PlannerControllerNode(object):
             self.occupancyGrid.setFromDataArrayFromMapServer(map.data)
 
     def mapUpdateCallback(self, msg):
-        rospy.loginfo("map update received")
+        rospy.loginfo("******************************** map update received")
         self.plannerController.handleMapUpdateMessage(msg)
         
     def createPlanner(self):
@@ -125,7 +125,7 @@ class PlannerControllerNode(object):
         # ugly logic and can lead to deadlocking.
         service = rospy.Service('drive_to_goal', Goal, self.handleDriveToGoal)
 
-        print 'Spinning to service goal requests'
+        rospy.loginfo('Spinning to service goal requests')
         
         while not rospy.is_shutdown():
 
