@@ -91,6 +91,10 @@ class GeneralForwardSearchAlgorithm(PlannerBase):
         
         return L
 
+    # Setup the occupancy grid
+    def setupOccupancyGrid(self):
+        self.searchGrid = SearchGrid.fromOccupancyGrid(self.occupancyGrid, self.robotRadius)
+
     # Update the seach grid
     def handleChangeToOccupancyGrid(self):
         # Create the search grid from the occupancy grid and seed

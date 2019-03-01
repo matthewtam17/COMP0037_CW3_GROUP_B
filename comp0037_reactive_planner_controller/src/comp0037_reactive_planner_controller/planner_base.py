@@ -24,7 +24,7 @@ class PlannerBase(object):
 
         rospy.loginfo("Occupancy grid dimensions = %dx%d", occupancyGrid.getWidthInCells(), occupancyGrid.getHeightInCells())
 
-        self.handleChangeToOccupancyGrid()
+        self.setupOccupancyGrid()
         
         # Graphics and debug output support
         self.showGraphics = True
@@ -35,6 +35,10 @@ class PlannerBase(object):
         self.occupancyGridDrawer = None
         self.windowHeightInPixels = 700
         self.runInteractively = False
+
+    # This method is called when first setting stuff up
+    def setupOccupancyGrid(self):
+        raise NotImplementedError()
 
     # This method is called if the occupancy grid changes
     def handleChangeToOccupancyGrid(self):
@@ -99,9 +103,16 @@ class PlannerBase(object):
         # If graphics is disabled, return
         if self.showGraphics is False:
             return
+
+        # This check is needed because this code can be called during initialisation,
+        # when not everything has been set up yet
+        if (self.searchGridDrawer is None) or (self.occupancyGridDrawer is None):
+            return
             
-        # Check if we need to do an update
+        # Check if we need to do an update - this happens either if we force an update,
+        # or the override has been set
         self.iterationsSinceLastGraphicsUpdate = self.iterationsSinceLastGraphicsUpdate + 1
+
         if forceUpdate is False:     
             if (self.iterationsSinceLastGraphicsUpdate < self.iterationsBetweenGraphicsUpdate):
                 return
