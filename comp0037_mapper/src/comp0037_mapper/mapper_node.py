@@ -141,6 +141,7 @@ class MapperNode(object):
 
         # Construct the map update message and send it out
         mapUpdateMessage = self.constructMapUpdateMessage(True)
+	rospy.loginfo('publishing map update message')
         self.mapUpdatePublisher.publish(mapUpdateMessage)
         
     # Predict the pose of the robot to the current time. This is to
@@ -319,6 +320,8 @@ class MapperNode(object):
     def constructMapUpdateMessage(self, deltaMapRequired):
         # Construct the map update message
         mapUpdateMessage = MapUpdate()
+
+	rospy.loginfo('constructMapUpdateMessage: invoked')
 
         mapUpdateMessage.header.stamp = rospy.Time().now()
         mapUpdateMessage.isPriorMap = self.noLaserScanReceived
