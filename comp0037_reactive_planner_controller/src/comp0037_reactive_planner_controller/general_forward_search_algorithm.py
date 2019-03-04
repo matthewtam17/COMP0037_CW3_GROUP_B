@@ -111,16 +111,17 @@ class GeneralForwardSearchAlgorithm(PlannerBase):
 
         self.handleChangeToOccupancyGrid()
         
-         # Make sure the queue is empty. We do this so that we can keep calling
+        # Make sure the queue is empty. We do this so that we can keep calling
         # the same method multiple times and have it work.
         while (self.isQueueEmpty() == False):
             self.popCellFromQueue()
 
-        # Check the start and end are not occupied
-        if (self.occupancyGrid.getCell(startCoords[0], startCoords[1]) > 0):
+        # Check the start and end are not occupied. Note that "0.5" means
+        # "don't know" which is why it is used as the threshold for detection.
+        if (self.occupancyGrid.getCell(startCoords[0], startCoords[1]) > 0.5):
             return False
 
-        if (self.occupancyGrid.getCell(goalCoords[0], goalCoords[1]) > 0):
+        if (self.occupancyGrid.getCell(goalCoords[0], goalCoords[1]) > 0.5):
             return False
 
         # Get the start cell object and label it as such. Also set its
