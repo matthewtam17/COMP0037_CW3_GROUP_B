@@ -94,7 +94,7 @@ class ControllerBase(object):
             cell = path.waypoints[waypointNumber]
             waypoint = self.occupancyGrid.getWorldCoordinatesFromCellCoordinates(cell.coords)
 
-            rospy.loginfo("Driving to waypoint (%f, %f)", waypoint[0], waypoint[1])
+            # rospy.loginfo("Driving to waypoint (%f, %f)", waypoint[0], waypoint[1])
 
             if self.abortCurrentGoal is True:
                 self.stopRobot()

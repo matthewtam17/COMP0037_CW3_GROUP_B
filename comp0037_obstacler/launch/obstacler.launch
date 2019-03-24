@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+    <node pkg="comp0037_obstacler" name="obstacler_node" type="obstaclerNode" output="screen"/>
+</launch>

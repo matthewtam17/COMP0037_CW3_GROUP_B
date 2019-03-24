@@ -26,6 +26,8 @@
 
 PLUGINLIB_EXPORT_CLASS(stdr_robot::Robot, nodelet::Nodelet)
 
+#define BLOCKED_OCCUPANCY 95
+
 namespace stdr_robot
 {
   /**
@@ -65,6 +67,18 @@ namespace stdr_robot
     //we should not start the timer, until we hame a motion controller
     _tfTimer = n.createTimer(
       ros::Duration(0.1), &Robot::publishTransforms, this, false, false);
+
+        _addObstacleToSimulationSubscriber = n.subscribe(
+      "/add_obstacle_to_simulation",
+      1,
+      &Robot::addObstacleToSimulationCallback,
+      this); 
+
+        _removeObstacleFromSimulationSubscriber = n.subscribe(
+      "/remove_obstacle_from_simulation",
+      1,
+      &Robot::removeObstacleFromSimulationCallback,
+      this); 
   }
 
   /**
@@ -188,6 +202,17 @@ namespace stdr_robot
     _map = *msg;
   }
 
+bool Robot::isCellBlocked(int xx, int yy)
+{
+  int cellValue = _map.data[ yy * _map.info.width + xx];
+
+  // Quick return if open
+  if (cellValue < 10) return false;
+
+  // Quick return if closed; otherwise, search everything
+  return (cellValue > BLOCKED_OCCUPANCY) || (_obstacles.find(cellValue) != _obstacles.end());
+}
+
   /**
   @brief The callback of the re-place robot service
   @param req [stdr_msgs::MoveRobot::Request&] The service request
@@ -240,13 +265,31 @@ namespace stdr_robot
       int xx = xMap + (int)(x / _map.info.resolution);
       int yy = yMap + (int)(y / _map.info.resolution);
 
-      if(_map.data[ yy * _map.info.width + xx ] > 70)
+/*
+      if(_map.data[ yy * _map.info.width + xx ] > BLOCKED_OCCUPANCY)
+      {
+        return true;
+      }*/
+
+      if (isCellBlocked(xx, yy)  == true)
       {
         return true;
       }
     }
     return false;
   }
+
+void Robot::addObstacleToSimulationCallback(const std_msgs::Int32::ConstPtr& msg)
+{
+    ROS_ERROR("Adding obstacle %d", (int)msg->data);
+    _obstacles.insert((int)msg->data);
+}
+
+void Robot::removeObstacleFromSimulationCallback(const std_msgs::Int32::ConstPtr& msg)
+{
+    ROS_ERROR("Removing obstacle %d", (int)msg->data);
+    _obstacles.erase((int)msg->data);
+}
 
   /**
   @brief Checks the robot's reposition into unknown area
@@ -388,24 +431,31 @@ namespace stdr_robot
 					  _map.info.width + pts[j].first + OF ]);
 
 #endif
-          if(
+          if(/*
             _map.data[ (pts[j].second - OF) * 
-              _map.info.width + pts[j].first - OF ] > 70 ||
+              _map.info.width + pts[j].first - OF ] > BLOCKED_OCCUPANCY ||
             _map.data[ (pts[j].second - OF) * 
-              _map.info.width + pts[j].first ] > 70 ||
+              _map.info.width + pts[j].first ] > BLOCKED_OCCUPANCY ||
             _map.data[ (pts[j].second - OF) *  
-              _map.info.width + pts[j].first + OF ] > 70 ||
+              _map.info.width + pts[j].first + OF ] > BLOCKED_OCCUPANCY ||
             _map.data[ (pts[j].second) * 
-              _map.info.width + pts[j].first - OF ] > 70 ||
+              _map.info.width + pts[j].first - OF ] > BLOCKED_OCCUPANCY ||
             _map.data[ (pts[j].second) * 
-              _map.info.width + pts[j].first + OF ] > 70 ||
+              _map.info.width + pts[j].first + OF ] > BLOCKED_OCCUPANCY ||
             _map.data[ (pts[j].second + OF) * 
-              _map.info.width + pts[j].first - OF ] > 70 ||
+              _map.info.width + pts[j].first - OF ] > BLOCKED_OCCUPANCY ||
             _map.data[ (pts[j].second + OF) * 
-              _map.info.width + pts[j].first ] > 70 ||
+              _map.info.width + pts[j].first ] > BLOCKED_OCCUPANCY ||
             _map.data[ (pts[j].second + OF) * 
-              _map.info.width + pts[j].first + OF ] > 70
-          )
+              _map.info.width + pts[j].first + OF ] > BLOCKED_OCCUPANCY*/
+              isCellBlocked(pts[j].first - OF, pts[j].second - OF) ||
+                    isCellBlocked(pts[j].first, pts[j].second - OF) ||
+                    isCellBlocked(pts[j].first + OF, pts[j].second - OF) ||
+                    isCellBlocked(pts[j].first - OF, pts[j].second) ||
+                    isCellBlocked(pts[j].first + OF, pts[j].second) ||
+                    isCellBlocked(pts[j].first - OF, pts[j].second + OF) ||
+                    isCellBlocked(pts[j].first, pts[j].second + OF) ||
+                    isCellBlocked(pts[j].first + OF, pts[j].second + OF))
           {
 #if 0
 	    NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": collision");

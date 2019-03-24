@@ -25,52 +25,65 @@
 #include <stdr_robot/sensors/sensor_base.h>
 #include <sensor_msgs/LaserScan.h>
 #include <stdr_msgs/LaserSensorMsg.h>
+#include <std_msgs/Int32.h>
+#include <iostream>
+
+#include <vector>
+#include <algorithm>
 
 /**
 @namespace stdr_robot
 @brief The main namespace for STDR Robot
-**/ 
-namespace stdr_robot {
-  
+**/
+namespace stdr_robot
+{
+
+/**
+    @class Laser
+    @brief A class that provides laser implementation. Inherits publicly Sensor
+    **/
+class Laser : public Sensor
+{
+
+public:
   /**
-  @class Laser
-  @brief A class that provides laser implementation. Inherits publicly Sensor
-  **/ 
-  class Laser : public Sensor {
+          @brief Default constructor
+          @param map [const nav_msgs::OccupancyGrid&] An occupancy grid map
+          @param msg [const stdr_msgs::LaserSensorMsg&] The laser description message
+          @param name [const std::string&] The sensor frame id without the base
+          @param n [ros::NodeHandle&] The ROS node handle
+          @return void
+          **/
+  Laser(const nav_msgs::OccupancyGrid &map,
+        const stdr_msgs::LaserSensorMsg &msg,
+        const std::string &name,
+        ros::NodeHandle &n);
 
-    public:
+  /**
+          @brief Updates the sensor measurements
+          @return void
+          **/
+  virtual void updateSensorCallback();
 
-      /**
-      @brief Default constructor
-      @param map [const nav_msgs::OccupancyGrid&] An occupancy grid map
-      @param msg [const stdr_msgs::LaserSensorMsg&] The laser description message
-      @param name [const std::string&] The sensor frame id without the base
-      @param n [ros::NodeHandle&] The ROS node handle
-      @return void
-      **/ 
-      Laser(const nav_msgs::OccupancyGrid& map,
-        const stdr_msgs::LaserSensorMsg& msg, 
-        const std::string& name, 
-        ros::NodeHandle& n);
-        
-      /**
-      @brief Updates the sensor measurements
-      @return void
-      **/ 
-      virtual void updateSensorCallback();
-      
-      /**
-      @brief Default destructor
-      @return void
-      **/ 
-      ~Laser() {}
+  /**
+          @brief Default destructor
+          @return void
+          **/
+  ~Laser() {}
 
-    private:
+  void addObstacleToSimulationCallback(const std_msgs::Int32::ConstPtr& msg);
 
-      //!< Laser sensor description
-      stdr_msgs::LaserSensorMsg _description;
-  };
+  void removeObstacleFromSimulationCallback(const std_msgs::Int32::ConstPtr& msg);
 
-}
+private:
+  //!< Laser sensor description
+  stdr_msgs::LaserSensorMsg _description;
+  //!  vector keeping the current thresholds that act as obsticles
+  std::set<int> _obstacles;
+  ros::Subscriber _addObstacleToSimulationSubscriber;
+  ros::Subscriber _removeObstacleFromSimulationSubscriber;
+};
+
+} // namespace stdr_robot
 
 #endif

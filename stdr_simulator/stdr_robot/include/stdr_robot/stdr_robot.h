@@ -128,8 +128,15 @@ namespace stdr_robot {
     @return void
     **/
     void publishTransforms(const ros::TimerEvent&);
+
+  protected:
    
-   
+    bool isCellBlocked(int xx, int yy);
+
+      void addObstacleToSimulationCallback(const std_msgs::Int32::ConstPtr& msg);
+
+  void removeObstacleFromSimulationCallback(const std_msgs::Int32::ConstPtr& msg);
+
    private:
   
     //!< ROS subscriber for map
@@ -176,6 +183,11 @@ namespace stdr_robot {
 
     //!< Robot's previous movement direction in Y Axis
     bool _previousMovementYAxis;
+
+    // The IDs of the sets of obstacles
+    std::set<int> _obstacles;
+    ros::Subscriber _addObstacleToSimulationSubscriber;
+    ros::Subscriber _removeObstacleFromSimulationSubscriber;
   };  
   
 } // namespace stdr_robot

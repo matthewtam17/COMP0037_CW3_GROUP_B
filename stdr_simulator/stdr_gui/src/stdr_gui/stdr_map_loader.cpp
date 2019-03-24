@@ -41,7 +41,7 @@ CMapLoader::CMapLoader(int argc, char **argv) : argc_(argc),
 
 CMapLoader::~CMapLoader()
 {
-  delete internal_img_;
+  //delete internal_img_;
 }
 
 /**

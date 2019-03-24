@@ -9,6 +9,7 @@ from comp0037_reactive_planner_controller.srv import *
 from nav_msgs.srv import GetMap
 from stdr_msgs.srv import MoveRobot
 from geometry_msgs.msg import Pose2D
+from comp0037_the_boss.msg import NewGoalSent
 import math
 from random import randint
 
@@ -31,6 +32,10 @@ class BossNode(object):
         rospy.wait_for_service('drive_to_goal')
         self.driveToGoalService = rospy.ServiceProxy('drive_to_goal', Goal)
         rospy.loginfo('Got the drive_to_goal service')
+
+        # Set up the new goal publisher. This is used to notify nodes that
+        # a service call is about to be issued.
+        self.newGoalPublisher = rospy.Publisher('boss_new_goal', NewGoalSent, queue_size=10)
 
         # Set up the goal array
         self.goals = []
@@ -76,7 +81,13 @@ class BossNode(object):
         
 
     def sendGoalToRobot(self, goal):
+        # Notify the user
         rospy.logwarn("Sending the robot to " + str(goal))
+
+        # Send out the notification message to the other nodes
+        self.newGoalPublisher.publish(NewGoalSent());
+
+        # Issue the service call
         try:
             response = self.driveToGoalService(goal[0], goal[1], goal[2])
             return response.reachedGoal
@@ -90,9 +101,8 @@ class BossNode(object):
         pose = Pose2D()
         pose.x = self.goals[0][0]
         pose.y = self.goals[0][1]
-        print 'self.goals[0][2]=' + str(self.goals[0][2])
         pose.theta = math.radians(self.goals[0][2])
-        #
+        rospy.loginfo('Sending the robot to initial position ({},{},{})'.format(pose.x, pose.y, pose.theta))
         self.teleportAbsoluteService(pose)
         rospy.loginfo('sleeping after getting teleport service')
         rospy.sleep(2)

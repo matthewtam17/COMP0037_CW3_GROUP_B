@@ -38,6 +38,7 @@ class OccupancyGrid(object):
 
         self = cls(mapUpdateMessage.extentInCells[0], mapUpdateMessage.extentInCells[1], mapUpdateMessage.resolution)
         self.scale = mapUpdateMessage.scale
+        self.updateGridFromVector(mapUpdateMessage.occupancyGrid)
 
         return self
         

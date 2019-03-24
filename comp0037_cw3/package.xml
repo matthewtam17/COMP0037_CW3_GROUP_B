@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-    <name>comp0037_cw2</name>
+    <name>comp0037_cw3</name>
     <version>2018.3.1</version>
-    <description>This package contains the additional materials to support coursework 2.</description>
+    <description>This package contains the additional materials to support coursework 3.</description>
     <maintainer email="s.julier@ucl.ac.uk">Simon Julier</maintainer>
     <license>BSD?</license>
     <buildtool_depend>catkin</buildtool_depend>

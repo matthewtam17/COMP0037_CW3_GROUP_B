@@ -20,6 +20,8 @@ class PassivePlannerController(PlannerControllerBase):
         if rospy.is_shutdown() is True:
             return False
 
+        self.goal = goal
+
         # Get the coal coordinate in cells
         goalCellCoords = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates((goal.x,goal.y))
 

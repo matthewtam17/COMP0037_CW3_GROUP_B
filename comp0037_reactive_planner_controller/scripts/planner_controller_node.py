@@ -15,6 +15,8 @@ from geometry_msgs.msg import Pose
 # Response we get from the map server when we ask for the map
 from nav_msgs.srv import GetMap
 
+from comp0037_mapper.srv import RequestMapUpdate
+
 # The service messages this node sends. This is actually a report
 # that the robot has reached its goal
 from comp0037_reactive_planner_controller.srv import *
@@ -37,37 +39,40 @@ class PlannerControllerNode(object):
         self.waitForDriveCompleted =  threading.Condition()
         self.goal = None
         self.goalReached = False
+
     
     def createOccupancyGridFromMapServer(self):
-
-        # If we are using the ground truth map, get it directly from stdr. Otherwise,
-        # retrieve it from the mapper node
-
-        if rospy.get_param('use_reactive_planner_controller', False) is False:
-            rospy.loginfo('Using the ground truth map from stdr')
-        else:
-            rospy.loginfo('Getting map size information from stdr')
-
+        
         # Get the map service
-        rospy.loginfo('Waiting for static_map to become available.')
-        rospy.wait_for_service('static_map') 
-        self.mapServer = rospy.ServiceProxy('static_map', GetMap)
-        rospy.loginfo('Found static_map; requesting map data')
-            
-        # Query the map status
-        response = self.mapServer()
-        map = response.map
-        rospy.loginfo('Got map data')
-            
-        # Allocate the occupancy grid and set the data from the array sent back by the map server
-        self.occupancyGrid = OccupancyGrid(map.info.width, map.info.height, map.info.resolution)
-        self.occupancyGrid.setScale(rospy.get_param('plan_scale', 5))
+        #rospy.loginfo('Waiting for static_map to become available.')
+        #rospy.wait_for_service('static_map') 
+        #self.mapServer = rospy.ServiceProxy('static_map', GetMap)
+        #rospy.loginfo('Found static_map service')
 
-        # Copy data over if passive
-        if rospy.get_param('use_reactive_planner_controller', False) is True:
-            self.occupancyGrid.scaleEmptyMap()
-        else:
-            self.occupancyGrid.setFromDataArrayFromMapServer(map.data)
+        # Wait for the 
+        rospy.loginfo('Waiting for the request_map_update service')
+        rospy.wait_for_service('request_map_update')
+        rospy.loginfo('request_map_update service registered')
+        
+        # Now pull the rest of the data from the mapping node
+        mapRequestService = rospy.ServiceProxy('request_map_update', RequestMapUpdate)
+        mapUpdate = mapRequestService(False)
+
+        self.occupancyGrid = OccupancyGrid.fromMapUpdateMessage(mapUpdate.initialMapUpdate)
+        #self.occupancyGrid.setScale(rospy.get_param('plan_scale', 5))
+
+        # Debug code
+        if False:
+            uniqueCellValues1 = []
+            for x in range(self.occupancyGrid.widthInCells):
+                for y in range(self.occupancyGrid.heightInCells):
+                    if self.occupancyGrid.grid[x][y] not in uniqueCellValues1:
+                        uniqueCellValues1.append(self.occupancyGrid.grid[x][y])
+
+            print '**************************************************************************************'
+            print str(uniqueCellValues1)
+            print '**************************************************************************************'
+
 
     def mapUpdateCallback(self, msg):
         rospy.loginfo("******************************** map update received")
@@ -103,6 +108,9 @@ class PlannerControllerNode(object):
         self.waitForDriveCompleted.release()
 
         return GoalResponse(self.goalReached)
+
+    def waitForObstacleToClear(self):
+        return True
     
     def run(self):
 
@@ -139,7 +147,9 @@ class PlannerControllerNode(object):
             if (self.goal is None):
                 continue
 
+            # Try to drive down this aisle to the final goal
             self.goalReached = self.plannerController.driveToGoal(self.goal)
+                
             self.goal = None
 
             # Signal back to the service handler that we are done

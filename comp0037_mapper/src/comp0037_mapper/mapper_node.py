@@ -5,6 +5,7 @@ import rospy
 import math
 import tf
 import copy
+from std_msgs.msg import Int32
 
 import numpy as np
 from nav_msgs.srv import GetMap
@@ -28,15 +29,26 @@ class MapperNode(object):
 
     def __init__(self):
 
-        # Get the ground truth map from stdr; we use this to figure out the dimensions of the map       
         rospy.init_node('mapper_node', anonymous=True)
+ 
+        # Check if we use the ground truth map from stdr; if this is enabled, the mapper will ignore
+        # the laser scans
+        self.useGroundTruthMap = True
+
+        self.activeObstacles = []
+
+        # Get the ground truth map from stdr; we use this to figure out the dimensions of the map
+        rospy.loginfo('waiting for the static_map service')
+        rospy.wait_for_service('static_map')
         self.mapServer = rospy.ServiceProxy('static_map', GetMap)
         resp = self.mapServer()
-
 
         # Drawing options
         self.showOccupancyGrid = rospy.get_param('show_mapper_occupancy_grid', True)
         self.showDeltaOccupancyGrid = rospy.get_param('show_mapper_delta_occupancy_grid', True)
+
+        # Flag set to true if graphics can be updated
+        self.visualisationUpdateRequired = False
         
         # Create the publisher for the regular map messages
         self.mapUpdatePublisher = rospy.Publisher('updated_map', MapUpdate, queue_size = 1)
@@ -44,15 +56,45 @@ class MapperNode(object):
         # Get the map scale
         mapScale = rospy.get_param('plan_scale',5)
 
-        # Create the occupancy grid map. This is the "raw" one from the sensor.
+        # Create the occupancy grid
         self.occupancyGrid = OccupancyGrid(resp.map.info.width, resp.map.info.height, resp.map.info.resolution, 0.5)
-	self.occupancyGrid.setScale(mapScale)
-	self.occupancyGrid.scaleEmptyMap()
-                         
+        self.occupancyGrid.setScale(mapScale)
+        self.occupancyGrid.scaleEmptyMap()
+
+        # If we are using ground truth, create a ground truth occupancy map (used for reference) and set its value to the
+        # ground truth map.
+        if self.useGroundTruthMap is True:
+            self.groundTruthOccupancyGrid = OccupancyGrid(resp.map.info.width, resp.map.info.height, resp.map.info.resolution, 0.5)
+            self.groundTruthOccupancyGrid.setScale(mapScale)
+            self.groundTruthOccupancyGrid.setFromDataArrayFromMapServer(resp.map.data)
+            self.updateOccupancyGridFromGroundTruthAndObstacles()
+            self.visualisationUpdateRequired = True
+            self.noLaserScanReceived = False
+
+        # Debug code
+        if False:
+            uniqueCellValues1 = []
+            for x in range(self.occupancyGrid.widthInCells):
+                for y in range(self.occupancyGrid.heightInCells):
+                    if self.groundTruthOccupancyGrid.grid[x][y] not in uniqueCellValues1:
+                        uniqueCellValues1.append(self.occupancyGrid.grid[x][y])
+
+            uniqueCellValues = []
+            print str(len(resp.map.data))
+            for x in range(len(resp.map.data)):
+                g = resp.map.data[x]
+                if g not in uniqueCellValues:
+                    uniqueCellValues.append(g)
+
+            print '**************************************************************************************'
+            print str(uniqueCellValues)
+            print str(uniqueCellValues1)
+            print '**************************************************************************************'
+        
         # Create the delta occupancy grid map. This stores the difference since the last time the map was sent out
         self.deltaOccupancyGrid = OccupancyGrid(resp.map.info.width, resp.map.info.height, resp.map.info.resolution, 0)
-	self.deltaOccupancyGrid.setScale(mapScale)
-	self.deltaOccupancyGrid.scaleEmptyMap()
+        self.deltaOccupancyGrid.setScale(mapScale)
+        self.deltaOccupancyGrid.scaleEmptyMap()
 
         windowHeight = rospy.get_param('maximum_window_height_in_pixels', 600)
 
@@ -69,9 +111,6 @@ class MapperNode(object):
                                                                 self.deltaOccupancyGridForShow, windowHeight)
 	    self.deltaOccupancyGridDrawer.open()
 
-        # Flag set to true if graphics can be updated
-        self.visualisationUpdateRequired = False
-
         # Set up the lock to ensure thread safety
         self.dataCopyLock = Lock()
 
@@ -80,17 +119,25 @@ class MapperNode(object):
         self.noLaserScanReceived = True
 
         self.enableMapping = True
-         
+
+        # List of active obstacles
+        self.activatedObstacles = []
+        self.disactivatedObstacles = []
+
+        # Set up the subscribers. These track the robot position, speed, threshold and laser scans.
+        self.mostRecentOdometry = Odometry()
+        self.odometrySubscriber = rospy.Subscriber("robot0/odom", Odometry, self.odometryCallback, queue_size=1)
+        self.mostRecentTwist = Twist()
+        self.twistSubscriber = rospy.Subscriber('/robot0/cmd_vel', Twist, self.twistCallback, queue_size=1)
+        self.laserSubscriber = rospy.Subscriber("robot0/laser_0", LaserScan, self.laserScanCallback, queue_size=1)
+        self.addObstacleToMapSubscriber = \
+            rospy.Subscriber("/add_obstacle_to_map", Int32, self.addObstacleToMapCallback, queue_size=1)
+        self.removeObstacleFromMapSubscriber = \
+            rospy.Subscriber("/remove_obstacle_from_map", Int32, self.removeObstacleFromMapCallback, queue_size=1)
+                 
         # Register the supported services
         self.changeMapperStateService = rospy.Service('change_mapper_state', ChangeMapperState, self.mappingStateService)
         self.requestMapUpdateService = rospy.Service('request_map_update', RequestMapUpdate, self.requestMapUpdateService)
-
-        # Set up the subscribers. These track the robot position, speed and laser scans.
-        self.mostRecentOdometry = Odometry()
-        self.odometrySubscriber = rospy.Subscriber("robot0/odom", Odometry, self.odometryCallback, queue_size=1)
-        self.mostRecentTwist = Twist();
-        self.twistSubscriber = rospy.Subscriber('/robot0/cmd_vel', Twist, self.twistCallback, queue_size=1)
-        self.laserSubscriber = rospy.Subscriber("robot0/laser_0", LaserScan, self.laserScanCallback, queue_size=1)
 
     def odometryCallback(self, msg):
         self.dataCopyLock.acquire()
@@ -106,7 +153,7 @@ class MapperNode(object):
 
     def mappingStateService(self, changeMapperState):
         self.enableMapping = changeMapperState.enableMapping
-        rospy.loginfo('Changing the enableMapping state to %d', self.enableMapping)
+        # rospy.loginfo('Changing the enableMapping state to %d', self.enableMapping)
         return ChangeMapperStateResponse()
 
     def requestMapUpdateService(self, request):
@@ -118,41 +165,9 @@ class MapperNode(object):
     
     def laserScanCallback(self, msg):
 
-        # Can't process anything until stuff is enabled
-        if self.enableMapping is False:
+        if self.useGroundTruthMap is True:
             return
 
-        # Can't process anything until we have the first scan
-        if (self.noOdometryReceived is True) or (self.noTwistReceived is True):
-            return
-
-        # Process the scan
-        gridHasChanged = self.parseScan(msg)
-
-        # If nothing has changed, return
-        if gridHasChanged is False:
-            return
-
-        # Mark that there is a pending update to the visualisation
-        self.visualisationUpdateRequired = True
-
-        # Mark that a laser scan has been received
-        self.noLaserScanReceived = False
-
-        # Construct the map update message and send it out
-        mapUpdateMessage = self.constructMapUpdateMessage(True)
-	rospy.loginfo('publishing map update message')
-        self.mapUpdatePublisher.publish(mapUpdateMessage)
-        
-    # Predict the pose of the robot to the current time. This is to
-    # hopefully make the pose of the robot a bit more accurate. The
-    # equation is: currentPose = lastPose + dT * lastTwist. Note this
-    # isn't quite right. e.g. a more proper implementation would store
-    # a history of velocities and interpolate over them.
-    
-    def predictPose(self, predictTime):
-
-        # Copy the last odometry and velocity
         self.dataCopyLock.acquire()
         currentPose = copy.deepcopy(self.mostRecentOdometry.pose.pose)
         currentPoseTime = self.mostRecentOdometry.header.stamp.to_sec()
@@ -186,6 +201,34 @@ class MapperNode(object):
         theta = theta + currentTwist.angular.z * dT
         
         return x, y, theta
+
+    # This method notes the obstacle ID with the groundtruth list.
+    def addObstacleToMapCallback(self, obstacleMsg):
+
+        id = obstacleMsg.data
+
+        rospy.loginfo('addObstacleToMapCallback: adding obstacle {}'.format(id))
+
+        if id not in self.activeObstacles:
+            self.activeObstacles.append(id)
+
+        rospy.loginfo('addObstacleToGroundtruthListCallback: activeObstacles = {}'.format(self.activeObstacles))
+        self.updateOccupancyGridFromGroundTruthAndObstacles()
+        self.visualisationUpdateRequired = True
+
+    def removeObstacleFromMapCallback(self, obstacleMsg):
+
+        id = obstacleMsg.data
+
+        rospy.loginfo('removeObstacleFromGroundtruthListCallback: removing obstacle {}'.format(id))
+
+        if id in self.activeObstacles:
+            self.activeObstacles.remove(id)
+
+        rospy.loginfo('removeObstacleFromGroundtruthListCallback: activateObstacles = {}'.format(self.activeObstacles))
+
+        self.updateOccupancyGridFromGroundTruthAndObstacles()
+        self.visualisationUpdateRequired = True
 
     def parseScan(self, msg):
 
@@ -239,16 +282,12 @@ class MapperNode(object):
             traversedToEnd = True
             for point in between:
                 try:
-                    if self.occupancyGrid.getCell(point[0], point[1]) > 0.5:
-                        traversedToEnd = False
-                        break
-                    
-                    if self.occupancyGrid.getCell(point[0], point[1]) == 0.5:
-                        self.occupancyGrid.setCell(point[0], point[1], 0)
-                        self.deltaOccupancyGrid.setCell(point[0], point[1], 1.0)
-                        if self.showDeltaOccupancyGrid is True:
-                            self.deltaOccupancyGridForShow.setCell(point[0], point[1], 1.0)
-                        gridHasChanged = True
+                    # if self.occupancyGrid.getCell(point[0], point[1]) == 0.5:
+                    self.occupancyGrid.setCell(point[0], point[1], 0)
+                    self.deltaOccupancyGrid.setCell(point[0], point[1], 1.0)
+                    if self.showDeltaOccupancyGrid is True:
+                        self.deltaOccupancyGridForShow.setCell(point[0], point[1], 1.0)
+                    gridHasChanged = True
                 except IndexError as e:
                     print(e)
                     print "between: " + str(point[0]) + ", " + str(point[1])
@@ -270,6 +309,7 @@ class MapperNode(object):
                     if self.showDeltaOccupancyGrid is True:
                         self.deltaOccupancyGridForShow.setCell(lastPoint[0], lastPoint[1], 1.0)
                     gridHasChanged = True
+            
 
         return gridHasChanged
 
@@ -290,7 +330,22 @@ class MapperNode(object):
         points = bresenham(endPoint, startPoint)
 
         return points.path
-    
+
+    def updateOccupancyGridFromGroundTruthAndObstacles(self):
+
+        # Loop through the map and change the occupancy grid so that only
+        # visible objects are shown. Note that we turn the cell occupancy back
+        # into an integer to avoid rounding issues in comparisons. 
+        self.occupancyGrid.grid = copy.deepcopy(self.groundTruthOccupancyGrid.grid)
+        for x in range(self.occupancyGrid.widthInCells):
+            for y in range(self.occupancyGrid.heightInCells):
+                cell = int(self.occupancyGrid.getCell(x, y)*100)
+                if cell > 0 and cell < 100:
+                    if cell in self.activeObstacles:
+                        self.occupancyGrid.setCell(x, y, 1)
+                    else:
+                        self.occupancyGrid.setCell(x, y, 0)
+
     def updateVisualisation(self):
 
         # If anything has changed the state of the occupancy grids,
@@ -321,7 +376,7 @@ class MapperNode(object):
         # Construct the map update message
         mapUpdateMessage = MapUpdate()
 
-	rospy.loginfo('constructMapUpdateMessage: invoked')
+	#rospy.loginfo('constructMapUpdateMessage: invoked')
 
         mapUpdateMessage.header.stamp = rospy.Time().now()
         mapUpdateMessage.isPriorMap = self.noLaserScanReceived

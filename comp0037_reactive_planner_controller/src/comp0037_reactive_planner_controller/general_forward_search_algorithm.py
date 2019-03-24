@@ -118,10 +118,10 @@ class GeneralForwardSearchAlgorithm(PlannerBase):
 
         # Check the start and end are not occupied. Note that "0.5" means
         # "don't know" which is why it is used as the threshold for detection.
-        if (self.occupancyGrid.getCell(startCoords[0], startCoords[1]) > 0.5):
+        if (self.occupancyGrid.getCell(startCoords[0], startCoords[1]) > 0.9):
             return False
 
-        if (self.occupancyGrid.getCell(goalCoords[0], goalCoords[1]) > 0.5):
+        if (self.occupancyGrid.getCell(goalCoords[0], goalCoords[1]) > 0.9):
             return False
 
         # Get the start cell object and label it as such. Also set its

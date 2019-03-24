@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(comp0037_cw2)
+project(comp0037_cw3)
 
 
 find_package(catkin REQUIRED COMPONENTS roslaunch)
