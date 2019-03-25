@@ -22,15 +22,8 @@ class ObstaclerNode(object):
         # Create a set of obstacles
         self.obstacles = []
 
-        # Add test
-        self.obstacles.append(Obstacle(52, 20, 1))
-        self.obstacles.append(Obstacle(64, 30, 1))
-        self.obstacles.append(Obstacle(76, 40, 1))
-        self.obstacles.append(Obstacle(88, 50, 1))
-
-        # Set all the objects up. Note that this makes the objects which are present detectable at the start
-        for obstacle in self.obstacles:
-            obstacle.reset()
+        # Read file if specified
+        
         
         # Set up the lock to ensure thread safety
         self.obstacleLock = Lock()
@@ -43,6 +36,36 @@ class ObstaclerNode(object):
 
         # Register the subscriber to get the laser scan. This is used to detect if an obstacle has been detected
         self.laserSubscriber = rospy.Subscriber("robot0/laser_0", LaserScan, self.laserScanCallback, queue_size=1)
+
+        # If a command line argument was provided, assume it includes
+        # a list of goals, so load it. If not, create the goals at
+        # random.
+        if (len(argv) > 1):
+            self.loadObstacleDetailsFromFile(argv[1])
+        else:
+            self.createTestObstacles()
+            
+        # Set all the objects up. Note that this makes the objects which are present detectable at the start
+        for obstacle in self.obstacles:
+            obstacle.reset()
+
+
+    def loadObstacleDetailsFromFile(self, obstacleFileName):
+        rospy.loginfo('Loading goals from file {}'.format(obstacleFileName))
+        fp = open(obstacleFileName)
+        lines = fp.readlines()
+        for line in lines:
+            nextLine = ([float(v) for v in line.split()])
+            self.obstacles.append(Obstacle(nextLine[0], nextLine[1], nextLine[2]))
+            
+        rospy.loginfo("Read {} obstacles".format(len(self.obstacles)))
+            
+    def createTestObstacles(self):
+        # Add test
+        self.obstacles.append(Obstacle(52, 20, 1))
+        self.obstacles.append(Obstacle(64, 30, 1))
+        self.obstacles.append(Obstacle(76, 40, 1))
+        self.obstacles.append(Obstacle(88, 50, 1))
  
     def odometryCallback(self, msg):
         self.obstacleLock.acquire()
