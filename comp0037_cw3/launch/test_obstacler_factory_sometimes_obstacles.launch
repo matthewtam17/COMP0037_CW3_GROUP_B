@@ -8,7 +8,7 @@
     <param name="time_scale_factor" type="double" value="2" />
     <arg name="map_file" default="$(find comp0037_resources)/maps/factory_with_obstacles.yaml"/>
     <arg name="goal_file" default="$(find comp0037_cw3)/scenarios/factory/obstacler_test_goals.txt"/>
-    <arg name="obstacles_file" default="$(find comp0037_cw3)/scenarios/factory/obstacler_test_obstacles.txt"/>
+    <arg name="obstacles_file" default="$(find comp0037_cw3)/scenarios/factory/obstacler_test_sometimes_obstacles.txt"/>
     <node pkg="comp0037_time_server" name="time_server" type="time_server_node.py"/>
     <include file="$(find stdr_robot)/launch/robot_manager.launch" />
     <node type="stdr_server_node" pkg="stdr_server" name="stdr_server" output="screen" args="$(arg map_file)"/>
