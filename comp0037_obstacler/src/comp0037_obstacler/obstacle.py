@@ -11,7 +11,7 @@ from time import sleep
 class Obstacle(object):
 
     def __init__(self, id, waitLambda, probabilityOfBeingPresent):
-        self.id = id
+        self.id = int(id)
         self.waitLambda = waitLambda
         self.probabilityOfBeingPresent = probabilityOfBeingPresent
         self.isInSimulation = False
