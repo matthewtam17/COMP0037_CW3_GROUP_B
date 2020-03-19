@@ -2,9 +2,9 @@ from cell_based_forward_search import CellBasedForwardSearch
 from Queue import PriorityQueue
 import math
 
-# This class implements Dijkstra's forward search algorithm
+# This class implements A* with the octile heuristic.
 
-class DijkstraPlanner(CellBasedForwardSearch):
+class AStarOctilePlanner(CellBasedForwardSearch):
     
     def __init__(self, title, occupancyGrid):
         CellBasedForwardSearch.__init__(self, title, occupancyGrid)
@@ -15,13 +15,20 @@ class DijkstraPlanner(CellBasedForwardSearch):
     def pushCellOntoQueue(self, cell):
     
         if (cell.parent is not None):
-            # Work out the cost of the action from the parent to self cell
+            # Work out the cost of the action from the parent to this cell
             d = self.computeLStageAdditiveCost(cell.parent, cell)
             cell.pathCost = cell.parent.pathCost + d
         else:
             cell.pathCost = 0
+
+        # Octile heuristic (hard coded)
+        dX = abs(cell.coords[0] - self.goal.coords[0])
+        dY = abs(cell.coords[1] - self.goal.coords[1])
+        octileDistance = max(dX, dY) +(math.sqrt(2) -1) * min(dX, dY)
+        
+        key = cell.pathCost + octileDistance
             
-        self.priorityQueue.put((cell.pathCost, cell))
+        self.priorityQueue.put((key, cell))
 
     # Check the queue size is zero
     def isQueueEmpty(self):
@@ -36,18 +43,17 @@ class DijkstraPlanner(CellBasedForwardSearch):
 
         # See if the cost from the parent cell to this cell is shorter
         # than the existing path. If so, use it instead.
-        dX = cell.coords[0] - parentCell.coords[0]
-        dY = cell.coords[1] - parentCell.coords[1]
-        d = math.sqrt(dX * dX + dY * dY)
+        d = self.computeLStageAdditiveCost(cell.parent, cell)
         pathCostThroughNewParent = parentCell.pathCost + d
         if (pathCostThroughNewParent < cell.pathCost):
             cell.parent = parentCell
             cell.pathCost = pathCostThroughNewParent
             self.reorderPriorityQueue()
 
-    # Reorder the queue. I don't see another way to do this, other than
-    # create a new queue and copy over tuple-by-tuple. This rebuilds
-    # the heap trees.
+    # Reorder the queue. I don't see a clean way to do this.  Here I
+    # just blindly create a new queue and copy over.  Another approach
+    # is to transform into a list, heapify and transform back. People
+    # have also used lambdas and sort functions.
     def reorderPriorityQueue(self):
         newQueue = PriorityQueue()
 

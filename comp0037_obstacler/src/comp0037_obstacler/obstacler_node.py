@@ -21,17 +21,14 @@ class ObstaclerNode(object):
         
         # Create a set of obstacles
         self.obstacles = []
-
-        # Read file if specified
-        
-        
+       
         # Set up the lock to ensure thread safety
         self.obstacleLock = Lock()
         self.noOdometryReceived = True
         self.mostRecentOdometry = Odometry()
 
         # Register the subscriber to get the robot's state. This is mostly used just to get regular updates
-        # to ensure that we properly handle the robot sleep stuff.
+        # to ensure that we properly handle the obstacle sleep stuff.
         self.odometrySubscriber = rospy.Subscriber("/robot0/odom", Odometry, self.odometryCallback, queue_size=1)
 
         # Register the subscriber to get the laser scan. This is used to detect if an obstacle has been detected
@@ -73,8 +70,8 @@ class ObstaclerNode(object):
             obstacle.update()
         self.obstacleLock.release()
 
-    # Go through the laser scan and find all the unqiue intensity values. From these, ping
-    # off of the obstacles.
+    # Go through the laser scan and find all the unique intensity values. From these, identify
+    # the set of detected objects and signal appropriately.
     def laserScanCallback(self, msg):
 
         uniqueIntensities = []
