@@ -14,34 +14,29 @@ from comp0037_obstacler.obstacle import *
 
 class ObstaclerNode(object):
 
-    def __init__(self, argv):
+    def __init__(self):
         rospy.init_node('obstacler')
 
         rospy.wait_for_service('request_map_update')
         
         # Create a set of obstacles
         self.obstacles = []
-
-        # Read file if specified
-        
-        
+       
         # Set up the lock to ensure thread safety
         self.obstacleLock = Lock()
         self.noOdometryReceived = True
         self.mostRecentOdometry = Odometry()
 
         # Register the subscriber to get the robot's state. This is mostly used just to get regular updates
-        # to ensure that we properly handle the robot sleep stuff.
+        # to ensure that we properly handle the obstacle sleep stuff.
         self.odometrySubscriber = rospy.Subscriber("/robot0/odom", Odometry, self.odometryCallback, queue_size=1)
 
         # Register the subscriber to get the laser scan. This is used to detect if an obstacle has been detected
         self.laserSubscriber = rospy.Subscriber("robot0/laser_0", LaserScan, self.laserScanCallback, queue_size=1)
 
-        # If a command line argument was provided, assume it includes
-        # a list of goals, so load it. If not, create the goals at
-        # random.
-        if (len(argv) > 1):
-            self.loadObstacleDetailsFromFile(argv[1])
+        # If the obstacle file parameter was specified, load. Otherwise, create defaults
+        if rospy.has_param('obstacles_file') is True:
+            self.loadObstacleDetailsFromFile(rospy.get_param('obstacles_file'))
         else:
             self.createTestObstacles()
             
@@ -73,8 +68,8 @@ class ObstaclerNode(object):
             obstacle.update()
         self.obstacleLock.release()
 
-    # Go through the laser scan and find all the unqiue intensity values. From these, ping
-    # off of the obstacles.
+    # Go through the laser scan and find all the unique intensity values. From these, identify
+    # the set of detected objects and signal appropriately.
     def laserScanCallback(self, msg):
 
         uniqueIntensities = []

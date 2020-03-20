@@ -8,8 +8,7 @@ from comp0037_obstacler.obstacler_node import ObstaclerNode
 if __name__ == '__main__':
     try:
 	# Strip out all the ROS-specific command line arguments
-        myargv = rospy.myargv(argv=sys.argv)
-        obstaclerNode = ObstaclerNode(myargv)
+        obstaclerNode = ObstaclerNode()
         obstaclerNode.run()
     except rospy.ROSInterruptException:
         pass

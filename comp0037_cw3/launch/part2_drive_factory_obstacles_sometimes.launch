@@ -4,11 +4,10 @@
     <param name="use_reactive_planner_controller" type="bool" value="true" />
     <param name="enable_change_mapper_state" type="bool" value="true" />
     <param name="remove_goal_cell_from_path_if_occupied" type="bool" value="false" />
-    <param name="remove_goal_cell_from_path_if_occupied" type="bool" value="false" />
+    <param name="obstacles_file" value="$(find comp0037_cw3)/scenarios/factory/part2_obstacles_sometimes.txt"/>
     <param name="time_scale_factor" type="double" value="2" />
     <arg name="map_file" default="$(find comp0037_resources)/maps/factory_with_obstacles.yaml"/>
     <arg name="goal_file" default="$(find comp0037_cw3)/scenarios/factory/part2_goals.txt"/>
-    <arg name="obstacles_file" default="$(find comp0037_cw3)/scenarios/factory/part2_obstacles_sometimes.txt"/>
     <node pkg="comp0037_time_server" name="time_server" type="time_server_node.py"/>
     <include file="$(find stdr_robot)/launch/robot_manager.launch" />
     <node type="stdr_server_node" pkg="stdr_server" name="stdr_server" output="screen" args="$(arg map_file)"/>
@@ -18,6 +17,6 @@
     <node pkg="comp0037_the_boss" name="the_boss" type="boss_node.py" args="$(arg goal_file)" output="screen"/>
     <include file="$(find comp0037_mapper)/launch/mapper.launch" />
     <node pkg="comp0037_reactive_planner_controller" name="planner_controller" type="planner_controller_node.py" output="screen"/>
-    <node pkg="comp0037_obstacler" name="obstacler_node" type="obstaclerNode" args="$(arg obstacles_file)" output="screen"/>
+    <node pkg="comp0037_obstacler" name="obstacler_node" type="obstaclerNode" output="screen"/>
     <include file="$(find stdr_gui)/launch/stdr_gui.launch"/>
 </launch>
