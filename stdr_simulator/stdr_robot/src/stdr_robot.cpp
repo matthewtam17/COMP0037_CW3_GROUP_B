@@ -367,7 +367,7 @@ void Robot::removeObstacleFromSimulationCallback(const std_msgs::Int32::ConstPtr
     
     while(distanceToNewPose > 0)
     {
-      float stepLength = std::min(0.5f*_map.info.resolution, distanceToNewPose);
+      float stepLength = std::min(0.1f*_map.info.resolution, distanceToNewPose);
       newX += stepLength * _map.info.resolution * cos(angle);
       newY += stepLength * _map.info.resolution * sin(angle);
       distanceToNewPose -= stepLength;
@@ -507,8 +507,10 @@ void Robot::removeObstacleFromSimulationCallback(const std_msgs::Int32::ConstPtr
   {
     //NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ": invoked");
 
+    
+    
     geometry_msgs::Pose2D pose = _motionControllerPtr->getPose();
-    //NODELET_ERROR_STREAM("pose=" <<  pose);
+    //NODELET_ERROR_STREAM("pose=" <<  pose << ";_previousPose=" << _previousPose);
     //NODELET_ERROR_STREAM("collisionExists(pose, _previousPose)=" <<  collisionExists(pose, _previousPose));
     if( ! collisionExists(pose, _previousPose) )
     {
@@ -516,9 +518,9 @@ void Robot::removeObstacleFromSimulationCallback(const std_msgs::Int32::ConstPtr
     }
     else
     {
-      NODELET_ERROR_STREAM("Collision detected when moving from ("
-			   << _previousPose.x << "," << _previousPose.y << "," << _previousPose.theta
-			   << ") to ("<< pose.x << "," << pose.y << "," << pose.theta << ")");
+      NODELET_ERROR_STREAM_THROTTLE(5, "Collision detected when moving from ("
+				    << _previousPose.x << "," << _previousPose.y << "," << _previousPose.theta
+				    << ") to ("<< pose.x << "," << pose.y << "," << pose.theta << ")");
       _motionControllerPtr->setPose(_previousPose);
     }
     //!< Robot tf
