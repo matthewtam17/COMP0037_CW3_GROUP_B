@@ -19,8 +19,10 @@ class DijkstraPlanner(CellBasedForwardSearch):
             cell.pathCost = cell.parent.pathCost + d
         else:
             cell.pathCost = 0
+
+        key = self.computePriorityQueueKey(cell)
             
-        self.priorityQueue.put((cell.pathCost, cell))
+        self.priorityQueue.put((key, cell))
 
     # Check the queue size is zero
     def isQueueEmpty(self):
@@ -35,13 +37,31 @@ class DijkstraPlanner(CellBasedForwardSearch):
 
         # See if the cost from the parent cell to this cell is shorter
         # than the existing path. If so, use it instead. NOTE: This should
-        # reorder the priority queue, but my bad implementation does not.
-        #dX = cell.coords[0] - parentCell.coords[0]
-        #dY = cell.coords[1] - parentCell.coords[1]
-        #d = math.sqrt(dX * dX + dY * dY)
-        d = self.computeLStageAdditiveCost(cell.parent, cell)
+        d = self.computeLStageAdditiveCost(parentCell, cell)
         pathCostThroughNewParent = parentCell.pathCost + d
         if (pathCostThroughNewParent < cell.pathCost):
             cell.parent = parentCell
             cell.pathCost = pathCostThroughNewParent
- 
+            self.reorderPriorityQueue()
+
+    # Reorder the queue. I don't see a clean way to do this.  Here I
+    # just blindly create a new queue and copy over.  Another approach
+    # is to transform into a list, heapify and transform back. People
+    # have also used lambdas and sort functions.
+    def reorderPriorityQueue(self):
+        newQueue = PriorityQueue()
+
+        while self.priorityQueue.empty() is False:
+            tuple = self.priorityQueue.get()
+            cell = tuple[1]
+            key = self.computePriorityQueueKey(cell)
+            newQueue.put((key, cell))
+             
+        self.priorityQueue = newQueue
+            
+    def computePriorityQueueKey(self, cell):
+        
+        # Compute the cost using weighted A*
+        key = cell.pathCost
+
+        return key

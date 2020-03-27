@@ -26,7 +26,7 @@ from comp0037_reactive_planner_controller.occupancy_grid import OccupancyGrid
 
 from comp0037_reactive_planner_controller.passive_planner_controller import PassivePlannerController
 from comp0037_reactive_planner_controller.reactive_planner_controller import ReactivePlannerController
-from comp0037_reactive_planner_controller.astar_octile_planner import AStarOctilePlanner
+from comp0037_reactive_planner_controller.a_star_planner import AStarPlanner
 from comp0037_reactive_planner_controller.move2goal_controller import Move2GoalController
 
 # This class is the main node and orchestrates everything else
@@ -79,7 +79,7 @@ class PlannerControllerNode(object):
         self.plannerController.handleMapUpdateMessage(msg)
         
     def createPlanner(self):
-        self.planner = AStarOctilePlanner('A* Octile', self.occupancyGrid)
+        self.planner = AStarPlanner('A*', self.occupancyGrid)
         self.planner.setPauseTime(0)
         self.planner.windowHeightInPixels = rospy.get_param('maximum_window_height_in_pixels', 700)
 

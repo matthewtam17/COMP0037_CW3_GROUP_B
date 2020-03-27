@@ -9,6 +9,7 @@ class CostToComeHeuristic(Enum):
     EUCLIDEAN = 1
     MANHATTAN = 2
     OCTILE = 3
+    SQUARED_EUCLIDEAN = 4
 
 class AStarPlanner(DijkstraPlanner):
     
@@ -35,7 +36,9 @@ class AStarPlanner(DijkstraPlanner):
             G = dXG + dYG
         elif self.heuristic is CostToComeHeuristic.OCTILE:
             G = max(dXG, dYG) + (math.sqrt(2) -1) * min(dXG, dYG)
- 
+        elif self.heuristic is CostToComeHeuristic.SQUARED_EUCLIDEAN:
+            G = dXG * dXG + dYG * dYG
+            
         # Compute the cost using weighted A*
         key = cell.pathCost + self.alpha * G
 
