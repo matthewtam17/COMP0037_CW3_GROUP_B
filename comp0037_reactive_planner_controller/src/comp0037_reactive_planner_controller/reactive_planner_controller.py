@@ -2,6 +2,7 @@
 # controller. This monitors the the robot motion.
 
 import rospy
+import math
 import threading
 from cell import CellLabel
 from planner_controller_base import PlannerControllerBase
@@ -16,6 +17,8 @@ class ReactivePlannerController(PlannerControllerBase):
         self.mapUpdateSubscriber = rospy.Subscriber('updated_map', MapUpdate, self.mapUpdateCallback)
         self.gridUpdateLock =  threading.Condition()
         self.aisleToDriveDown = None
+        self.Lw = 2
+
 
     def mapUpdateCallback(self, mapUpdateMessage):
 
@@ -36,16 +39,22 @@ class ReactivePlannerController(PlannerControllerBase):
         # This methods needs to check if the current path, whose
         # waypoints are in self.currentPlannedPath, can still be
         # traversed
-                
+
+        waypoints = self.currentPlannedPath.waypoints
+        for point in waypoints:
+            x,y = point.coords
+            status = self.occupancyGrid.getCell(x,y)
+            if status == 1:
+                print("Path no longer valid - cell blocked at " + str(x) + "," +str(y))
+                self.controller.stopDrivingToCurrentGoal()
+                break
         # If the route is not viable any more, call
         # self.controller.stopDrivingToCurrentGoal()
-
-        pass
 
     # Choose the first aisle the robot will initially drive down.
     # This is based on the prior.
     def chooseInitialAisle(self, startCellCoords, goalCellCoords):
-        return Aisle.A
+        return Aisle.B
 
     # Choose the subdquent aisle the robot will drive down
     def chooseAisle(self, startCellCoords, goalCellCoords):
@@ -53,34 +62,158 @@ class ReactivePlannerController(PlannerControllerBase):
 
     # Return whether the robot should wait for the obstacle to clear or not.
     def shouldWaitUntilTheObstacleClears(self, startCellCoords, goalCellCoords):
+        #Calculate the path cost for the new path, and the path cost for the original path 
+        #From the robot's current position
+        #The robot's current position is given as startCellCoords.
+        #Old remaining path cost from current robot position:
+        print("Original old path cost: " + str(self.currentPlannedPath.travelCost))
+        oldPathWaypoints = list(self.currentPlannedPath.waypoints)
+        currentIndex = 0
+        closestDistance = float('inf')
+        currentDistance = float('inf')
+        print("robot's current cell: " + str(startCellCoords))
+        for cell in oldPathWaypoints:
+            print(currentDistance)
+            # Project the robot onto the lsit of waypoints - obtaining the closest waypoint to the robot
+            currentDistance = math.sqrt((cell.coords[0] - startCellCoords[0])**2 + (cell.coords[1] - startCellCoords[1])**2)
+            if  currentDistance < closestDistance:
+                currentIndex = oldPathWaypoints.index(cell)
+                closestDistance = currentDistance
+            # Do a check to see if closestDistance is significant - the error from the robot to the closest waypoint
+            # If this is significant then there is an error somewhere. If it is small enough then it probably due to 
+            # some noise in the robot's movement. Want to check that this error is less than width of a cell.
+        print("i: " +str(currentIndex))
+        oldPathRemainingCost = 0
+        for i in range(currentIndex,len(oldPathWaypoints)-1):
+            #This is a less computationally expensive solution than recomputing the cost 
+            #by re-planning a section of the old path
+            oldPathRemainingCost = oldPathRemainingCost + self.planner.computeLStageAdditiveCost(oldPathWaypoints[i],oldPathWaypoints[i+1])
+        print("Old Path remaining cost: " + str(oldPathRemainingCost))
+
+        # The planners are deterministic. So if I plan a search from start to currentcoords,
+        # then the plannned path of that should be identical to the old path that the robot has traversed.
+        # That has some computational cost. So maybe a way of extracting the traversed path from the 
+        # reactive planner.
+
+        #New Path Cost: 
+        newPath = self.planner.search(startCellCoords,goalCellCoords)
+        if newPath is False:
+            print("Cannot find alternative path")
+            return True
+        newPath = self.planner.extractPathToGoal()
+        newPathTravelCost = newPath.travelCost
+        diffPathTravelCost = newPathTravelCost - oldPathRemainingCost
+        print("diffPathTravelCost: " + str(diffPathTravelCost))
+        wait = 0
+        waitCost = self.Lw * wait
+        if waitCost < diffPathTravelCost:
+            return True
+        else:
+            return False
+
         return False
 
     # This method will wait until the obstacle has cleared and the robot can move.
     def waitUntilTheObstacleClears(self):
-        pass
+        waiting = True
+        blocked = False
+        while waiting:
+            blocked = False
+            waypoints = self.currentPlannedPath.waypoints
+            for point in waypoints:
+                x,y = point.coords
+                status = self.occupancyGrid.getCell(x,y)
+                if status == 1:
+                    print("Path still blocked - waiting")
+                    blocked = True
+            if blocked is False:
+                waiting = False
+        
     
     # Plan a path to the goal which will go down the designated aisle. The code, as
     # currently implemented simply tries to drive from the start to the goal without
     # considering the aisle.
     def planPathToGoalViaAisle(self, startCellCoords, goalCellCoords, aisle):
+        #The principle in this function is that driving down an aisle
+        #is like introducing an intermediate waypoint
+        print("start Coords: " + str(startCellCoords))
+        #This function, based on the aisle given, would plan a path from the 
+        # start coordinates to a cell determined by an aisle
+        # then a separate planned path from the aisle to the goal coordinates
+        # and then contatenate the two planned paths (which contain the waypoints)
+        # together so that the function that runs the robot along each waypoint,
+        # driveToGoal(), is able to drive the robot as usual.
 
         # Note that, if the robot has waited, it might be tasked to drive down the
         # aisle it's currently on. Your code should handle this case.
         if self.aisleToDriveDown is None:
             self.aisleToDriveDown = aisle
+        
+        # Make sure that when you write it out, that you define the points
+        # such that the lidar can reach the obstacle (i.e. the waypoint defined for
+        #B1 should be such that the robot's sensors can actually detect the obstacle
+
+        #The intermediateGoal is used to control the via point of the planned path
+        # i.e. what aisle the robot will drive down
+
+        intermediateGoal = (25,25)
+        print("aisle: " + str(aisle))
+        if aisle == Aisle.A:
+            print("Driving down aisle A")
+            intermediateGoal = (25,20)
+        elif aisle == Aisle.B:
+            intermediateGoal = (40,20)
+            print("Driving down aisle B")
+        elif aisle == Aisle.C:
+            intermediateGoal = (60,20)
+            print("Driving down aisle C")
+        elif aisle == Aisle.D:
+            intermediateGoal = (75,20)
+            print("Driving down aisle D")
+        elif aisle == Aisle.E:
+            intermediateGoal = (90,20)
+            print("Driving down aisle E")
+        else: 
+            intermediateGoal = (25,20)
+            print("Driving down aisle A")
 
         # Implement your method here to construct a path which will drive the robot
         # from the start to the goal via the aisle.
-        pathToGoalFound = self.planner.search(startCellCoords, goalCellCoords)    
+        #Planning first path from start cell to intermediate
+        firstPath = self.planner.search(startCellCoords,intermediateGoal)
+        if firstPath is False:
+            rospy.logwarn("Could not find a first path to the aisle at (%d, %d)", \
+                            intermediateGoal[0], intermediateGoal[1])
+            return None
+        firstPath = self.planner.extractPathToGoal()
+        print("end of first path: " + str(list(firstPath.waypoints)[-1].coords))
 
-        # If we can't reach the goal, give up and return
-        if pathToGoalFound is False:
-            rospy.logwarn("Could not find a path to the goal at (%d, %d)", \
+        #Update graphics before planning the second path
+        self.planner.searchGridDrawer.update()
+        #Planning second path from intermediate to goal
+        secondPath = self.planner.search(intermediateGoal,goalCellCoords)
+        if secondPath is False:
+            rospy.logwarn("Could not find second path to the goal at (%d, %d)", \
                             goalCellCoords[0], goalCellCoords[1])
             return None
+        
+        secondPath = self.planner.extractPathToGoal()
+        print("start of second path: " + str(list(secondPath.waypoints)[0].coords))
+        # We contatenate the two planned paths using the addToEnd() function of the 
+        # first path. 
+        firstPath.addToEnd(secondPath)
+        currentPlannedPath = firstPath
+        #pathToGoalFound = self.planner.search(startCellCoords, goalCellCoords)    
+
+        #Update the graphics
+        self.planner.searchGridDrawer.update()
+        self.planner.searchGridDrawer.drawPathGraphicsWithCustomColour(currentPlannedPath, 'yellow')
+        self.planner.searchGridDrawer.waitForKeyPress()
 
         # Extract the path
-        currentPlannedPath = self.planner.extractPathToGoal()
+        #currentPlannedPath = self.planner.extractPathToGoal()
+
+        #Show both the first and second planned path separately, and also the combined path (3 screenshots)
 
         return currentPlannedPath
 
@@ -119,12 +252,14 @@ class ReactivePlannerController(PlannerControllerBase):
 
             # If we couldn't find a path, give up
             if self.currentPlannedPath is None:
+                print("couldn't find a path")
                 return False
 
             # Drive along the path towards the goal. This returns True
             # if the goal was successfully reached. The controller
             # should stop the robot and return False if the
             # stopDrivingToCurrentGoal method is called.
+            print("driving to goal")
             goalReached = self.controller.drivePathToGoal(self.currentPlannedPath, \
                                                           goal.theta, self.planner.getPlannerDrawer())
 
@@ -141,10 +276,9 @@ class ReactivePlannerController(PlannerControllerBase):
             pose = self.controller.getCurrentPose()
             start = (pose.x, pose.y)
             startCellCoords = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates(start)
-
             # See if we should wait
             waitingGame = self.shouldWaitUntilTheObstacleClears(startCellCoords, goalCellCoords)
-
+            print("Should wait: " + str(waitingGame))
             # Depending upon the decision, either wait or determine the new aisle
             # we should drive down.
             if waitingGame is True:
