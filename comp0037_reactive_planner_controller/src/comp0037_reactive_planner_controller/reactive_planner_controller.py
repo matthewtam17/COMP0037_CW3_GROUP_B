@@ -66,7 +66,7 @@ class ReactivePlannerController(PlannerControllerBase):
         #From the robot's current position
         #The robot's current position is given as startCellCoords.
         #Old remaining path cost from current robot position:
-        print("Original old path cost: " + str(self.currentPlannedPath.travelCost))
+        rospy.loginfo("Original old path cost: " + str(self.currentPlannedPath.travelCost))
         oldPathWaypoints = list(self.currentPlannedPath.waypoints)
         currentIndex = 0
         closestDistance = float('inf')
@@ -79,6 +79,7 @@ class ReactivePlannerController(PlannerControllerBase):
             if  currentDistance < closestDistance:
                 currentIndex = oldPathWaypoints.index(cell)
                 closestDistance = currentDistance
+
             # Do a check to see if closestDistance is significant - the error from the robot to the closest waypoint
             # If this is significant then there is an error somewhere. If it is small enough then it probably due to
             # some noise in the robot's movement. Want to check that this error is less than width of a cell.
@@ -88,7 +89,7 @@ class ReactivePlannerController(PlannerControllerBase):
             #This is a less computationally expensive solution than recomputing the cost
             #by re-planning a section of the old path
             oldPathRemainingCost = oldPathRemainingCost + self.planner.computeLStageAdditiveCost(oldPathWaypoints[i],oldPathWaypoints[i+1])
-        print("Old Path remaining cost: " + str(oldPathRemainingCost))
+        rospy.loginfo("Old Path remaining cost: " + str(oldPathRemainingCost))
 
         # The planners are deterministic. So if I plan a search from start to currentcoords,
         # then the plannned path of that should be identical to the old path that the robot has traversed.
@@ -98,12 +99,12 @@ class ReactivePlannerController(PlannerControllerBase):
         #New Path Cost:
         newPath = self.planner.search(startCellCoords,goalCellCoords)
         if newPath is False:
-            print("Cannot find alternative path")
+            rospy.logwarn("Cannot find alternative path")
             return True
         newPath = self.planner.extractPathToGoal()
         newPathTravelCost = newPath.travelCost
         diffPathTravelCost = newPathTravelCost - oldPathRemainingCost
-        print("diffPathTravelCost: " + str(diffPathTravelCost))
+        rospy.loginfo("diffPathTravelCost: " + str(diffPathTravelCost))
         wait = 0
         waitCost = self.Lw * wait
         if waitCost < diffPathTravelCost:
@@ -279,7 +280,7 @@ class ReactivePlannerController(PlannerControllerBase):
             startCellCoords = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates(start)
             # See if we should wait
             waitingGame = self.shouldWaitUntilTheObstacleClears(startCellCoords, goalCellCoords)
-            print("Should wait: " + str(waitingGame))
+            print("Should we wait?: " + str(waitingGame))
             # Depending upon the decision, either wait or determine the new aisle
             # we should drive down.
             if waitingGame is True:
