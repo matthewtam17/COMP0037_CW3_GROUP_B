@@ -18,7 +18,7 @@ class ReactivePlannerController(PlannerControllerBase):
         self.gridUpdateLock =  threading.Condition()
         self.aisleToDriveDown = None
         self.Lw = 2
-        self.expectedWaitTime = 4
+        self.expectedWaitTime = 0.2
         self.B_obstacle_prob = 0.8
 
     def mapUpdateCallback(self, mapUpdateMessage):
