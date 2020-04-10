@@ -73,7 +73,7 @@ class ReactivePlannerController(PlannerControllerBase):
         currentDistance = float('inf')
         print("robot's current cell: " + str(startCellCoords))
         for cell in oldPathWaypoints:
-            print(currentDistance)
+            # print(currentDistance) # my note: debug del
             # Project the robot onto the lsit of waypoints - obtaining the closest waypoint to the robot
             currentDistance = math.sqrt((cell.coords[0] - startCellCoords[0])**2 + (cell.coords[1] - startCellCoords[1])**2)
             if  currentDistance < closestDistance:
