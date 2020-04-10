@@ -20,7 +20,6 @@ class ReactivePlannerController(PlannerControllerBase):
         self.Lw = 2
         self.expectedWaitTime = 4
 
-
     def mapUpdateCallback(self, mapUpdateMessage):
 
         # Update the occupancy grid and search grid given the latest map update
@@ -55,7 +54,18 @@ class ReactivePlannerController(PlannerControllerBase):
     # Choose the first aisle the robot will initially drive down.
     # This is based on the prior.
     def chooseInitialAisle(self, startCellCoords, goalCellCoords):
-        return Aisle.B
+        rospy.logwarn("Chosing Aisle")
+        path_b = planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.B)
+        path_c = planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.C)
+        self._draw_path_by_color(path_b)
+        self._draw_path_by_color(path_c, 'red')
+
+        L_cost_via_b = path_b.travelCost + self.expectedWaitTime * 0.8 # mynote: 0.8 is the probability of obstacle at B
+        L_cost_via_c = path_c.travelCost
+
+        aisle_ret = Aisle.B if L_cost_via_b < L_cost_via_c else Aisle.C
+        rospy.logwarn("Logging Decission for Aisle B or C.\n Cost via B: {}; Cost via C: {}. Chosen Aisle: {}".format(L_cost_via_b, L_cost_via_c. aisle_ret))
+        return aisle_ret
 
     # Choose the subdquent aisle the robot will drive down
     def chooseAisle(self, startCellCoords, goalCellCoords):
@@ -100,8 +110,8 @@ class ReactivePlannerController(PlannerControllerBase):
         # Compare old_path (not remained path) and new_path
         old_path = self.currentPlannedPath
         newPath = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, self.chooseAisle(startCellCoords, goalCellCoords)) # my note: a fix to ensure it travels via aisle
-        self._draw_path_by_color(old_path, 'red')
-        self._draw_path_by_color(newPath, 'green')
+        self._draw_path_by_color(old_path, 'yellow')
+        self._draw_path_by_color(newPath, 'red')
 
         #New Path Cost:
         newPathTravelCost = newPath.travelCost
