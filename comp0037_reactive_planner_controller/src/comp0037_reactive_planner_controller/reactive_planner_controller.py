@@ -104,7 +104,7 @@ class ReactivePlannerController(PlannerControllerBase):
         newPath = self.planner.extractPathToGoal()
         newPathTravelCost = newPath.travelCost
         diffPathTravelCost = newPathTravelCost - oldPathRemainingCost
-        rospy.logwarn("A new path found.\nOld Path (remainded) Cost: {}, New Path Cost: {}, Difference: {}".format(oldPathRemainingCost, newPathTravelCost, diffPathTravelCost))
+        rospy.logwarn("A new path found.\nOld Path (remainded) Cost: {:.4f}, New Path Cost: {:.4f}, Difference: {:.4f}".format(oldPathRemainingCost, newPathTravelCost, diffPathTravelCost))
         wait = 0
         waitCost = self.Lw * wait
         if waitCost < diffPathTravelCost:
