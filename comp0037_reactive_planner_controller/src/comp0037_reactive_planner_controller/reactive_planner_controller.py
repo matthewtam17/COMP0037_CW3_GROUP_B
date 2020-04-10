@@ -98,7 +98,9 @@ class ReactivePlannerController(PlannerControllerBase):
         # reactive planner.
 
         #New Path Cost:
+        old_path = self.currentPlannedPath
         newPath = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, self.chooseAisle(startCellCoords, goalCellCoords)) # my note: a fix
+        self.planner.searchGridDrawer.drawPathGraphicsWithCustomColour(old_path, 'red')
         newPathTravelCost = newPath.travelCost
         diffPathTravelCost = newPathTravelCost - oldPathRemainingCost
         rospy.logwarn("A new path found.\nOld Path (remainded) Cost: {:.4f}; New Path Cost: {:.4f}; Difference: {:.4f}".format(oldPathRemainingCost, newPathTravelCost, diffPathTravelCost))
