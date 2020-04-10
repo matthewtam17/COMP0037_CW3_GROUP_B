@@ -97,11 +97,13 @@ class ReactivePlannerController(PlannerControllerBase):
         # That has some computational cost. So maybe a way of extracting the traversed path from the
         # reactive planner.
 
-        #New Path Cost:
+        # Compare old_path (not remained path) and new_path
         old_path = self.currentPlannedPath
-        newPath = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, self.chooseAisle(startCellCoords, goalCellCoords)) # my note: a fix
+        newPath = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, self.chooseAisle(startCellCoords, goalCellCoords)) # my note: a fix to ensure it travels via aisle
         self.planner.searchGridDrawer.drawPathGraphicsWithCustomColour(old_path, 'red')
         self.planner.searchGridDrawer.waitForKeyPress()
+
+        #New Path Cost:
         newPathTravelCost = newPath.travelCost
         diffPathTravelCost = newPathTravelCost - oldPathRemainingCost
         rospy.logwarn("A new path found.\nOld Path (remainded) Cost: {:.4f}; New Path Cost: {:.4f}; Difference: {:.4f}".format(oldPathRemainingCost, newPathTravelCost, diffPathTravelCost))
@@ -188,8 +190,6 @@ class ReactivePlannerController(PlannerControllerBase):
         firstPath = self.planner.extractPathToGoal()
         print("end of first path: " + str(list(firstPath.waypoints)[-1].coords))
 
-        #Update graphics before planning the second path
-        self.planner.searchGridDrawer.update()
         #Planning second path from intermediate to goal
         secondPath = self.planner.search(intermediateGoal,goalCellCoords)
         if secondPath is False:
@@ -204,11 +204,6 @@ class ReactivePlannerController(PlannerControllerBase):
         firstPath.addToEnd(secondPath)
         currentPlannedPath = firstPath
         #pathToGoalFound = self.planner.search(startCellCoords, goalCellCoords)
-
-        #Update the graphics
-        self.planner.searchGridDrawer.update()
-        self.planner.searchGridDrawer.drawPathGraphicsWithCustomColour(currentPlannedPath, 'yellow')
-        self.planner.searchGridDrawer.waitForKeyPress()
 
         # Extract the path
         #currentPlannedPath = self.planner.extractPathToGoal()
@@ -249,6 +244,11 @@ class ReactivePlannerController(PlannerControllerBase):
             self.gridUpdateLock.acquire()
             self.currentPlannedPath = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, aisleToDriveDown)
             self.gridUpdateLock.release()
+
+            # my note: put the drawing outside of the method to ensure purity
+            self.planner.searchGridDrawer.update()
+            self.planner.searchGridDrawer.drawPathGraphicsWithCustomColour(self.currentPlannedPath, 'yellow')
+            self.planner.searchGridDrawer.waitForKeyPress()
 
             # If we couldn't find a path, give up
             if self.currentPlannedPath is None:
