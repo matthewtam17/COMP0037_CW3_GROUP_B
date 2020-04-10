@@ -59,7 +59,7 @@ class ReactivePlannerController(PlannerControllerBase):
 
     # Choose the subdquent aisle the robot will drive down
     def chooseAisle(self, startCellCoords, goalCellCoords):
-        return Aisle.A
+        return Aisle.D
 
     # Return whether the robot should wait for the obstacle to clear or not.
     def shouldWaitUntilTheObstacleClears(self, startCellCoords, goalCellCoords):
@@ -106,10 +106,10 @@ class ReactivePlannerController(PlannerControllerBase):
         newPath = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, self.chooseAisle(startCellCoords, goalCellCoords)) # my note: a fix
         newPathTravelCost = newPath.travelCost
         diffPathTravelCost = newPathTravelCost - oldPathRemainingCost
-        rospy.logwarn("A new path found.\nOld Path (remainded) Cost: {:.4f}, New Path Cost: {:.4f}, Difference: {:.4f}".format(oldPathRemainingCost, newPathTravelCost, diffPathTravelCost))
+        rospy.logwarn("A new path found.\nOld Path (remainded) Cost: {:.4f}; New Path Cost: {:.4f}; Difference: {:.4f}".format(oldPathRemainingCost, newPathTravelCost, diffPathTravelCost))
         wait = self.expectedWaitTime
         waitCost = self.Lw * wait
-        rospy.logwarn("Wait Cost Info:\nE(T): {:.2f}, L Weight: {:.2f}, c(L(T)): {:.2f}, E(T) Thres: {:2f}".format(wait, self.Lw, waitCost, 1.0 * diffPathTravelCost/self.Lw))
+        rospy.logwarn("Wait Cost Info:\nE(T): {:.2f}; L_w: {:.2f}; c(L(T)): {:.2f}; E(T)_thres: {:2f}".format(wait, self.Lw, waitCost, 1.0 * diffPathTravelCost/self.Lw))
         if waitCost < diffPathTravelCost:
             return True
         return False
