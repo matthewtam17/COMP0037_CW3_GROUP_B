@@ -64,7 +64,7 @@ class ReactivePlannerController(PlannerControllerBase):
         L_cost_via_c = path_c.travelCost
 
         aisle_ret = Aisle.B if L_cost_via_b < L_cost_via_c else Aisle.C
-        rospy.logwarn("Logging Decission for Aisle B or C.\n Cost via B: {}; Cost via C: {}. Chosen Aisle: {}".format(L_cost_via_b, L_cost_via_c. aisle_ret))
+        rospy.logwarn("Logging Decission for Aisle B or C.\n Cost via B: {}; Cost via C: {}. Chosen Aisle: {}".format(L_cost_via_b, L_cost_via_c, aisle_ret))
         return aisle_ret
 
     # Choose the subdquent aisle the robot will drive down
