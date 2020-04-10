@@ -100,8 +100,8 @@ class ReactivePlannerController(PlannerControllerBase):
         # Compare old_path (not remained path) and new_path
         old_path = self.currentPlannedPath
         newPath = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, self.chooseAisle(startCellCoords, goalCellCoords)) # my note: a fix to ensure it travels via aisle
-        self.planner.searchGridDrawer.drawPathGraphicsWithCustomColour(old_path, 'red')
-        self.planner.searchGridDrawer.waitForKeyPress()
+        self._draw_path_by_color(old_path, 'red')
+        self._draw_path_by_color(newPath, 'green')
 
         #New Path Cost:
         newPathTravelCost = newPath.travelCost
@@ -246,9 +246,7 @@ class ReactivePlannerController(PlannerControllerBase):
             self.gridUpdateLock.release()
 
             # my note: put the drawing outside of the method to ensure purity
-            self.planner.searchGridDrawer.update()
-            self.planner.searchGridDrawer.drawPathGraphicsWithCustomColour(self.currentPlannedPath, 'yellow')
-            self.planner.searchGridDrawer.waitForKeyPress()
+            self._draw_path_by_color(self.currentPlannedPath, color = 'yellow')
 
             # If we couldn't find a path, give up
             if self.currentPlannedPath is None:
@@ -287,3 +285,9 @@ class ReactivePlannerController(PlannerControllerBase):
                 aisleToDriveDown = self.chooseAisle(startCellCoords, goalCellCoords)
 
         return False
+
+    def _draw_path_by_color(self, path, color = 'yellow'):
+        self.planner.searchGridDrawer.update()
+        self.planner.searchGridDrawer.drawPathGraphicsWithCustomColour(path, 'yellow')
+        self.planner.searchGridDrawer.waitForKeyPress()
+        return
