@@ -280,7 +280,7 @@ class ReactivePlannerController(PlannerControllerBase):
             startCellCoords = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates(start)
             # See if we should wait
             waitingGame = self.shouldWaitUntilTheObstacleClears(startCellCoords, goalCellCoords)
-            print("Should we wait?: " + str(waitingGame))
+            ros.logwarn("Waiting?: " + str(waitingGame))
             # Depending upon the decision, either wait or determine the new aisle
             # we should drive down.
             if waitingGame is True:
