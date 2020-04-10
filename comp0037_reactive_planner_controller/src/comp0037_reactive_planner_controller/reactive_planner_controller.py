@@ -288,6 +288,6 @@ class ReactivePlannerController(PlannerControllerBase):
 
     def _draw_path_by_color(self, path, color = 'yellow'):
         # self.planner.searchGridDrawer.update()
-        self.planner.searchGridDrawer.drawPathGraphicsWithCustomColour(path, 'yellow')
+        self.planner.searchGridDrawer.drawPathGraphicsWithCustomColour(path, color)
         self.planner.searchGridDrawer.waitForKeyPress()
         return
