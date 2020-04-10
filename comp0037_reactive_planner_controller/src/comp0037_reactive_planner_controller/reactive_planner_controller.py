@@ -66,7 +66,7 @@ class ReactivePlannerController(PlannerControllerBase):
         #From the robot's current position
         #The robot's current position is given as startCellCoords.
         #Old remaining path cost from current robot position:
-        rospy.loginfo("Original old path cost: " + str(self.currentPlannedPath.travelCost))
+        rospy.loginfo("Calculating original old path cost: " + str(self.currentPlannedPath.travelCost))
         oldPathWaypoints = list(self.currentPlannedPath.waypoints)
         currentIndex = 0
         closestDistance = float('inf')
@@ -89,7 +89,7 @@ class ReactivePlannerController(PlannerControllerBase):
             #This is a less computationally expensive solution than recomputing the cost
             #by re-planning a section of the old path
             oldPathRemainingCost = oldPathRemainingCost + self.planner.computeLStageAdditiveCost(oldPathWaypoints[i],oldPathWaypoints[i+1])
-        rospy.loginfo("Old Path remaining cost: " + str(oldPathRemainingCost))
+        rospy.loginfo("Calculating old Path remaining cost: " + str(oldPathRemainingCost))
 
         # The planners are deterministic. So if I plan a search from start to currentcoords,
         # then the plannned path of that should be identical to the old path that the robot has traversed.
@@ -104,7 +104,7 @@ class ReactivePlannerController(PlannerControllerBase):
         newPath = self.planner.extractPathToGoal()
         newPathTravelCost = newPath.travelCost
         diffPathTravelCost = newPathTravelCost - oldPathRemainingCost
-        rospy.loginfo("diffPathTravelCost: " + str(diffPathTravelCost))
+        rospy.loginfo("A new path found. Old Path (remainded) Cost: {}, New Path Cost: {}, Difference: {}"".format(oldPathRemainingCost, newPathTravelCost, diffPathTravelCost))
         wait = 0
         waitCost = self.Lw * wait
         if waitCost < diffPathTravelCost:
