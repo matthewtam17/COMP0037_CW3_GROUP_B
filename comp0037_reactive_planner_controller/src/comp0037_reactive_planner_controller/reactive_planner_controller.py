@@ -98,11 +98,6 @@ class ReactivePlannerController(PlannerControllerBase):
         # reactive planner.
 
         #New Path Cost:
-        # newPath = self.planner.search(startCellCoords,goalCellCoords)
-        # if newPath is False:
-        #     rospy.logwarn("Cannot find alternative path")
-        #     return True
-        # newPath = self.planner.extractPathToGoal()
         newPath = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, self.chooseAisle(startCellCoords, goalCellCoords)) # my note: a fix
         newPathTravelCost = newPath.travelCost
         diffPathTravelCost = newPathTravelCost - oldPathRemainingCost
