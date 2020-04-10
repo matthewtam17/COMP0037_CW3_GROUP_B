@@ -19,6 +19,7 @@ class ReactivePlannerController(PlannerControllerBase):
         self.aisleToDriveDown = None
         self.Lw = 2
         self.expectedWaitTime = 4
+        self.B_obstacle_prob = 0.8
 
     def mapUpdateCallback(self, mapUpdateMessage):
 
@@ -60,12 +61,12 @@ class ReactivePlannerController(PlannerControllerBase):
         self._draw_path_by_color(path_b)
         self._draw_path_by_color(path_c, 'red')
 
-        L_cost_via_b = path_b.travelCost + self.Lw * self.expectedWaitTime * 0.8 # mynote: 0.8 is the probability of obstacle at B
+        L_cost_via_b = path_b.travelCost + self.Lw * self.expectedWaitTime * self.B_obstacle_prob # mynote: 0.8 is the probability of obstacle at B
         L_cost_via_c = path_c.travelCost
 
         aisle_ret = Aisle.B if L_cost_via_b < L_cost_via_c else Aisle.C
         rospy.logwarn("\nLogging Decission for Aisle B or C.\nCost via B: {}; Cost via C: {}. Chosen Aisle: {}\
-                        \nExpected Time to Wait was: {}s; L_w was: {}".format(L_cost_via_b, L_cost_via_c, aisle_ret, self.expectedWaitTime, self.Lw))
+        \nExpected Time to Wait was: {}s; L_w was: {}; B_obstacle_prob was: {}".format(L_cost_via_b, L_cost_via_c, aisle_ret, self.expectedWaitTime, self.Lw, self.B_obstacle_prob))
         return aisle_ret
 
     # Choose the subdquent aisle the robot will drive down
