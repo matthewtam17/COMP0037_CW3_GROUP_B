@@ -55,8 +55,8 @@ class ReactivePlannerController(PlannerControllerBase):
     # This is based on the prior.
     def chooseInitialAisle(self, startCellCoords, goalCellCoords):
         rospy.logwarn("Chosing Aisle")
-        path_b = planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.B)
-        path_c = planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.C)
+        path_b = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.B)
+        path_c = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.C)
         self._draw_path_by_color(path_b)
         self._draw_path_by_color(path_c, 'red')
 
