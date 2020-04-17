@@ -10,11 +10,11 @@ from time import sleep
 
 class Obstacle(object):
 
-    def __init__(self, id, waitBeta, probabilityOfBeingPresent):
+    def __init__(self, id, waitMean, probabilityOfBeingPresent):
         self.id = int(id)
         # Documentation at https://docs.scipy.org/doc/numpy-1.15.0/reference/generated/numpy.random.exponential.html
         # suggests that beta=1/lambda whereas, in fact, beta=lambda
-        self.waitLambda = waitBeta
+        self.waitMean = waitMean
         self.probabilityOfBeingPresent = probabilityOfBeingPresent
         self.isInSimulation = False
         self.hasBeenDetected = False
@@ -26,7 +26,7 @@ class Obstacle(object):
             rospy.Publisher("/add_obstacle_to_map", Int32, queue_size=1)
         self.removeObstacleFromMapPublisher = \
             rospy.Publisher("/remove_obstacle_from_map", Int32, queue_size=1)
-        rospy.logwarn('Added obstacle {} with waitLamba={}, probabilityOfBeingPresent={}'.format(self.id, self.waitLambda, self.probabilityOfBeingPresent))
+        rospy.logwarn('Added obstacle {} with waitLamba={}, probabilityOfBeingPresent={}'.format(self.id, self.waitMean, self.probabilityOfBeingPresent))
         
         sleep(1)
 
@@ -42,7 +42,11 @@ class Obstacle(object):
         self.hasBeenDetected = True
         
         # From the exponential distribution, sample the sleep until time
-        visibleTime = 0.5 * self.waitLambda + exponential(0.5 * self.waitLambda)
+       
+
+        visibleTime = 0.5 * self.waitMean + exponential(0.5 * self.waitMean)# Previous
+
+        visibleTime = 0.5 * self.waitMean + exponential(1/(2* self.waitMean))# I think correct
         self.sleepUntilTime = rospy.Time.now() + rospy.Duration.from_sec(visibleTime)
 
         rospy.logwarn('Obstacle {} detected and will persist for {} seconds'.format(self.id, visibleTime))
