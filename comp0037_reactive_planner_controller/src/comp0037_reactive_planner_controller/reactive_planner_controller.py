@@ -104,7 +104,11 @@ class ReactivePlannerController(PlannerControllerBase):
         newPathTravelCost = newPath.travelCost
         diffPathTravelCost = newPathTravelCost - oldPathRemainingCost
         print("diffPathTravelCost: " + str(diffPathTravelCost))
-        wait = 0
+        
+        expectedWaitTime = 0
+        
+
+
         waitCost = self.Lw * wait
         if waitCost < diffPathTravelCost:
             return True
