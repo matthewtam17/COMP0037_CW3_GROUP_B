@@ -74,7 +74,7 @@ class ReactivePlannerController(PlannerControllerBase):
         str_buf.append("Logging Decission for Aisle B or C.")
         str_buf.append("E(T): {}; L_w: {}; B_obstacle_prob: {}".format(self.t_fed, self.Lw, self.p_b))
         str_buf.append("Cost via B: {}; Cost via C: {}. Chosen Aisle: {}".format(L_cost_via_b, L_cost_via_c, aisle_ret))
-        str_buf.append("E(T) thres: {}; E(T): {}".format(E_t_threshold, self.t_fed))
+        str_buf.append("E(T) thres: {}; E(T): {}".format(t_expected_threshold, self.t_fed))
         str_buf.append("Ans for 2.3, lambda is: {:.2f}".format(lambda_my))
 
         rospy.logwarn('\n'.join(str_buf))
