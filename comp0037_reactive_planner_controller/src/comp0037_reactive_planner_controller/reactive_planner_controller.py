@@ -120,14 +120,15 @@ class ReactivePlannerController(PlannerControllerBase):
         # That has some computational cost. So maybe a way of extracting the traversed path from the
         # reactive planner.
 
-        # Compare old_path (not remained path) and new_path
-        old_path = self.currentPlannedPath
-        newPath = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, self.chooseAisle(startCellCoords, goalCellCoords)) # my note: a fix to ensure it travels via aisle
-        self._draw_path_by_color(old_path, 'yellow')
-        self._draw_path_by_color(newPath, 'red')
+        # Compare path_old (not remained path) and new_path
+        path_old = self.currentPlannedPath
+        path_new = self.planPathToGoalViaAisle(self._get_current_cell_coord(), goalCellCoords, Aisle.C)
+        # path_new = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, self.chooseAisle(startCellCoords, goalCellCoords))
+        self._draw_path_by_color(path_old, 'yellow')
+        self._draw_path_by_color(path_new, 'red')
 
         #New Path Cost: The calculation part
-        newPathTravelCost = newPath.travelCost
+        newPathTravelCost = path_new.travelCost
         diffPathTravelCost = newPathTravelCost - oldPathRemainingCost
         rospy.logwarn("\nA new path found.\nOld path remained Cost: {:.2f}\nNew path cost: {:.2f};\nDifference: {:.2f}"\
                 .format(oldPathRemainingCost, newPathTravelCost, diffPathTravelCost))
