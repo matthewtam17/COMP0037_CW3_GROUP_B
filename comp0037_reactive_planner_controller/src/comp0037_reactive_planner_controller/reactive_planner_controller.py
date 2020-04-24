@@ -129,18 +129,18 @@ class ReactivePlannerController(PlannerControllerBase):
         #New Path Cost: The calculation part
         newPathTravelCost = newPath.travelCost
         diffPathTravelCost = newPathTravelCost - oldPathRemainingCost
-        rospy.logwarn("A new path found.\n\
-                    Old Path remainded Cost: {:.4f}; New Path Cost: {:.4f};\n\
-                    Difference: {:.2f}".format(oldPathRemainingCost, newPathTravelCost, diffPathTravelCost))
+        rospy.logwarn("A new path found.\nOld path remained Cost: {:.2f}\nNew path cost: {:.2f};\nDifference: {:.2f}"\
+                .format(oldPathRemainingCost, newPathTravelCost, diffPathTravelCost))
 
         t_fed = self.t_fed
         t_expected_threshold = 1.0 * diffPathTravelCost/self.Lw
         lambda_my = 1.0/t_expected_threshold # Mike: use 1 here because code only enters this codeblock when an obastacle is seen, so it has to be 1.
 
         waitCost = self.Lw * t_fed
-        rospy.logwarn("Wait Cost Info:\nE(T): {:.2f}; L_w: {:.2f}; c(L(T)): {:.2f}; E(T)_thres: {:2f}"\
-                    .format(t_fed, self.Lw, waitCost, t_expected_threshold))
-        rospy.logwarn("Ans for 2.2, lambda is: {:.2f}".format(lambda_my))
+        string = "\nWait Cost Info:\nE(T): {:.2f}; L_w: {:.2f}; c(L(T)): {:.2f}\nE(T)_thres: {:2f}"\
+                    .format(t_fed, self.Lw, waitCost, t_expected_threshold)\
+                    + "Ans for 2.2, lambda is: {:.2f}".format(lambda_my)
+        
         if waitCost < diffPathTravelCost:
             return True
         return False
