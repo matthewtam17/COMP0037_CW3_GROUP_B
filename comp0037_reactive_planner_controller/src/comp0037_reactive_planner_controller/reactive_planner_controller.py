@@ -104,9 +104,9 @@ class ReactivePlannerController(PlannerControllerBase):
                 currentIndex = oldPathWaypoints.index(cell)
                 closestDistance = currentDistance
 
-            # Do a check to see if closestDistance is significant - the error from the robot to the closest waypoint
-            # If this is significant then there is an error somewhere. If it is small enough then it probably due to
-            # some noise in the robot's movement. Want to check that this error is less than width of a cell.
+        # Do a check to see if closestDistance is significant - the error from the robot to the closest waypoint
+        # If this is significant then there is an error somewhere. If it is small enough then it probably due to
+        # some noise in the robot's movement. Want to check that this error is less than width of a cell.
         print("i: " +str(currentIndex))
         oldPathRemainingCost = 0
         for i in range(currentIndex,len(oldPathWaypoints)-1):
@@ -133,8 +133,9 @@ class ReactivePlannerController(PlannerControllerBase):
                 .format(oldPathRemainingCost, newPathTravelCost, diffPathTravelCost))
 
         # <Michael test> test my implementation
-        path_b = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.B)
-        path_c = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.C)
+        startCellCoords_mike = self._get_current_cell_coord()
+        path_b = self.planPathToGoalViaAisle(startCellCoords_mike, goalCellCoords, Aisle.B) # Mike: Please ensure using the fixed value Aisle.B here.
+        path_c = self.planPathToGoalViaAisle(startCellCoords_mike, goalCellCoords, Aisle.C)
         pCost_new = path_c.travelCost
         pCost_old = path_b.travelCost
         pCost_diff = pCost_new - pCost_old # assume re-planed path cost is always longer than remained path cost
@@ -333,3 +334,9 @@ class ReactivePlannerController(PlannerControllerBase):
         self.planner.searchGridDrawer.drawPathGraphicsWithCustomColour(path, color)
         self.planner.searchGridDrawer.waitForKeyPress()
         return
+
+    def _get_current_cell_coord(self):
+        goalCellCoords = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates((goal.x,goal.y))
+        pose = self.controller.getCurrentPose()
+        start = (pose.x, pose.y)
+        return self.occupancyGrid.getCellCoordinatesFromWorldCoordinates(start)
