@@ -20,15 +20,15 @@ class ReactivePlannerController(PlannerControllerBase):
 
         #The defined weight for waiting - given in question sheet
         self.Lw = 2
-    
+
         #Probability that the obstacle will appear - given in question sheet
         self.p_b = 0.8 # The probability of obstacle appearing in B
-        
+
         #User entered lambda_B, rate parameter for exponential distribution
         self.lambda_B = 10
-        
-        #User entered wait time 
-        #For simplicity we can just change the value in the code before 
+
+        #User entered wait time
+        #For simplicity we can just change the value in the code before
         #running the actual test if we want to do so
         #rather than implementing an input and parsing in values from elsewhere etc.
 #         self.inputWaitTime = 0
@@ -69,7 +69,6 @@ class ReactivePlannerController(PlannerControllerBase):
     # This is based on the prior.
     def chooseInitialAisle(self, startCellCoords, goalCellCoords):
         rospy.logwarn("Choosing Aisle Initially")
-
         path_b = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.B)
         path_c = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.C)
         self._draw_path_by_color(path_b)
@@ -94,7 +93,6 @@ class ReactivePlannerController(PlannerControllerBase):
         rospy.logwarn('\n'.join(str_buf))
         return aisle_ret
 
-
     # Choose the subdquent aisle the robot will drive down
     def chooseAisle(self, startCellCoords, goalCellCoords):
         return Aisle.D
@@ -112,8 +110,7 @@ class ReactivePlannerController(PlannerControllerBase):
         currentDistance = float('inf')
         print("robot's current cell: " + str(startCellCoords))
         for cell in oldPathWaypoints:
-            print(currentDistance)
-            
+            # print(currentDistance) # my note: debug del
             # Project the robot onto the lsit of waypoints - obtaining the closest waypoint to the robot
             currentDistance = math.sqrt((cell.coords[0] - startCellCoords[0])**2 + (cell.coords[1] - startCellCoords[1])**2)
             if  currentDistance < closestDistance:
@@ -186,6 +183,8 @@ class ReactivePlannerController(PlannerControllerBase):
                     break
             if blocked is False:
                 waiting = False
+
+
     # Plan a path to the goal which will go down the designated aisle. The code, as
     # currently implemented simply tries to drive from the start to the goal without
     # considering the aisle.
@@ -193,8 +192,7 @@ class ReactivePlannerController(PlannerControllerBase):
         #The principle in this function is that driving down an aisle
         #is like introducing an intermediate waypoint
         print("start Coords: " + str(startCellCoords))
-
-        # This function, based on the aisle given, would plan a path from the 
+        #This function, based on the aisle given, would plan a path from the
         # start coordinates to a cell determined by an aisle
         # then a separate planned path from the aisle to the goal coordinates
         # and then contatenate the two planned paths (which contain the waypoints)
@@ -205,33 +203,6 @@ class ReactivePlannerController(PlannerControllerBase):
         # aisle it's currently on. Your code should handle this case.
         if self.aisleToDriveDown is None:
             self.aisleToDriveDown = aisle
-        
-        # Make sure that when you write it out, that you define the points
-        # such that the lidar can reach the obstacle (i.e. the waypoint defined for
-        #B1 should be such that the robot's sensors can actually detect the obstacle
-
-        #The intermediateGoal is used to control the via point of the planned path
-        # i.e. what aisle the robot will drive down
-        intermediateGoal = (25,25)
-        print("aisle: " + str(aisle))
-        if aisle == Aisle.A:
-            print("Driving down aisle A")
-            intermediateGoal = (25,20)
-        elif aisle == Aisle.B:
-            intermediateGoal = (40,20)
-            print("Driving down aisle B")
-        elif aisle == Aisle.C:
-            intermediateGoal = (60,20)
-            print("Driving down aisle C")
-        elif aisle == Aisle.D:
-            intermediateGoal = (75,20)
-            print("Driving down aisle D")
-        elif aisle == Aisle.E:
-            intermediateGoal = (90,20)
-            print("Driving down aisle E")
-        else: 
-            intermediateGoal = (25,20)
-            print("Driving down aisle A")
 
         # Make sure that when you write it out, that you define the points
         # such that the lidar can reach the obstacle (i.e. the waypoint defined for
@@ -278,19 +249,6 @@ class ReactivePlannerController(PlannerControllerBase):
             rospy.logwarn("Could not find second path to the goal at (%d, %d)", \
                             goalCellCoords[0], goalCellCoords[1])
             return None
-        
-        secondPath = self.planner.extractPathToGoal()
-        print("start of second path: " + str(list(secondPath.waypoints)[0].coords))
-        # We contatenate the two planned paths using the addToEnd() function of the 
-        # first path. 
-        firstPath.addToEnd(secondPath)
-        currentPlannedPath = firstPath
-        #pathToGoalFound = self.planner.search(startCellCoords, goalCellCoords)    
-
-        #Update the graphics
-        #self.planner.searchGridDrawer.update()
-        #self.planner.searchGridDrawer.drawPathGraphicsWithCustomColour(currentPlannedPath, 'yellow')
-        #self.planner.searchGridDrawer.waitForKeyPress()
 
         secondPath = self.planner.extractPathToGoal()
         print("start of second path: " + str(list(secondPath.waypoints)[0].coords))
