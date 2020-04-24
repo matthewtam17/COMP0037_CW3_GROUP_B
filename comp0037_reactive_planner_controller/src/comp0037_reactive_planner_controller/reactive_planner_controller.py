@@ -18,8 +18,8 @@ class ReactivePlannerController(PlannerControllerBase):
         self.gridUpdateLock =  threading.Condition()
         self.aisleToDriveDown = None
         self.Lw = 2
-        self.expectedWaitTime = 0.2
-        self.B_obstacle_prob = 0.8
+        self.t_fed = 0.2 # The customizable fed wait time from 2.2 description
+        self.p_b = 0.8 # The probability of obstacle appearing in B
 
     def mapUpdateCallback(self, mapUpdateMessage):
 
@@ -55,23 +55,27 @@ class ReactivePlannerController(PlannerControllerBase):
     # Choose the first aisle the robot will initially drive down.
     # This is based on the prior.
     def chooseInitialAisle(self, startCellCoords, goalCellCoords):
-        rospy.logwarn("Chosing Aisle")
+        rospy.logwarn("Choosing Aisle Initially")
         path_b = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.B)
         path_c = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.C)
         self._draw_path_by_color(path_b)
         self._draw_path_by_color(path_c, 'red')
 
-        L_cost_via_b = path_b.travelCost + self.Lw * self.expectedWaitTime * self.B_obstacle_prob # mynote: 0.8 is the probability of obstacle at B
+        L_cost_via_b = path_b.travelCost + self.Lw * self.t_fed * self.p_b # mynote: the time is fed here as described from the assignemnt
         L_cost_via_c = path_c.travelCost
 
         aisle_ret = Aisle.B if L_cost_via_b < L_cost_via_c else Aisle.C
 
-        et_thres = (path_c.travelCost - path_b.travelCost)/(self.Lw * self.B_obstacle_prob) # mynote: assume path_c cost always > path_b cost
-        str_buf = []
+        # mynote: assume path_c cost always > path_b cost. This is an assumption the assignment used for B is always the shortest physical path.
+        E_t_threshold = (path_c.travelCost - path_b.travelCost)/(self.Lw * self.p_b)
+        lambda = 1.0/E_t_threshold
+
+        str_buf = ['',]
         str_buf.append("Logging Decission for Aisle B or C.")
-        str_buf.append("E(T): {}; L_w: {}; B_obstacle_prob: {}".format(self.expectedWaitTime, self.Lw, self.B_obstacle_prob))
+        str_buf.append("E(T): {}; L_w: {}; B_obstacle_prob: {}".format(self.t_fed, self.Lw, self.p_b))
         str_buf.append("Cost via B: {}; Cost via C: {}. Chosen Aisle: {}".format(L_cost_via_b, L_cost_via_c, aisle_ret))
-        str_buf.append("E(T) thres: {}; E(T): {}".format(et_thres, self.expectedWaitTime))
+        str_buf.append("E(T) thres: {}; E(T): {}".format(E_t_threshold, self.t_fed))
+        str_buf.append("Ans for 2.3, lambda is: {:.2f}".format(lambda))
 
         rospy.logwarn('\n'.join(str_buf))
         return aisle_ret
@@ -122,13 +126,21 @@ class ReactivePlannerController(PlannerControllerBase):
         self._draw_path_by_color(old_path, 'yellow')
         self._draw_path_by_color(newPath, 'red')
 
-        #New Path Cost:
+        #New Path Cost: The calculation part
         newPathTravelCost = newPath.travelCost
         diffPathTravelCost = newPathTravelCost - oldPathRemainingCost
-        rospy.logwarn("A new path found.\nOld Path (remainded) Cost: {:.4f}; New Path Cost: {:.4f}; Difference: {:.4f}".format(oldPathRemainingCost, newPathTravelCost, diffPathTravelCost))
-        wait = self.expectedWaitTime
-        waitCost = self.Lw * wait
-        rospy.logwarn("Wait Cost Info:\nE(T): {:.2f}; L_w: {:.2f}; c(L(T)): {:.2f}; E(T)_thres: {:2f}".format(wait, self.Lw, waitCost, 1.0 * diffPathTravelCost/self.Lw))
+        rospy.logwarn("A new path found.\n\
+                    Old Path remainded Cost: {:.4f}; New Path Cost: {:.4f};\n\
+                    Difference: {:.2f}".format(oldPathRemainingCost, newPathTravelCost, diffPathTravelCost))
+
+        t_fed = self.t_fed
+        t_expected_threshold = 1.0 * diffPathTravelCost/self.Lw
+        lambda = 1.0/t_expected_threshold # Mike: use 1 here because code only enters this codeblock when an obastacle is seen, so it has to be 1.
+
+        waitCost = self.Lw * t_fed
+        rospy.logwarn("Wait Cost Info:\nE(T): {:.2f}; L_w: {:.2f}; c(L(T)): {:.2f}; E(T)_thres: {:2f}"\
+                    .format(t_fed, self.Lw, waitCost, t_expected_threshold))
+        rospy.logwarn("Ans for 2.2, lambda is: {:.2f}".format(lambda))
         if waitCost < diffPathTravelCost:
             return True
         return False
