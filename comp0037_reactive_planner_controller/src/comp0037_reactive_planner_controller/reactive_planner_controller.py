@@ -134,6 +134,7 @@ class ReactivePlannerController(PlannerControllerBase):
 
         # <Michael test> test my implementation
         startCellCoords_mike = self._get_current_cell_coord()
+        print "startCellCoords_mike: ", startCellCoords_mike
         path_b = self.planPathToGoalViaAisle(startCellCoords_mike, goalCellCoords, Aisle.B) # Mike: Please ensure using the fixed value Aisle.B here.
         path_c = self.planPathToGoalViaAisle(startCellCoords_mike, goalCellCoords, Aisle.C)
         pCost_new = path_c.travelCost
