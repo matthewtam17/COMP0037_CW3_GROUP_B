@@ -74,7 +74,7 @@ class ReactivePlannerController(PlannerControllerBase):
         str_buf.append("Logging Decission for Aisle B or C.")
         str_buf.append("E(T): {:.2f}; L_w: {:.2f}; B_obstacle_prob: {:.2f}".format(self.t_fed, self.Lw, self.p_b))
         str_buf.append("Cost via B: {:.2f}; Cost via C: {:.2f}. Chosen Aisle: {}".format(L_cost_via_b, L_cost_via_c, aisle_ret))
-        str_buf.append("E(T) thres: {:.2f}; E(T): {:.2f}".format(t_expected_threshold, self.t_fed))
+        str_buf.append("E(T) customizable: {:.2f}\nE(T) threshold: {:.2f}".format(self.t_fed, t_expected_threshold))
         str_buf.append("Ans for 2.3, lambda is: {:.2f}".format(lambda_my))
 
         rospy.logwarn('\n'.join(str_buf))
@@ -145,8 +145,8 @@ class ReactivePlannerController(PlannerControllerBase):
         rospy.logwarn("\nL costs:\nOld path L Cost: {:.2f}\nNew L cost: {:.2f};\nDifference: {:.2f}"\
                 .format(oldLCost, newLCost, diffLCost))
 
-        string_long = "\nParameters Info:\nE(T): {:.2f}; L_w: {:.2f}; c(L(T)): {:.2f}\nE(T)_thres: {:.2f}"\
-                    .format(t_fed, self.Lw, waitCost, t_expected_threshold)\
+        string_long = "\nParameters Info:\nL_w: {:.2f}; c(L(T)): {:.2f}\nE(T) customizable: {:.2f}\nE(T) threshold: {:.2f}"\
+                    .format(self.Lw, waitCost, t_fed, t_expected_threshold)\
                     + "\nAns for 2.2, lambda is: {:.2f}".format(lambda_my)
         rospy.logwarn(string_long)
 
