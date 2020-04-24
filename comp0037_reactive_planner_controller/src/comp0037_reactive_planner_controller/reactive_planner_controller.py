@@ -336,7 +336,6 @@ class ReactivePlannerController(PlannerControllerBase):
         return
 
     def _get_current_cell_coord(self):
-        goalCellCoords = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates((goal.x,goal.y))
         pose = self.controller.getCurrentPose()
         start = (pose.x, pose.y)
         return self.occupancyGrid.getCellCoordinatesFromWorldCoordinates(start)
