@@ -17,7 +17,20 @@ class ReactivePlannerController(PlannerControllerBase):
         self.mapUpdateSubscriber = rospy.Subscriber('updated_map', MapUpdate, self.mapUpdateCallback)
         self.gridUpdateLock =  threading.Condition()
         self.aisleToDriveDown = None
+        #The defined weight for waiting - given in question sheet
         self.Lw = 2
+        #Probability that the obstacle will appear - given in question sheet
+        self.obstacleProbability = 0.8
+        #User entered lambda_B, rate parameter for exponential distribution
+        self.lambda_B = 10
+        #User entered wait time 
+        #For simplicity we can just change the value in the code before 
+        #running the actual test if we want to do so
+        #rather than implementing an input and parsing in values from elsewhere etc.
+        self.inputWaitTime = 0
+
+        self.expectedWaitTime = 0.2
+        self.B_obstacle_prob = 0.8
 
 
     def mapUpdateCallback(self, mapUpdateMessage):
@@ -54,11 +67,32 @@ class ReactivePlannerController(PlannerControllerBase):
     # Choose the first aisle the robot will initially drive down.
     # This is based on the prior.
     def chooseInitialAisle(self, startCellCoords, goalCellCoords):
-        return Aisle.B
+
+        rospy.logwarn("Chosing Aisle")
+        path_b = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.B)
+        path_c = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.C)
+        self._draw_path_by_color(path_b)
+        self._draw_path_by_color(path_c, 'red')
+
+        L_cost_via_b = path_b.travelCost + self.Lw * self.expectedWaitTime * self.B_obstacle_prob # mynote: 0.8 is the probability of obstacle at B
+        L_cost_via_c = path_c.travelCost
+
+        aisle_ret = Aisle.B if L_cost_via_b < L_cost_via_c else Aisle.C
+
+        et_thres = (path_c.travelCost - path_b.travelCost)/(self.Lw * self.B_obstacle_prob) # mynote: assume path_c cost always > path_b cost
+        str_buf = []
+        str_buf.append("Logging Decission for Aisle B or C.")
+        str_buf.append("E(T): {}; L_w: {}; B_obstacle_prob: {}".format(self.expectedWaitTime, self.Lw, self.B_obstacle_prob))
+        str_buf.append("Cost via B: {}; Cost via C: {}. Chosen Aisle: {}".format(L_cost_via_b, L_cost_via_c, aisle_ret))
+        str_buf.append("E(T) thres: {}; E(T): {}".format(et_thres, self.expectedWaitTime))
+
+        rospy.logwarn('\n'.join(str_buf))
+        return aisle_ret
+
 
     # Choose the subdquent aisle the robot will drive down
     def chooseAisle(self, startCellCoords, goalCellCoords):
-        return Aisle.E
+        return Aisle.D
 
     # Return whether the robot should wait for the obstacle to clear or not.
     def shouldWaitUntilTheObstacleClears(self, startCellCoords, goalCellCoords):
@@ -66,7 +100,7 @@ class ReactivePlannerController(PlannerControllerBase):
         #From the robot's current position
         #The robot's current position is given as startCellCoords.
         #Old remaining path cost from current robot position:
-        print("Original old path cost: " + str(self.currentPlannedPath.travelCost))
+        rospy.loginfo("Calculating original old path cost: " + str(self.currentPlannedPath.travelCost))
         oldPathWaypoints = list(self.currentPlannedPath.waypoints)
         currentIndex = 0
         closestDistance = float('inf')
@@ -88,7 +122,7 @@ class ReactivePlannerController(PlannerControllerBase):
             #This is a less computationally expensive solution than recomputing the cost 
             #by re-planning a section of the old path
             oldPathRemainingCost = oldPathRemainingCost + self.planner.computeLStageAdditiveCost(oldPathWaypoints[i],oldPathWaypoints[i+1])
-        print("Old Path remaining cost: " + str(oldPathRemainingCost))
+        rospy.loginfo("Calculating old Path remaining cost: " + str(oldPathRemainingCost))
 
         # The planners are deterministic. So if I plan a search from start to currentcoords,
         # then the plannned path of that should be identical to the old path that the robot has traversed.
@@ -96,24 +130,27 @@ class ReactivePlannerController(PlannerControllerBase):
         # reactive planner.
 
         #New Path Cost: 
-        newPath = self.planner.search(startCellCoords,goalCellCoords)
-        if newPath is False:
-            print("Cannot find alternative path")
-            return True
-        newPath = self.planner.extractPathToGoal()
+        # Compare old_path (not remained path) and new_path
+        old_path = self.currentPlannedPath
+        newPath = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, self.chooseAisle(startCellCoords, goalCellCoords)) # my note: a fix to ensure it travels via aisle
+        self._draw_path_by_color(old_path, 'yellow')
+        self._draw_path_by_color(newPath, 'red')
+
+        #New Path Cost:
         newPathTravelCost = newPath.travelCost
         diffPathTravelCost = newPathTravelCost - oldPathRemainingCost
-        print("diffPathTravelCost: " + str(diffPathTravelCost))
-        
-        expectedWaitTime = 0
+        rospy.logwarn("A new path found.\nOld Path (remainded) Cost: {:.4f}; New Path Cost: {:.4f}; Difference: {:.4f}".format(oldPathRemainingCost, newPathTravelCost, diffPathTravelCost))
+        wait = self.expectedWaitTime
+
+        wait = self.inputWaitTime
         
 
 
         waitCost = self.Lw * wait
+        rospy.logwarn("Wait Cost Info:\nE(T): {:.2f}; L_w: {:.2f}; c(L(T)): {:.2f}; E(T)_thres: {:2f}".format(wait, self.Lw, waitCost, 1.0 * diffPathTravelCost/self.Lw))
+
         if waitCost < diffPathTravelCost:
             return True
-        else:
-            return False
 
         return False
 
@@ -128,7 +165,6 @@ class ReactivePlannerController(PlannerControllerBase):
                 x,y = point.coords
                 status = self.occupancyGrid.getCell(x,y)
                 if status == 1:
-                    print("Path still blocked - waiting")
                     blocked = True
             if blocked is False:
                 waiting = False
@@ -159,7 +195,6 @@ class ReactivePlannerController(PlannerControllerBase):
 
         #The intermediateGoal is used to control the via point of the planned path
         # i.e. what aisle the robot will drive down
-
         intermediateGoal = (25,25)
         print("aisle: " + str(aisle))
         if aisle == Aisle.A:
@@ -210,9 +245,9 @@ class ReactivePlannerController(PlannerControllerBase):
         #pathToGoalFound = self.planner.search(startCellCoords, goalCellCoords)    
 
         #Update the graphics
-        self.planner.searchGridDrawer.update()
-        self.planner.searchGridDrawer.drawPathGraphicsWithCustomColour(currentPlannedPath, 'yellow')
-        self.planner.searchGridDrawer.waitForKeyPress()
+        #self.planner.searchGridDrawer.update()
+        #self.planner.searchGridDrawer.drawPathGraphicsWithCustomColour(currentPlannedPath, 'yellow')
+        #self.planner.searchGridDrawer.waitForKeyPress()
 
         # Extract the path
         #currentPlannedPath = self.planner.extractPathToGoal()
@@ -254,6 +289,8 @@ class ReactivePlannerController(PlannerControllerBase):
             self.currentPlannedPath = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, aisleToDriveDown)
             self.gridUpdateLock.release()
 
+            self._draw_path_by_color(self.currentPlannedPath, color = 'yellow')
+
             # If we couldn't find a path, give up
             if self.currentPlannedPath is None:
                 print("couldn't find a path")
@@ -282,7 +319,7 @@ class ReactivePlannerController(PlannerControllerBase):
             startCellCoords = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates(start)
             # See if we should wait
             waitingGame = self.shouldWaitUntilTheObstacleClears(startCellCoords, goalCellCoords)
-            print("Should wait: " + str(waitingGame))
+            rospy.logwarn("Waiting?: " + str(waitingGame))
             # Depending upon the decision, either wait or determine the new aisle
             # we should drive down.
             if waitingGame is True:
@@ -291,5 +328,11 @@ class ReactivePlannerController(PlannerControllerBase):
                 aisleToDriveDown = self.chooseAisle(startCellCoords, goalCellCoords)
 
         return False
+
+    def _draw_path_by_color(self, path, color = 'yellow'):
+        # self.planner.searchGridDrawer.update() # do not flush
+        self.planner.searchGridDrawer.drawPathGraphicsWithCustomColour(path, color)
+        self.planner.searchGridDrawer.waitForKeyPress()
+        return
             
             
