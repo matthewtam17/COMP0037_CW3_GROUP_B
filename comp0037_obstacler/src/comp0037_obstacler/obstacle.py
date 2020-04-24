@@ -8,26 +8,29 @@ from time import sleep
 
 # This class stores an obstacle
 
+
 class Obstacle(object):
 
-    def __init__(self, id, waitBeta, probabilityOfBeingPresent):
+    def __init__(self, id, waitMean, probabilityOfBeingPresent):
         self.id = int(id)
         # Documentation at https://docs.scipy.org/doc/numpy-1.15.0/reference/generated/numpy.random.exponential.html
         # suggests that beta=1/lambda whereas, in fact, beta=lambda
-        self.waitLambda = waitBeta
+        self.waitMean = waitMean
         self.probabilityOfBeingPresent = probabilityOfBeingPresent
         self.isInSimulation = False
         self.hasBeenDetected = False
         self.addObstacleToSimulationPublisher = \
             rospy.Publisher("/add_obstacle_to_simulation", Int32, queue_size=1)
         self.removeObstacleFromSimulationPublisher = \
-            rospy.Publisher("/remove_obstacle_from_simulation", Int32, queue_size=1)
+            rospy.Publisher("/remove_obstacle_from_simulation",
+                            Int32, queue_size=1)
         self.addObstacleToMapPublisher = \
             rospy.Publisher("/add_obstacle_to_map", Int32, queue_size=1)
         self.removeObstacleFromMapPublisher = \
             rospy.Publisher("/remove_obstacle_from_map", Int32, queue_size=1)
-        rospy.logwarn('Added obstacle {} with waitLamba={}, probabilityOfBeingPresent={}'.format(self.id, self.waitLambda, self.probabilityOfBeingPresent))
-        
+        rospy.logwarn('Added obstacle {} with waitLamba={}, probabilityOfBeingPresent={}'.format(
+            self.id, self.waitMean, self.probabilityOfBeingPresent))
+
         sleep(1)
 
     def sameID(self, id):
@@ -40,12 +43,15 @@ class Obstacle(object):
             return
 
         self.hasBeenDetected = True
-        
+
         # From the exponential distribution, sample the sleep until time
-        visibleTime = 0.5 * self.waitLambda + exponential(0.5 * self.waitLambda)
+        # check https://docs.scipy.org/doc/numpy-1.15.0/reference/generated/numpy.random.exponential.html
+        visibleTime = 0.5 * self.waitMean + exponential(0.5 * self.waitMean)
+
         self.sleepUntilTime = rospy.Time.now() + rospy.Duration.from_sec(visibleTime)
 
-        rospy.logwarn('Obstacle {} detected and will persist for {} seconds'.format(self.id, visibleTime))
+        rospy.logwarn('Obstacle {} detected and will persist for {} seconds'.format(
+            self.id, visibleTime))
 
         self.addObstacleToMapPublisher.publish(self.id)
 
@@ -70,14 +76,14 @@ class Obstacle(object):
 
     # Reset the object state
     def reset(self):
- 
-        # If currently being shown, remove it 
+
+        # If currently being shown, remove it
         if self.isInSimulation is True:
             self.removeObstacleFromSimulationPublisher.publish(self.id)
             self.removeObstacleFromMapPublisher.publish(self.id)
 
         self.hasBeenDetected = False
-        
+
         # Check the probability that the obstacle is present; if not return
         if (uniform() > self.probabilityOfBeingPresent):
             rospy.logwarn('Obstacle {} not present'.format(self.id))
@@ -85,7 +91,6 @@ class Obstacle(object):
             return
 
         self.isInSimulation = True
-        rospy.logwarn('Obstacle {} is present; registering it with the simulation'.format(self.id))
+        rospy.logwarn(
+            'Obstacle {} is present; registering it with the simulation'.format(self.id))
         self.addObstacleToSimulationPublisher.publish(self.id)
-
-
