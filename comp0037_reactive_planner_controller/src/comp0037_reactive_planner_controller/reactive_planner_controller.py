@@ -337,15 +337,3 @@ class ReactivePlannerController(PlannerControllerBase):
         pose = self.controller.getCurrentPose()
         start = (pose.x, pose.y)
         return self.occupancyGrid.getCellCoordinatesFromWorldCoordinates(start)
-
-    # # <Michael test> test my implementation
-    # startCellCoords_mike = self._get_current_cell_coord()
-    # print "startCellCoords_mike: ", startCellCoords_mike
-    # path_b = self.planPathToGoalViaAisle(startCellCoords_mike, goalCellCoords, Aisle.B) # Mike: Please ensure using the fixed value Aisle.B here.
-    # path_c = self.planPathToGoalViaAisle(startCellCoords_mike, goalCellCoords, Aisle.C)
-    # pCost_new = path_c.travelCost
-    # pCost_old = path_b.travelCost
-    # pCost_diff = pCost_new - pCost_old # assume re-planed path cost is always longer than remained path cost
-    # rospy.logwarn("\nMichael ver: A new path found.\nOld path remained Cost: {:.2f}\nNew path cost: {:.2f};\nDifference: {:.2f}"\
-    #         .format(pCost_old, pCost_new, pCost_diff))
-    # # </Michael test>
