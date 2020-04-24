@@ -10,8 +10,8 @@ from math import *
 import rospy
 
 # <Michael mod> disable all prints here.
-import sys, os
-sys.stdout = open(os.devnull, 'w')
+# import sys, os
+# sys.stdout = open(os.devnull, 'w')
 # </Michael mod>
 
 
