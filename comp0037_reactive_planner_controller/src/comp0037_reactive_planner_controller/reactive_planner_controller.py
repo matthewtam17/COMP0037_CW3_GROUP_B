@@ -68,14 +68,14 @@ class ReactivePlannerController(PlannerControllerBase):
 
         # mynote: assume path_c cost always > path_b cost. This is an assumption the assignment used for B is always the shortest physical path.
         t_expected_threshold = (path_c.travelCost - path_b.travelCost)/(self.Lw * self.p_b)
-        lambda = 1.0/t_expected_threshold
+        lambda_my = 1.0/t_expected_threshold
 
         str_buf = ['',]
         str_buf.append("Logging Decission for Aisle B or C.")
         str_buf.append("E(T): {}; L_w: {}; B_obstacle_prob: {}".format(self.t_fed, self.Lw, self.p_b))
         str_buf.append("Cost via B: {}; Cost via C: {}. Chosen Aisle: {}".format(L_cost_via_b, L_cost_via_c, aisle_ret))
         str_buf.append("E(T) thres: {}; E(T): {}".format(E_t_threshold, self.t_fed))
-        str_buf.append("Ans for 2.3, lambda is: {:.2f}".format(lambda))
+        str_buf.append("Ans for 2.3, lambda is: {:.2f}".format(lambda_my))
 
         rospy.logwarn('\n'.join(str_buf))
         return aisle_ret
@@ -135,12 +135,12 @@ class ReactivePlannerController(PlannerControllerBase):
 
         t_fed = self.t_fed
         t_expected_threshold = 1.0 * diffPathTravelCost/self.Lw
-        lambda = 1.0/t_expected_threshold # Mike: use 1 here because code only enters this codeblock when an obastacle is seen, so it has to be 1.
+        lambda_my = 1.0/t_expected_threshold # Mike: use 1 here because code only enters this codeblock when an obastacle is seen, so it has to be 1.
 
         waitCost = self.Lw * t_fed
         rospy.logwarn("Wait Cost Info:\nE(T): {:.2f}; L_w: {:.2f}; c(L(T)): {:.2f}; E(T)_thres: {:2f}"\
                     .format(t_fed, self.Lw, waitCost, t_expected_threshold))
-        rospy.logwarn("Ans for 2.2, lambda is: {:.2f}".format(lambda))
+        rospy.logwarn("Ans for 2.2, lambda is: {:.2f}".format(lambda_my))
         if waitCost < diffPathTravelCost:
             return True
         return False
