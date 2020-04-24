@@ -123,7 +123,6 @@ class ReactivePlannerController(PlannerControllerBase):
         # Compare path_old (not remained path) and new_path
         path_old = self.currentPlannedPath
         path_new = self.planPathToGoalViaAisle(self._get_current_cell_coord(), goalCellCoords, Aisle.C)
-        # path_new = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, self.chooseAisle(startCellCoords, goalCellCoords))
         self._draw_path_by_color(path_old, 'yellow')
         self._draw_path_by_color(path_new, 'red')
 
@@ -132,18 +131,6 @@ class ReactivePlannerController(PlannerControllerBase):
         diffPathTravelCost = newPathTravelCost - oldPathRemainingCost
         rospy.logwarn("\nA new path found.\nOld path remained Cost: {:.2f}\nNew path cost: {:.2f};\nDifference: {:.2f}"\
                 .format(oldPathRemainingCost, newPathTravelCost, diffPathTravelCost))
-
-        # <Michael test> test my implementation
-        startCellCoords_mike = self._get_current_cell_coord()
-        print "startCellCoords_mike: ", startCellCoords_mike
-        path_b = self.planPathToGoalViaAisle(startCellCoords_mike, goalCellCoords, Aisle.B) # Mike: Please ensure using the fixed value Aisle.B here.
-        path_c = self.planPathToGoalViaAisle(startCellCoords_mike, goalCellCoords, Aisle.C)
-        pCost_new = path_c.travelCost
-        pCost_old = path_b.travelCost
-        pCost_diff = pCost_new - pCost_old # assume re-planed path cost is always longer than remained path cost
-        rospy.logwarn("\nMichael ver: A new path found.\nOld path remained Cost: {:.2f}\nNew path cost: {:.2f};\nDifference: {:.2f}"\
-                .format(pCost_old, pCost_new, pCost_diff))
-        # </Michael test>
 
         t_fed = self.t_fed
         t_expected_threshold = 1.0 * diffPathTravelCost/self.Lw
@@ -341,3 +328,15 @@ class ReactivePlannerController(PlannerControllerBase):
         pose = self.controller.getCurrentPose()
         start = (pose.x, pose.y)
         return self.occupancyGrid.getCellCoordinatesFromWorldCoordinates(start)
+
+    # # <Michael test> test my implementation
+    # startCellCoords_mike = self._get_current_cell_coord()
+    # print "startCellCoords_mike: ", startCellCoords_mike
+    # path_b = self.planPathToGoalViaAisle(startCellCoords_mike, goalCellCoords, Aisle.B) # Mike: Please ensure using the fixed value Aisle.B here.
+    # path_c = self.planPathToGoalViaAisle(startCellCoords_mike, goalCellCoords, Aisle.C)
+    # pCost_new = path_c.travelCost
+    # pCost_old = path_b.travelCost
+    # pCost_diff = pCost_new - pCost_old # assume re-planed path cost is always longer than remained path cost
+    # rospy.logwarn("\nMichael ver: A new path found.\nOld path remained Cost: {:.2f}\nNew path cost: {:.2f};\nDifference: {:.2f}"\
+    #         .format(pCost_old, pCost_new, pCost_diff))
+    # # </Michael test>
