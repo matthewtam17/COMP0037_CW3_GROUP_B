@@ -147,7 +147,7 @@ class ReactivePlannerController(PlannerControllerBase):
 
         string_long = "\nParameters Info:\nE(T): {:.2f}; L_w: {:.2f}; c(L(T)): {:.2f}\nE(T)_thres: {:2f}"\
                     .format(t_fed, self.Lw, waitCost, t_expected_threshold)\
-                    + "Ans for 2.2, lambda is: {:.2f}".format(lambda_my)
+                    + "\nAns for 2.2, lambda is: {:.2f}".format(lambda_my)
         rospy.logwarn(string_long)
 
         if waitCost < diffPathTravelCost: # ie.diffLCost > 0
