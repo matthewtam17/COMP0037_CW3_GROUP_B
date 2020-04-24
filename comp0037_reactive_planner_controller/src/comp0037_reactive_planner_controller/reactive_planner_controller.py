@@ -67,8 +67,8 @@ class ReactivePlannerController(PlannerControllerBase):
         aisle_ret = Aisle.B if L_cost_via_b < L_cost_via_c else Aisle.C
 
         # mynote: assume path_c cost always > path_b cost. This is an assumption the assignment used for B is always the shortest physical path.
-        E_t_threshold = (path_c.travelCost - path_b.travelCost)/(self.Lw * self.p_b)
-        lambda = 1.0/E_t_threshold
+        t_expected_threshold = (path_c.travelCost - path_b.travelCost)/(self.Lw * self.p_b)
+        lambda = 1.0/t_expected_threshold
 
         str_buf = ['',]
         str_buf.append("Logging Decission for Aisle B or C.")
