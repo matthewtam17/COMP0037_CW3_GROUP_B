@@ -145,7 +145,7 @@ class ReactivePlannerController(PlannerControllerBase):
         rospy.logwarn("\nL costs:\nOld path L Cost: {:.2f}\nNew L cost: {:.2f};\nDifference: {:.2f}"\
                 .format(oldLCost, newLCost, diffLCost))
 
-        string_long = "\nParameters Info:\nE(T): {:.2f}; L_w: {:.2f}; c(L(T)): {:.2f}\nE(T)_thres: {:2f}"\
+        string_long = "\nParameters Info:\nE(T): {:.2f}; L_w: {:.2f}; c(L(T)): {:.2f}\nE(T)_thres: {:.2f}"\
                     .format(t_fed, self.Lw, waitCost, t_expected_threshold)\
                     + "\nAns for 2.2, lambda is: {:.2f}".format(lambda_my)
         rospy.logwarn(string_long)
