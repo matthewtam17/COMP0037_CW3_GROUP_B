@@ -129,8 +129,18 @@ class ReactivePlannerController(PlannerControllerBase):
         #New Path Cost: The calculation part
         newPathTravelCost = newPath.travelCost
         diffPathTravelCost = newPathTravelCost - oldPathRemainingCost
-        rospy.logwarn("A new path found.\nOld path remained Cost: {:.2f}\nNew path cost: {:.2f};\nDifference: {:.2f}"\
+        rospy.logwarn("\nA new path found.\nOld path remained Cost: {:.2f}\nNew path cost: {:.2f};\nDifference: {:.2f}"\
                 .format(oldPathRemainingCost, newPathTravelCost, diffPathTravelCost))
+
+        # <Michael test> test my implementation
+        path_b = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.B)
+        path_c = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.C)
+        pCost_new = path_c.travelCost
+        pCost_old = path_b.travelCost
+        pCost_diff = pCost_new - pCost_old # assume re-planed path cost is always longer than remained path cost
+        rospy.logwarn("\nMichael ver: A new path found.\nOld path remained Cost: {:.2f}\nNew path cost: {:.2f};\nDifference: {:.2f}"\
+                .format(pCost_old, pCost_new, pCost_diff))
+        # </Michael test>
 
         t_fed = self.t_fed
         t_expected_threshold = 1.0 * diffPathTravelCost/self.Lw
