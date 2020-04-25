@@ -75,7 +75,7 @@ class ReactivePlannerController(PlannerControllerBase):
         path_c = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.C)
         path_d = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.D)
         path_e = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.E)
-        
+
         self._draw_path_by_color(path_b)
         self._draw_path_by_color(path_c, 'red')
         self._draw_path_by_color(path_a, 'blue')
@@ -97,7 +97,10 @@ class ReactivePlannerController(PlannerControllerBase):
         str_buf = ['',]
         str_buf.append("Logging Decission for Aisle B or C.")
         str_buf.append("E(T): {:.2f}; L_w: {:.2f}; B_obstacle_prob: {:.2f}".format(self.t_fed, self.Lw, self.p_b))
-        str_buf.append("Cost via B: {:.2f}; Cost via C: {:.2f}. Chosen Aisle: {}".format(L_cost_via_b, L_cost_via_c, aisle_ret))
+        # Cost via B: {:.2f}; Cost via C: {:.2f}.
+        for name, cost in zip('ABCDE',[L_cost_via_a, L_cost_via_b, L_cost_via_c, L_cost_via_d, L_cost_via_e,]):
+            str_buf.append("Cost via {}: {:.2f}".format(name, cost))
+        str_buf.append("Chosen Aisle: {}".format(aisle_ret))
         str_buf.append("E(T) customizable: {:.2f}\nE(T) threshold: {:.2f}".format(self.t_fed, t_expected_threshold))
         str_buf.append("Ans for 2.3, lambda is: {:.2f}".format(lambda_my))
 
@@ -146,8 +149,8 @@ class ReactivePlannerController(PlannerControllerBase):
 
         # Compare path_old (not remained path) and new_path
         path_old = self.currentPlannedPath
-        
-        # We can't just compute the path cost for one new path, but we need 
+
+        # We can't just compute the path cost for one new path, but we need
         # to compute it for multiple new paths. So this includes the aisle A - E except B
 
         path_new_A = self.planPathToGoalViaAisle(self._get_current_cell_coord(), goalCellCoords, Aisle.A)
