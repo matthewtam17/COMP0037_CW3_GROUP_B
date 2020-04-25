@@ -34,7 +34,8 @@ class ReactivePlannerController(PlannerControllerBase):
         #running the actual test if we want to do so
         #rather than implementing an input and parsing in values from elsewhere etc.
 #         self.inputWaitTime = 0
-        self.t_fed = 0.2 # Mike: Please use this var name for my merged methods now. You can change them globally later if it is not proferred
+        self.t_fed = 1.96 # Mike: Please use this var name for my merged methods now. You can change them globally later if it is not proferred
+        self.force_choosing_B = False
 
     def mapUpdateCallback(self, mapUpdateMessage):
 
@@ -91,7 +92,9 @@ class ReactivePlannerController(PlannerControllerBase):
         L_cost_via_e = path_e.travelCost
 
         aisle_ret = Aisle.B if L_cost_via_b < L_cost_via_c else Aisle.C
-
+        if self.force_choosing_B: # M: for switching 2.2 and 2.3
+            aisle_ret = Aisle.B
+        
         # mynote: assume path_c cost always > path_b cost. This is an assumption the assignment used for B is always the shortest physical path.
         t_expected_threshold = (path_c.travelCost - path_b.travelCost)/(self.Lw * self.p_b)
         lambda_my = 1.0/t_expected_threshold
@@ -102,6 +105,7 @@ class ReactivePlannerController(PlannerControllerBase):
         # Cost via B: {:.2f}; Cost via C: {:.2f}.
         for name, cost in zip('ABCDE',[L_cost_via_a, L_cost_via_b, L_cost_via_c, L_cost_via_d, L_cost_via_e,]):
             str_buf.append("Cost via {}: {:.2f}".format(name, cost))
+        str_buf.append("Force to B? {}".format(self.force_choosing_B))
         str_buf.append("Chosen Aisle: {}".format(aisle_ret))
         str_buf.append("E(T) customizable: {:.2f}\nE(T) threshold: {:.2f}".format(self.t_fed, t_expected_threshold))
         str_buf.append("Ans for 2.3, lambda is: {:.2f}".format(lambda_my))
@@ -214,9 +218,9 @@ class ReactivePlannerController(PlannerControllerBase):
 
         self.planner.searchGridDrawer.update() # M: flush here for my pics.
         if waitCost < diffPathTravelCost: # ie.diffLCost > 0
-            self._draw_path_by_color(path_new_C, 'blue')
+            self._draw_path_by_color(path_old, 'yellow')
             return True
-        self._draw_path_by_color(path_old, 'blue')
+        self._draw_path_by_color(path_new_C, 'blue')
         return False
 
     # This method will wait until the obstacle has cleared and the robot can move.
