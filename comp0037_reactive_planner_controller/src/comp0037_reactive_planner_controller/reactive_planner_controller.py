@@ -3,6 +3,7 @@
 
 import rospy
 import math
+import time
 import threading
 from cell import CellLabel
 from planner_controller_base import PlannerControllerBase
@@ -69,13 +70,23 @@ class ReactivePlannerController(PlannerControllerBase):
     # This is based on the prior.
     def chooseInitialAisle(self, startCellCoords, goalCellCoords):
         rospy.logwarn("Choosing Aisle Initially")
+        path_a = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.A)
         path_b = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.B)
         path_c = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.C)
+        path_d = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.D)
+        path_e = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.E)
+        
         self._draw_path_by_color(path_b)
         self._draw_path_by_color(path_c, 'red')
-
+        self._draw_path_by_color(path_a, 'blue')
+        self._draw_path_by_color(path_d, 'orange')
+        self._draw_path_by_color(path_e, 'green')
+        time.sleep(3)
+        L_cost_via_a = path_a.travelCost
         L_cost_via_b = path_b.travelCost + self.Lw * self.t_fed * self.p_b # mynote: the time is fed here as described from the assignemnt
         L_cost_via_c = path_c.travelCost
+        L_cost_via_d = path_d.travelCost
+        L_cost_via_e = path_e.travelCost
 
         aisle_ret = Aisle.B if L_cost_via_b < L_cost_via_c else Aisle.C
 
@@ -135,9 +146,42 @@ class ReactivePlannerController(PlannerControllerBase):
 
         # Compare path_old (not remained path) and new_path
         path_old = self.currentPlannedPath
+        
+        # We can't just compute the path cost for one new path, but we need 
+        # to compute it for multiple new paths. So this includes the aisle A - E except B
+
+        path_new_A = self.planPathToGoalViaAisle(self._get_current_cell_coord(), goalCellCoords, Aisle.A)
+        path_new_C = self.planPathToGoalViaAisle(self._get_current_cell_coord(), goalCellCoords, Aisle.C)
+        path_new_D = self.planPathToGoalViaAisle(self._get_current_cell_coord(), goalCellCoords, Aisle.D)
+        path_new_E = self.planPathToGoalViaAisle(self._get_current_cell_coord(), goalCellCoords, Aisle.E)
+
         path_new = self.planPathToGoalViaAisle(self._get_current_cell_coord(), goalCellCoords, Aisle.C)
         self._draw_path_by_color(path_old, 'yellow')
-        self._draw_path_by_color(path_new, 'red')
+        self._draw_path_by_color(path_new_A, 'red')
+        self._draw_path_by_color(path_new_C, 'blue')
+        self._draw_path_by_color(path_new_D, 'green')
+        self._draw_path_by_color(path_new_E, 'brown')
+
+        newPathTravelCost = path_new_A.travelCost
+        path_new = path_new_A
+        if path_new_C.travelCost < newPathTravelCost:
+            newPathTravelCost = path_new_C.travelCost
+            path_new = path_new_C
+        if path_new_D.travelCost < newPathTravelCost:
+            newPathTravelCost = path_new_D.travelCost
+            path_new = path_new_D
+        if path_new_E.travelCost < newPathTravelCost:
+            newPathTravelCost = path_new_E.travelCost
+            path_new = path_new_E
+
+        if path_new == path_new_A:
+            rospy.logwarn("A new alternative path chosen via aisle A")
+        elif path_new == path_new_C:
+            rospy.logwarn("A new alternative path chosen via aisle C")
+        elif path_new == path_new_D:
+            rospy.logwarn("A new alternative path chosen via aisle D")
+        elif path_new == path_new_E:
+            rospy.logwarn("A new alternative path chosen via aisle E")
 
         #New Path Cost: The calculation part
         newPathTravelCost = path_new.travelCost
@@ -152,7 +196,7 @@ class ReactivePlannerController(PlannerControllerBase):
         newLCost = newPathTravelCost
         diffLCost = newPathTravelCost - oldPathRemainingCost
 
-        rospy.logwarn("\nA new path found.\nOld path remained Cost: {:.2f}\nNew path cost: {:.2f};\nDifference: {:.2f}"\
+        rospy.logwarn("\nOld path remained Cost: {:.2f}\nNew path cost: {:.2f};\nDifference: {:.2f}"\
                 .format(oldPathRemainingCost, newPathTravelCost, diffPathTravelCost))
 
         rospy.logwarn("\nL costs:\nOld path L Cost: {:.2f}\nNew L cost: {:.2f};\nDifference: {:.2f}"\
