@@ -212,8 +212,11 @@ class ReactivePlannerController(PlannerControllerBase):
                     + "\nAns for 2.2, lambda is: {:.2f}".format(lambda_my)
         rospy.logwarn(string_long)
 
+        self.planner.searchGridDrawer.update() # M: flush here for my pics.
         if waitCost < diffPathTravelCost: # ie.diffLCost > 0
+            self._draw_path_by_color(path_new_C, 'blue')
             return True
+        self._draw_path_by_color(path_old, 'blue')
         return False
 
     # This method will wait until the obstacle has cleared and the robot can move.
