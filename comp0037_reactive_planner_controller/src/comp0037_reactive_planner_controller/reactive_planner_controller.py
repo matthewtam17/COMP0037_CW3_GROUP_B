@@ -222,6 +222,8 @@ class ReactivePlannerController(PlannerControllerBase):
         waiting = True
         blocked = False
         while waiting:
+            sleep(5)
+            
             blocked = False
             waypoints = self.currentPlannedPath.waypoints
             for point in waypoints:
