@@ -9,6 +9,7 @@ from cell import CellLabel
 from planner_controller_base import PlannerControllerBase
 from comp0037_mapper.msg import *
 from comp0037_reactive_planner_controller.aisle import Aisle
+from planned_path import PlannedPath
 
 class ReactivePlannerController(PlannerControllerBase):
 
@@ -85,6 +86,7 @@ class ReactivePlannerController(PlannerControllerBase):
         self._draw_path_by_color(path_d, 'orange')
         self._draw_path_by_color(path_e, 'green')
         time.sleep(3)
+
         L_cost_via_a = path_a.travelCost
         L_cost_via_b = path_b.travelCost + self.Lw * self.t_fed * self.p_b # mynote: the time is fed here as described from the assignemnt
         L_cost_via_c = path_c.travelCost
@@ -94,7 +96,7 @@ class ReactivePlannerController(PlannerControllerBase):
         aisle_ret = Aisle.B if L_cost_via_b < L_cost_via_c else Aisle.C
         if self.force_choosing_B: # M: for switching 2.2 and 2.3
             aisle_ret = Aisle.B
-        
+
         # mynote: assume path_c cost always > path_b cost. This is an assumption the assignment used for B is always the shortest physical path.
         t_expected_threshold = (path_c.travelCost - path_b.travelCost)/(self.Lw * self.p_b)
         lambda_my = 1.0/t_expected_threshold
@@ -141,10 +143,11 @@ class ReactivePlannerController(PlannerControllerBase):
         # If this is significant then there is an error somewhere. If it is small enough then it probably due to
         # some noise in the robot's movement. Want to check that this error is less than width of a cell.
         print("i: " +str(currentIndex))
+        path_remain = PlannedPath()
         oldPathRemainingCost = 0
         for i in range(currentIndex,len(oldPathWaypoints)-1):
-            #This is a less computationally expensive solution than recomputing the cost
-            #by re-planning a section of the old path
+            #This is a less computationally expensive solution than recomputing the cost by re-planning a section of the old path
+            path_remain.waypoints.append(oldPathWaypoints[i]) # Mike: a simple object without considering other attributes, but waypoints.
             oldPathRemainingCost = oldPathRemainingCost + self.planner.computeLStageAdditiveCost(oldPathWaypoints[i],oldPathWaypoints[i+1])
         rospy.loginfo("Calculating old Path remaining cost: " + str(oldPathRemainingCost))
 
@@ -165,7 +168,8 @@ class ReactivePlannerController(PlannerControllerBase):
         path_new_E = self.planPathToGoalViaAisle(self._get_current_cell_coord(), goalCellCoords, Aisle.E)
 
         path_new = self.planPathToGoalViaAisle(self._get_current_cell_coord(), goalCellCoords, Aisle.C)
-        self._draw_path_by_color(path_old, 'yellow')
+        # self._draw_path_by_color(path_old, 'yellow')
+        self._draw_path_by_color(path_remain, 'yellow')
         self._draw_path_by_color(path_new_A, 'red')
         self._draw_path_by_color(path_new_C, 'blue')
         self._draw_path_by_color(path_new_D, 'green')
@@ -216,6 +220,7 @@ class ReactivePlannerController(PlannerControllerBase):
                     + "\nAns for 2.2, lambda is: {:.2f}".format(lambda_my)
         rospy.logwarn(string_long)
 
+        time.sleep(5) # M: leave some time for me to collect pics.
         self.planner.searchGridDrawer.update() # M: flush here for my pics.
         if waitCost < diffPathTravelCost: # ie.diffLCost > 0
             self._draw_path_by_color(path_old, 'yellow')
@@ -228,6 +233,8 @@ class ReactivePlannerController(PlannerControllerBase):
         waiting = True
         blocked = False
         while waiting:
+            # sleep(5)
+
             blocked = False
             waypoints = self.currentPlannedPath.waypoints
             for point in waypoints:
