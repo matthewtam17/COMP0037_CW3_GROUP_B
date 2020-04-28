@@ -34,7 +34,6 @@ class ReactivePlannerController(PlannerControllerBase):
         #For simplicity we can just change the value in the code before
         #running the actual test if we want to do so
         #rather than implementing an input and parsing in values from elsewhere etc.
-#         self.inputWaitTime = 0
         self.t_fed = 1.96 # Mike: Please use this var name for my merged methods now. You can change them globally later if it is not proferred
         self.force_choosing_B = False
 
@@ -80,19 +79,22 @@ class ReactivePlannerController(PlannerControllerBase):
         path_d = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.D)
         path_e = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, Aisle.E)
 
+        # drawing the path by colors
         self._draw_path_by_color(path_b)
         self._draw_path_by_color(path_c, 'red')
         self._draw_path_by_color(path_a, 'blue')
         self._draw_path_by_color(path_d, 'orange')
         self._draw_path_by_color(path_e, 'green')
-        time.sleep(3)
+        time.sleep(3) # sleep for some time so that we can collect the pictures.
 
+        # calculations for L cost, which are of the assignment interest.
         L_cost_via_a = path_a.travelCost
         L_cost_via_b = path_b.travelCost + self.Lw * self.t_fed * self.p_b # mynote: the time is fed here as described from the assignemnt
         L_cost_via_c = path_c.travelCost
         L_cost_via_d = path_d.travelCost
         L_cost_via_e = path_e.travelCost
 
+        # assignment for the optimal path
         aisle_ret = Aisle.B if L_cost_via_b < L_cost_via_c else Aisle.C
         if self.force_choosing_B: # M: for switching 2.2 and 2.3
             aisle_ret = Aisle.B
@@ -101,6 +103,7 @@ class ReactivePlannerController(PlannerControllerBase):
         t_expected_threshold = (path_c.travelCost - path_b.travelCost)/(self.Lw * self.p_b)
         lambda_my = 1.0/t_expected_threshold
 
+        # print out verbost information of interest
         str_buf = ['',]
         str_buf.append("Logging Decission for Aisle B or C.")
         str_buf.append("E(T): {:.2f}; L_w: {:.2f}; B_obstacle_prob: {:.2f}".format(self.t_fed, self.Lw, self.p_b))
@@ -117,7 +120,7 @@ class ReactivePlannerController(PlannerControllerBase):
 
     # Choose the subdquent aisle the robot will drive down
     def chooseAisle(self, startCellCoords, goalCellCoords):
-        return Aisle.D
+        return Aisle.C
 
     # Return whether the robot should wait for the obstacle to clear or not.
     def shouldWaitUntilTheObstacleClears(self, startCellCoords, goalCellCoords):
@@ -175,6 +178,7 @@ class ReactivePlannerController(PlannerControllerBase):
         self._draw_path_by_color(path_new_D, 'green')
         self._draw_path_by_color(path_new_E, 'brown')
 
+        # the calculation for new path cost.
         newPathTravelCost = path_new_A.travelCost
         path_new = path_new_A
         if path_new_C.travelCost < newPathTravelCost:
@@ -187,6 +191,7 @@ class ReactivePlannerController(PlannerControllerBase):
             newPathTravelCost = path_new_E.travelCost
             path_new = path_new_E
 
+        # information for path decision
         if path_new == path_new_A:
             rospy.logwarn("A new alternative path chosen via aisle A")
         elif path_new == path_new_C:
@@ -196,7 +201,7 @@ class ReactivePlannerController(PlannerControllerBase):
         elif path_new == path_new_E:
             rospy.logwarn("A new alternative path chosen via aisle E")
 
-        #New Path Cost: The calculation part
+        # New Path Cost: The calculation part
         newPathTravelCost = path_new.travelCost
         diffPathTravelCost = newPathTravelCost - oldPathRemainingCost
 
@@ -209,6 +214,7 @@ class ReactivePlannerController(PlannerControllerBase):
         newLCost = newPathTravelCost
         diffLCost = newPathTravelCost - oldPathRemainingCost
 
+        # log information
         rospy.logwarn("\nOld path remained Cost: {:.2f}\nNew path cost: {:.2f};\nDifference: {:.2f}"\
                 .format(oldPathRemainingCost, newPathTravelCost, diffPathTravelCost))
 
@@ -233,7 +239,7 @@ class ReactivePlannerController(PlannerControllerBase):
         waiting = True
         blocked = False
         while waiting:
-            # sleep(5)
+            time.sleep(5) # we sleep here mostly for saving resources, it emulate the waiting behaviour as well.
 
             blocked = False
             waypoints = self.currentPlannedPath.waypoints
@@ -241,7 +247,7 @@ class ReactivePlannerController(PlannerControllerBase):
                 x,y = point.coords
                 status = self.occupancyGrid.getCell(x,y)
                 if status == 1:
-                    # print("Path still blocked - waiting")
+                    print("Path is still blocked - Waiting")
                     blocked = True
                     break
             if blocked is False:
@@ -273,7 +279,6 @@ class ReactivePlannerController(PlannerControllerBase):
 
         #The intermediateGoal is used to control the via point of the planned path
         # i.e. what aisle the robot will drive down
-
         intermediateGoal = (25,25)
         print("aisle: " + str(aisle))
         if aisle == Aisle.A:
@@ -323,7 +328,6 @@ class ReactivePlannerController(PlannerControllerBase):
 
         # Extract the path
         #currentPlannedPath = self.planner.extractPathToGoal()
-
         #Show both the first and second planned path separately, and also the combined path (3 screenshots)
 
         return currentPlannedPath
@@ -331,7 +335,6 @@ class ReactivePlannerController(PlannerControllerBase):
     # This method drives the robot from the start to the final goal. It includes
     # choosing an aisle to drive down and both waiting and replanning behaviour.
     # Note that driving down an aisle is like introducing an intermediate waypoint.
-
     def driveToGoal(self, goal):
 
         # Get the goal coordinate in cells
